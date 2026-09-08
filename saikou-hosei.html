@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="用途地域別の採光補正係数と有効採光面積を計算します。居室用途は1/7・1/5・1/10・義務なしを選択可能。">
+<meta name="description" content="用途地域別の採光補正係数と有効採光面積を計算します。数値の直接入力とスライダーが連動します。">
 <meta name="tool-tag" content="法規">
 <title>採光補正係数シミュレーター</title>
 <style>
@@ -37,7 +37,23 @@
   .control-group { background: #0f3460; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
   .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
   .control-row label { font-size: 0.9em; font-weight: bold; color: #fff; }
-  .control-row span { font-weight: bold; color: #4ecca3; font-size: 1.1em; }
+  .input-wrapper { display: flex; align-items: baseline; }
+  .input-wrapper span { font-weight: bold; color: #4ecca3; font-size: 1.1em; margin-left: 3px; }
+  input[type=number] {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed #4ecca3;
+    color: #4ecca3;
+    font-size: 1.2em;
+    font-weight: bold;
+    width: 60px;
+    text-align: right;
+    outline: none;
+    padding: 2px;
+  }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
   select {
     width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px;
     background: #0b132b; color: #4ecca3; border: 1px solid #4ecca3;
@@ -93,24 +109,36 @@
     </select>
     <div class="control-row">
       <label>水平距離 D (隣地境界まで)</label>
-      <span id="val-d">3.0 m</span>
+      <div class="input-wrapper">
+        <input type="number" id="num-d" min="0.5" max="10.0" step="0.1" value="3.0" oninput="sync('d', 'num')">
+        <span>m</span>
+      </div>
     </div>
-    <input type="range" id="slider-d" min="0.5" max="10.0" step="0.1" value="3.0" oninput="calculate()">
+    <input type="range" id="slider-d" min="0.5" max="10.0" step="0.1" value="3.0" oninput="sync('d', 'slider')">
     <div class="control-row">
       <label>垂直距離 H (直上のパラペット等まで)</label>
-      <span id="val-h">2.0 m</span>
+      <div class="input-wrapper">
+        <input type="number" id="num-h" min="1.0" max="10.0" step="0.1" value="2.0" oninput="sync('h', 'num')">
+        <span>m</span>
+      </div>
     </div>
-    <input type="range" id="slider-h" min="1.0" max="10.0" step="0.1" value="2.0" oninput="calculate()">
+    <input type="range" id="slider-h" min="1.0" max="10.0" step="0.1" value="2.0" oninput="sync('h', 'slider')">
     <div class="control-row">
       <label>部屋の床面積</label>
-      <span id="val-floor">14.0 ㎡</span>
+      <div class="input-wrapper">
+        <input type="number" id="num-floor" min="5.0" max="40.0" step="1.0" value="14.0" oninput="sync('floor', 'num')">
+        <span>㎡</span>
+      </div>
     </div>
-    <input type="range" id="slider-floor" min="5.0" max="40.0" step="1.0" value="14.0" oninput="calculate()">
+    <input type="range" id="slider-floor" min="5.0" max="40.0" step="1.0" value="14.0" oninput="sync('floor', 'slider')">
     <div class="control-row">
       <label>実際の窓面積 (開口部)</label>
-      <span id="val-win">1.5 ㎡</span>
+      <div class="input-wrapper">
+        <input type="number" id="num-win" min="0.0" max="10.0" step="0.1" value="1.5" oninput="sync('win', 'num')">
+        <span>㎡</span>
+      </div>
     </div>
-    <input type="range" id="slider-win" min="0.0" max="10.0" step="0.1" value="1.5" oninput="calculate()">
+    <input type="range" id="slider-win" min="0.0" max="10.0" step="0.1" value="1.5" oninput="sync('win', 'slider')">
   </div>
   <div class="result-area">
     <div class="formula-display" id="formula-text">式: D/H × 6.0 - 1.4</div>
@@ -141,16 +169,22 @@
     document.getElementById('tab-' + zone).classList.add('active');
     calculate();
   }
+  function sync(id, source) {
+    const numInput = document.getElementById('num-' + id);
+    const sliderInput = document.getElementById('slider-' + id);
+    if (source === 'num') {
+      sliderInput.value = numInput.value;
+    } else if (source === 'slider') {
+      numInput.value = sliderInput.value;
+    }
+    calculate();
+  }
   function calculate() {
-    const D = parseFloat(document.getElementById('slider-d').value);
-    const H = parseFloat(document.getElementById('slider-h').value);
-    const floorArea = parseFloat(document.getElementById('slider-floor').value);
-    const winArea = parseFloat(document.getElementById('slider-win').value);
+    const D = parseFloat(document.getElementById('num-d').value) || 0;
+    const H = parseFloat(document.getElementById('num-h').value) || 1;
+    const floorArea = parseFloat(document.getElementById('num-floor').value) || 0;
+    const winArea = parseFloat(document.getElementById('num-win').value) || 0;
     const usageRatio = document.getElementById('usage-select').value;
-    document.getElementById('val-d').textContent = D.toFixed(1) + ' m';
-    document.getElementById('val-h').textContent = H.toFixed(1) + ' m';
-    document.getElementById('val-floor').textContent = floorArea.toFixed(1) + ' ㎡';
-    document.getElementById('val-win').textContent = winArea.toFixed(1) + ' ㎡';
     const ratio = D / H;
     let factor = 0;
     let formulaStr = '';
