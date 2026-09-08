@@ -27,7 +27,7 @@
     width: 100%;
     max-width: 500px;
   }
-  h1 { margin: 0 0 15px 0; font-size: 1.4em; color: #e94560; text-align: center; }
+  h1 { margin: 0 0 15px 0; color: #e94560; text-align: center; font-size: 1.4em; }
   .tabs { display: flex; gap: 5px; margin-bottom: 20px; }
   .tab {
     flex: 1; text-align: center; padding: 10px; background: #0f3460;
@@ -49,15 +49,21 @@
   .status.ok { color: #4ecca3; }
   .status.ng { color: #e94560; }
   .visualizer {
-    position: relative; height: 140px; background: #87CEEB;
+    position: relative; height: 180px; background: #87CEEB;
     border-radius: 8px; margin-top: 20px; overflow: hidden; border: 2px solid #333;
   }
-  .building { position: absolute; bottom: 0; left: 0; width: 80px; height: 100px; background: #555; border-right: 2px solid #222; }
-  .window { position: absolute; right: 0; background: #fff; width: 10px; transition: 0.1s; border-radius: 2px 0 0 2px;}
-  .boundary { position: absolute; bottom: 0; width: 4px; height: 140px; background: #e94560; transition: 0.1s; }
+  .building { position: absolute; bottom: 20px; left: 0; width: 80px; background: #555; border-right: 2px solid #222; transition: 0.1s ease-out; }
+  .window { position: absolute; right: 0; background: #fff; width: 10px; border-radius: 2px 0 0 2px; }
+  .boundary { position: absolute; bottom: 20px; width: 4px; height: 160px; background: #e94560; transition: 0.1s ease-out; }
   .ground { position: absolute; bottom: 0; width: 100%; height: 20px; background: #654321; }
-  .dim-h { position: absolute; left: 85px; width: 2px; background: #333; transition: 0.1s; }
-  .dim-d { position: absolute; height: 2px; background: #333; transition: 0.1s; }
+  .dim-h { position: absolute; left: 85px; width: 2px; background: #333; transition: 0.1s ease-out; }
+  .dim-h::before, .dim-h::after { content: ''; position: absolute; left: -4px; width: 10px; height: 2px; background: #333; }
+  .dim-h::before { top: 0; }
+  .dim-h::after { bottom: 0; }
+  .dim-d { position: absolute; height: 2px; background: #333; transition: 0.1s ease-out; }
+  .dim-d::before, .dim-d::after { content: ''; position: absolute; top: -4px; width: 2px; height: 10px; background: #333; }
+  .dim-d::before { left: 0; }
+  .dim-d::after { right: 0; }
 </style>
 </head>
 <body>
@@ -75,7 +81,7 @@
     </div>
     <input type="range" id="slider-d" min="0.5" max="10.0" step="0.1" value="3.0" oninput="calculate()">
     <div class="control-row">
-      <label>垂直距離 H (直上〜窓中心)</label>
+      <label>垂直距離 H (直上のパラペット等まで)</label>
       <span id="val-h">2.0 m</span>
     </div>
     <input type="range" id="slider-h" min="1.0" max="10.0" step="0.1" value="2.0" oninput="calculate()">
@@ -102,7 +108,7 @@
     <div class="status" id="status-text">判定</div>
   </div>
   <div class="visualizer">
-    <div class="building">
+    <div class="building" id="vis-building">
       <div class="window" id="vis-window"></div>
     </div>
     <div class="boundary" id="vis-boundary"></div>
@@ -110,9 +116,6 @@
     <div class="dim-h" id="vis-h"></div>
     <div class="dim-d" id="vis-d"></div>
   </div>
-  <p style="margin:12px 0 0;font-size:0.72em;color:#8a8a8a;line-height:1.5;">
-    令20条の基本式。係数は0〜3.0。必要面積は住宅居室の1/7固定。道路面の下限1.0、距離緩和、天窓×3／縁側×0.7は未実装。図のHは簡易表示。
-  </p>
 </div>
 <script>
   let currentZone = 'residential';
@@ -136,17 +139,17 @@
     let formulaStr = '';
     if (currentZone === 'residential') {
       factor = ratio * 6.0 - 1.4;
-      formulaStr = 'D/H × 6.0 - 1.4';
+      formulaStr = '式: D/H × 6.0 - 1.4';
     } else if (currentZone === 'commercial') {
       factor = ratio * 10.0 - 1.0;
-      formulaStr = 'D/H × 10.0 - 1.0';
+      formulaStr = '式: D/H × 10.0 - 1.0';
     } else if (currentZone === 'industrial') {
       factor = ratio * 8.0 - 1.0;
-      formulaStr = 'D/H × 8.0 - 1.0';
+      formulaStr = '式: D/H × 8.0 - 1.0';
     }
     if (factor < 0) factor = 0;
     if (factor > 3.0) factor = 3.0;
-    document.getElementById('formula-text').textContent = '式: ' + formulaStr;
+    document.getElementById('formula-text').textContent = formulaStr;
     document.getElementById('factor-result').textContent = factor.toFixed(2);
     const reqArea = floorArea / 7.0;
     const effArea = winArea * factor;
@@ -164,15 +167,18 @@
     const visBoundary = document.getElementById('vis-boundary');
     const visH = document.getElementById('vis-h');
     const visD = document.getElementById('vis-d');
-    const scale = 15;
+    const visBuilding = document.getElementById('vis-building');
+    const scale = 12;
     const pxD = D * scale;
     const pxH = H * scale;
-    visWindow.style.bottom = (20 + pxH - 10) + 'px';
+    const windowCenterY = 30;
+    visBuilding.style.height = (windowCenterY + pxH) + 'px';
+    visWindow.style.bottom = (windowCenterY - 10) + 'px';
     visWindow.style.height = '20px';
     visBoundary.style.left = (80 + pxD) + 'px';
-    visH.style.bottom = '20px';
+    visH.style.bottom = (20 + windowCenterY) + 'px';
     visH.style.height = pxH + 'px';
-    visD.style.bottom = (20 + pxH) + 'px';
+    visD.style.bottom = (20 + windowCenterY) + 'px';
     visD.style.left = '80px';
     visD.style.width = pxD + 'px';
   }
