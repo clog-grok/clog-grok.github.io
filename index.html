@@ -2,19 +2,116 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>clog-grok tools</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ツール一覧 | clog-grok</title>
+  <meta name="description" content="内見用・歩幅チェッカーとストップウォッチ。タップしてすぐ使えます。">
+  <meta name="theme-color" content="#111111">
+  <meta property="og:title" content="ツール一覧 | clog-grok">
+  <meta property="og:description" content="歩幅チェッカーとストップウォッチ。タップしてすぐ使えます。">
+  <meta property="og:url" content="https://clog-grok.github.io/">
+  <meta name="twitter:card" content="summary">
   <style>
-    body { font-family: -apple-system, sans-serif; max-width: 28rem; margin: 2rem auto; padding: 0 1rem; color: #222; }
-    a { color: #0b57d0; }
-    li { margin: 0.6rem 0; }
+    :root {
+      --bg: #111;
+      --card: #1c1c1e;
+      --line: #2c2c2e;
+      --text: #f2f2f7;
+      --muted: #8e8e93;
+      --gold: #f1c40f;
+      --green: #30d158;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding: 28px 16px calc(28px + env(safe-area-inset-bottom));
+    }
+    main { max-width: 420px; margin: 0 auto; }
+    .kicker {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin: 0 0 6px;
+    }
+    h1 {
+      font-size: 1.55rem;
+      margin: 0 0 8px;
+      letter-spacing: 0.02em;
+    }
+    .lead {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+    .list { display: grid; gap: 12px; }
+    a.card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 16px 14px;
+    }
+    a.card:active { transform: scale(0.99); }
+    .tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .tag.site { background: #2c3e50; color: var(--gold); }
+    .tag.exam { background: #143322; color: var(--green); }
+    .name {
+      font-size: 1.12rem;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+    .desc {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+    .go {
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: #fff;
+    }
+    footer {
+      margin-top: 28px;
+      color: #636366;
+      font-size: 0.72rem;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
-  <h1>tools</h1>
-  <ul>
-    <li><a href="./hohaba-checker.html">内見用・歩幅チェッカー</a></li>
-    <li><a href="./stopwatch.html">ストップウォッチ</a></li>
-  </ul>
+  <main>
+    <p class="kicker">CLOG-GROK</p>
+    <h1>ツール</h1>
+    <p class="lead">タップしてすぐ使えます。内見と製図用に作ったものから置いています。</p>
+    <div class="list">
+      <a class="card" href="./hohaba-checker.html">
+        <span class="tag site">内見</span>
+        <p class="name">歩幅チェッカー</p>
+        <p class="desc">身長から歩幅の目安を出します。歩数と距離の換算もできます。</p>
+        <p class="go">開く →</p>
+      </a>
+      <a class="card" href="./stopwatch.html">
+        <span class="tag exam">製図</span>
+        <p class="name">ストップウォッチ</p>
+        <p class="desc">アナログとデジタルを切り替えられます。ラップは多めに残せます。</p>
+        <p class="go">開く →</p>
+      </a>
+    </div>
+    <footer>増やしたツールはここに追していきます。</footer>
+  </main>
 </body>
 </html>
