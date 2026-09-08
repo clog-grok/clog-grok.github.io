@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="用途地域別の採光補正係数と有効採光面積をその場で計算します。上限3.0／下限0、住宅居室は床面積の1/7。">
+<meta name="tool-tag" content="法規">
+<title>採光補正係数シミュレーター</title>
+<style>
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .app-container {
+    background: #16213e;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    width: 100%;
+    max-width: 500px;
+  }
+  h1 { margin: 0 0 15px 0; font-size: 1.4em; color: #e94560; text-align: center; }
+  .tabs { display: flex; gap: 5px; margin-bottom: 20px; }
+  .tab {
+    flex: 1; text-align: center; padding: 10px; background: #0f3460;
+    cursor: pointer; border-radius: 6px; font-weight: bold; transition: 0.2s;
+  }
+  .tab.active { background: #e94560; color: #fff; }
+  .control-group { background: #0f3460; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+  .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  .control-row label { font-size: 0.9em; }
+  .control-row span { font-weight: bold; color: #4ecca3; font-size: 1.1em; }
+  input[type=range] { width: 100%; accent-color: #4ecca3; margin-bottom: 15px; }
+  .result-area { background: #0b132b; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #4ecca3; }
+  .formula-display { font-family: monospace; color: #a0a0a0; margin-bottom: 10px; font-size: 0.9em; }
+  .factor-display { font-size: 2.2em; font-weight: bold; color: #e94560; margin: 10px 0; }
+  .judgement { display: flex; justify-content: space-around; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #333; }
+  .judgement div { text-align: center; }
+  .judgement div span { display: block; font-size: 1.2em; font-weight: bold; color: #fff; margin-top: 5px; }
+  .status { font-size: 1.5em; font-weight: bold; margin-top: 15px; }
+  .status.ok { color: #4ecca3; }
+  .status.ng { color: #e94560; }
+  .visualizer {
+    position: relative; height: 140px; background: #87CEEB;
+    border-radius: 8px; margin-top: 20px; overflow: hidden; border: 2px solid #333;
+  }
+  .building { position: absolute; bottom: 0; left: 0; width: 80px; height: 100px; background: #555; border-right: 2px solid #222; }
+  .window { position: absolute; right: 0; background: #fff; width: 10px; transition: 0.1s; border-radius: 2px 0 0 2px;}
+  .boundary { position: absolute; bottom: 0; width: 4px; height: 140px; background: #e94560; transition: 0.1s; }
+  .ground { position: absolute; bottom: 0; width: 100%; height: 20px; background: #654321; }
+  .dim-h { position: absolute; left: 85px; width: 2px; background: #333; transition: 0.1s; }
+  .dim-d { position: absolute; height: 2px; background: #333; transition: 0.1s; }
+</style>
+</head>
+<body>
+<div class="app-container">
+  <h1>☀️ 採光補正係数 シミュレーター</h1>
+  <div class="tabs">
+    <div class="tab active" onclick="setZone('residential')" id="tab-residential">住居系</div>
+    <div class="tab" onclick="setZone('commercial')" id="tab-commercial">商業系</div>
+    <div class="tab" onclick="setZone('industrial')" id="tab-industrial">工業系</div>
+  </div>
+  <div class="control-group">
+    <div class="control-row">
+      <label>水平距離 D (隣地境界まで)</label>
+      <span id="val-d">3.0 m</span>
+    </div>
+    <input type="range" id="slider-d" min="0.5" max="10.0" step="0.1" value="3.0" oninput="calculate()">
+    <div class="control-row">
+      <label>垂直距離 H (直上〜窓中心)</label>
+      <span id="val-h">2.0 m</span>
+    </div>
+    <input type="range" id="slider-h" min="1.0" max="10.0" step="0.1" value="2.0" oninput="calculate()">
+    <div class="control-row">
+      <label>部屋の床面積</label>
+      <span id="val-floor">14.0 ㎡</span>
+    </div>
+    <input type="range" id="slider-floor" min="5.0" max="40.0" step="1.0" value="14.0" oninput="calculate()">
+    <div class="control-row">
+      <label>実際の窓面積 (開口部)</label>
+      <span id="val-win">1.5 ㎡</span>
+    </div>
+    <input type="range" id="slider-win" min="0.5" max="10.0" step="0.1" value="1.5" oninput="calculate()">
+  </div>
+  <div class="result-area">
+    <div class="formula-display" id="formula-text">式: D/H × 6.0 - 1.4</div>
+    <div>採光補正係数</div>
+    <div class="factor-display" id="factor-result">0.00</div>
+    <div style="font-size:0.8em; color:#888;">(最大 3.0)</div>
+    <div class="judgement">
+      <div>必要採光面積<br><span id="req-area">0.0 ㎡</span><br><small>(床面積の1/7)</small></div>
+      <div>有効採光面積<br><span id="eff-area">0.0 ㎡</span><br><small>(窓面積 × 係数)</small></div>
+    </div>
+    <div class="status" id="status-text">判定</div>
+  </div>
+  <div class="visualizer">
+    <div class="building">
+      <div class="window" id="vis-window"></div>
+    </div>
+    <div class="boundary" id="vis-boundary"></div>
+    <div class="ground"></div>
+    <div class="dim-h" id="vis-h"></div>
+    <div class="dim-d" id="vis-d"></div>
+  </div>
+  <p style="margin:12px 0 0;font-size:0.72em;color:#8a8a8a;line-height:1.5;">
+    令20条の基本式。係数は0〜3.0。必要面積は住宅居室の1/7固定。道路面の下限1.0、距離緩和、天窓×3／縁側×0.7は未実装。図のHは簡易表示。
+  </p>
+</div>
+<script>
+  let currentZone = 'residential';
+  function setZone(zone) {
+    currentZone = zone;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + zone).classList.add('active');
+    calculate();
+  }
+  function calculate() {
+    const D = parseFloat(document.getElementById('slider-d').value);
+    const H = parseFloat(document.getElementById('slider-h').value);
+    const floorArea = parseFloat(document.getElementById('slider-floor').value);
+    const winArea = parseFloat(document.getElementById('slider-win').value);
+    document.getElementById('val-d').textContent = D.toFixed(1) + ' m';
+    document.getElementById('val-h').textContent = H.toFixed(1) + ' m';
+    document.getElementById('val-floor').textContent = floorArea.toFixed(1) + ' ㎡';
+    document.getElementById('val-win').textContent = winArea.toFixed(1) + ' ㎡';
+    const ratio = D / H;
+    let factor = 0;
+    let formulaStr = '';
+    if (currentZone === 'residential') {
+      factor = ratio * 6.0 - 1.4;
+      formulaStr = 'D/H × 6.0 - 1.4';
+    } else if (currentZone === 'commercial') {
+      factor = ratio * 10.0 - 1.0;
+      formulaStr = 'D/H × 10.0 - 1.0';
+    } else if (currentZone === 'industrial') {
+      factor = ratio * 8.0 - 1.0;
+      formulaStr = 'D/H × 8.0 - 1.0';
+    }
+    if (factor < 0) factor = 0;
+    if (factor > 3.0) factor = 3.0;
+    document.getElementById('formula-text').textContent = '式: ' + formulaStr;
+    document.getElementById('factor-result').textContent = factor.toFixed(2);
+    const reqArea = floorArea / 7.0;
+    const effArea = winArea * factor;
+    document.getElementById('req-area').textContent = reqArea.toFixed(2) + ' ㎡';
+    document.getElementById('eff-area').textContent = effArea.toFixed(2) + ' ㎡';
+    const statusText = document.getElementById('status-text');
+    if (effArea >= reqArea) {
+      statusText.textContent = '✅ クリア！ (採光OK)';
+      statusText.className = 'status ok';
+    } else {
+      statusText.textContent = '❌ アウト (窓を大きくするかDを広げて)';
+      statusText.className = 'status ng';
+    }
+    const visWindow = document.getElementById('vis-window');
+    const visBoundary = document.getElementById('vis-boundary');
+    const visH = document.getElementById('vis-h');
+    const visD = document.getElementById('vis-d');
+    const scale = 15;
+    const pxD = D * scale;
+    const pxH = H * scale;
+    visWindow.style.bottom = (20 + pxH - 10) + 'px';
+    visWindow.style.height = '20px';
+    visBoundary.style.left = (80 + pxD) + 'px';
+    visH.style.bottom = '20px';
+    visH.style.height = pxH + 'px';
+    visD.style.bottom = (20 + pxH) + 'px';
+    visD.style.left = '80px';
+    visD.style.width = pxD + 'px';
+  }
+  calculate();
+</script>
+</body>
+</html>
