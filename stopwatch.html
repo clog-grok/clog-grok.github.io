@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストップウォッチ</title>
+<style>
+  body {
+    background-color: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .dial-container {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    margin: 6px auto 0;
+  }
+  #analog {
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: #000;
+    box-shadow: 0 0 0 1px #222;
+    transition: opacity 0.2s ease;
+  }
+  .digital-overlay {
+    position: absolute;
+    top: 58%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    font-weight: 300;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .large-digital {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 52px;
+    font-weight: 200;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+    pointer-events: none;
+    text-align: center;
+    display: none;
+  }
+  .dots {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: #8e8e93;
+    letter-spacing: 5px;
+    cursor: pointer;
+  }
+  .dots .active {
+    color: #fff;
+  }
+  .buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 36px;
+    margin: 6px 0 6px;
+  }
+  button {
+    width: 64px;
+    height: 64px;
+    border: none;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .left-btn {
+    background-color: #3a3a3c;
+    color: #ff9500;
+  }
+  .right-btn {
+    background-color: #34c759;
+    color: white;
+  }
+  .right-btn.stop {
+    background-color: #ff3b30;
+    color: white;
+  }
+  .laps {
+    flex: 1;
+    background-color: #1c1c1e;
+    border-radius: 12px 12px 0 0;
+    overflow-y: auto;
+    margin: 0 10px;
+    padding: 2px 0;
+    min-height: 140px;
+  }
+  .lap-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 16px;
+    border-bottom: 1px solid #3a3a3c;
+    font-size: 15px;
+  }
+  .lap-item:last-child {
+    border-bottom: none;
+  }
+  .lap-number {
+    color: #8e8e93;
+  }
+  .lap-time {
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+
+  <div class="dial-container" id="dialContainer">
+    <canvas id="analog" width="260" height="260"></canvas>
+    <div class="digital-overlay" id="timerSmall">00:00:00.00</div>
+    <div class="large-digital" id="timerLarge">00:00:00.00</div>
+    <div class="dots" id="dots">● ●</div>
+  </div>
+
+  <div class="buttons">
+    <button id="leftBtn" class="left-btn" onclick="leftButtonPressed()">リセット</button>
+    <button id="rightBtn" class="right-btn" onclick="rightButtonPressed()">開始</button>
+  </div>
+
+  <div class="laps" id="lapsContainer"></div>
+
+<script>
+let startTime = 0;
+let elapsedTime = 0;
+let lastLapTime = 0;
+let isRunning = false;
+let timerInterval = null;
+let laps = [];
+let currentView = 'analog';
+
+const timerSmall = document.getElementById('timerSmall');
+const timerLarge = document.getElementById('timerLarge');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+const lapsContainer = document.getElementById('lapsContainer');
+const canvas = document.getElementById('analog');
+const ctx = canvas.getContext('2d', { alpha: true });
+const dialContainer = document.getElementById('dialContainer');
+const dots = document.getElementById('dots');
+
+function formatTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const centiseconds = Math.floor((ms % 1000) / 10);
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}.${centiseconds.toString().padStart(2,'0')}`;
+  } else {
+    return `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}.${centiseconds.toString().padStart(2,'0')}`;
+  }
+}
+
+function drawAnalog(totalMs, lapMs) {
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const radius = 118;
+
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = '#111';
+  ctx.fill();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  for (let i = 0; i < 60; i++) {
+    const angle = (i * 6 - 90) * Math.PI / 180;
+    const isMajor = i % 5 === 0;
+    const inner = isMajor ? radius - 16 : radius - 9;
+    const outer = radius - 2;
+
+    ctx.beginPath();
+    ctx.moveTo(cx + inner * Math.cos(angle), cy + inner * Math.sin(angle));
+    ctx.lineTo(cx + outer * Math.cos(angle), cy + outer * Math.sin(angle));
+    ctx.strokeStyle = isMajor ? '#fff' : '#666';
+    ctx.lineWidth = isMajor ? 2.2 : 1.1;
+    ctx.stroke();
+
+    if (isMajor && i !== 0) {
+      const numR = radius - 28;
+      ctx.fillStyle = '#fff';
+      ctx.font = '600 13px -apple-system';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(i.toString(), cx + numR * Math.cos(angle), cy + numR * Math.sin(angle));
+    }
+  }
+  ctx.fillStyle = '#fff';
+  ctx.font = '600 13px -apple-system';
+  ctx.fillText('60', cx, cy - radius + 24);
+
+  const innerRadius = 44;
+  const innerCx = cx;
+  const innerCy = cy - 6;
+
+  ctx.beginPath();
+  ctx.arc(innerCx, innerCy, innerRadius, 0, Math.PI * 2);
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fill();
+  ctx.strokeStyle = '#444';
+  ctx.lineWidth = 1.3;
+  ctx.stroke();
+
+  for (let i = 5; i <= 30; i += 5) {
+    const angle = (i * 12 - 90) * Math.PI / 180;
+    const innerTick = innerRadius - 9;
+    const outerTick = innerRadius - 3;
+
+    ctx.beginPath();
+    ctx.moveTo(innerCx + innerTick * Math.cos(angle), innerCy + innerTick * Math.sin(angle));
+    ctx.lineTo(innerCx + outerTick * Math.cos(angle), innerCy + outerTick * Math.sin(angle));
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+
+    const numR = innerRadius - 16;
+    ctx.fillStyle = '#aaa';
+    ctx.font = '500 8px -apple-system';
+    ctx.fillText(i.toString(), innerCx + numR * Math.cos(angle), innerCy + numR * Math.sin(angle));
+  }
+
+  const lapSec = (lapMs / 1000) % 60;
+  const blueAngle = (lapSec * 6 - 90) * Math.PI / 180;
+  ctx.strokeStyle = 'rgba(10, 132, 255, 0.3)';
+  ctx.lineWidth = 3.8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + (radius - 36) * Math.cos(blueAngle), cy + (radius - 36) * Math.sin(blueAngle));
+  ctx.stroke();
+  ctx.strokeStyle = '#0a84ff';
+  ctx.lineWidth = 2.9;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + (radius - 34) * Math.cos(blueAngle), cy + (radius - 34) * Math.sin(blueAngle));
+  ctx.stroke();
+
+  const totalSec = (totalMs / 1000) % 60;
+  const orangeAngle = (totalSec * 6 - 90) * Math.PI / 180;
+  ctx.strokeStyle = 'rgba(255, 149, 0, 0.3)';
+  ctx.lineWidth = 3.8;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + (radius - 28) * Math.cos(orangeAngle), cy + (radius - 28) * Math.sin(orangeAngle));
+  ctx.stroke();
+  ctx.strokeStyle = '#ff9500';
+  ctx.lineWidth = 2.7;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + (radius - 26) * Math.cos(orangeAngle), cy + (radius - 26) * Math.sin(orangeAngle));
+  ctx.stroke();
+
+  const totalMinutes = totalMs / 1000 / 60;
+  const minOn30 = totalMinutes % 30;
+  const slowAngle = (minOn30 * 12 - 90) * Math.PI / 180;
+  ctx.strokeStyle = 'rgba(255, 204, 0, 0.3)';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.moveTo(innerCx, innerCy);
+  ctx.lineTo(innerCx + (innerRadius - 17) * Math.cos(slowAngle), innerCy + (innerRadius - 17) * Math.sin(slowAngle));
+  ctx.stroke();
+  ctx.strokeStyle = '#ffcc00';
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.moveTo(innerCx, innerCy);
+  ctx.lineTo(innerCx + (innerRadius - 15) * Math.cos(slowAngle), innerCy + (innerRadius - 15) * Math.sin(slowAngle));
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#222';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#0a84ff';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(innerCx, innerCy, 4.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffcc00';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(innerCx, innerCy, 2.2, 0, Math.PI * 2);
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fill();
+}
+
+function updateDisplay() {
+  const currentLap = elapsedTime - lastLapTime;
+  timerSmall.textContent = formatTime(elapsedTime);
+  timerLarge.textContent = formatTime(elapsedTime);
+
+  if (currentView === 'analog') {
+    drawAnalog(elapsedTime, currentLap);
+  }
+}
+
+function updateTimer() {
+  const now = Date.now();
+  elapsedTime = now - startTime;
+  updateDisplay();
+}
+
+function switchView(view) {
+  currentView = view;
+  if (view === 'analog') {
+    canvas.style.display = 'block';
+    timerSmall.style.display = 'block';
+    timerLarge.style.display = 'none';
+    dots.innerHTML = '<span class="active">●</span> ●';
+  } else {
+    canvas.style.display = 'none';
+    timerSmall.style.display = 'none';
+    timerLarge.style.display = 'block';
+    dots.innerHTML = '● <span class="active">●</span>';
+  }
+}
+
+function toggleView() {
+  switchView(currentView === 'analog' ? 'digital' : 'analog');
+}
+
+let touchStartX = 0;
+dialContainer.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+}, { passive: true });
+
+dialContainer.addEventListener('touchend', (e) => {
+  const touchEndX = e.changedTouches[0].screenX;
+  const diff = touchEndX - touchStartX;
+  if (Math.abs(diff) > 50) {
+    toggleView();
+  }
+});
+
+dots.addEventListener('click', () => {
+  toggleView();
+});
+
+function toggleRunning() {
+  if (!isRunning) {
+    startTime = Date.now() - elapsedTime;
+    timerInterval = setInterval(updateTimer, 10);
+    isRunning = true;
+
+    leftBtn.textContent = 'ラップ';
+    leftBtn.style.backgroundColor = '#3a3a3c';
+    leftBtn.style.color = '#0a84ff';
+
+    rightBtn.textContent = '停止';
+    rightBtn.classList.add('stop');
+    rightBtn.style.backgroundColor = '#ff3b30';
+  } else {
+    clearInterval(timerInterval);
+    isRunning = false;
+
+    leftBtn.textContent = 'リセット';
+    leftBtn.style.backgroundColor = '#3a3a3c';
+    leftBtn.style.color = '#ff9500';
+
+    rightBtn.textContent = '開始';
+    rightBtn.classList.remove('stop');
+    rightBtn.style.backgroundColor = '#34c759';
+  }
+}
+
+function leftButtonPressed() {
+  if (isRunning) {
+    const lapDuration = elapsedTime - lastLapTime;
+    if (lapDuration > 5) {
+      laps.unshift({ number: laps.length + 1, time: lapDuration });
+      renderLaps();
+    }
+    lastLapTime = elapsedTime;
+  } else {
+    resetAll();
+  }
+}
+
+function rightButtonPressed() {
+  toggleRunning();
+}
+
+function renderLaps() {
+  lapsContainer.innerHTML = '';
+  if (laps.length === 0) return;
+
+  laps.forEach((lap) => {
+    const div = document.createElement('div');
+    div.className = 'lap-item';
+
+    let timeColor = '';
+    if (laps.length > 1) {
+      const times = laps.map(l => l.time);
+      const fastest = Math.min(...times);
+      const slowest = Math.max(...times);
+      if (lap.time === fastest) timeColor = 'color:#30d158;';
+      if (lap.time === slowest) timeColor = 'color:#ff453a;';
+    }
+
+    div.innerHTML = `
+      <span class="lap-number">ラップ ${lap.number}</span>
+      <span class="lap-time" style="${timeColor}">${formatTime(lap.time)}</span>
+    `;
+    lapsContainer.appendChild(div);
+  });
+}
+
+function resetAll() {
+  clearInterval(timerInterval);
+  isRunning = false;
+  elapsedTime = 0;
+  lastLapTime = 0;
+  laps = [];
+
+  timerSmall.textContent = '00:00:00.00';
+  timerLarge.textContent = '00:00:00.00';
+  lapsContainer.innerHTML = '';
+  drawAnalog(0, 0);
+
+  leftBtn.textContent = 'リセット';
+  leftBtn.style.backgroundColor = '#3a3a3c';
+  leftBtn.style.color = '#ff9500';
+
+  rightBtn.textContent = '開始';
+  rightBtn.classList.remove('stop');
+  rightBtn.style.backgroundColor = '#34c759';
+}
+
+drawAnalog(0, 0);
+leftBtn.textContent = 'リセット';
+leftBtn.style.color = '#ff9500';
+rightBtn.textContent = '開始';
+switchView('analog');
+</script>
+
+</body>
+</html>
