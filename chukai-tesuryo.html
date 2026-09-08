@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仲介手数料チェッカー</title>
+<meta name="description" content="不動産売買の仲介手数料の法定上限。令和6年7月改正の空家等特例にも対応。">
+<meta name="tool-tag" content="不動産">
+<style>
+  :root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-main: #f8fafc;
+    --text-sub: #94a3b8;
+    --accent: #38bdf8;
+    --warning: #fb7185;
+    --border: #334155;
+    --panel-bg: #283548;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    margin: 0;
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+  }
+  .app-container {
+    background-color: var(--card-bg);
+    width: 100%;
+    max-width: 400px;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  }
+  h1 {
+    font-size: 1.15rem;
+    text-align: center;
+    margin: 0 0 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sub {
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    text-align: center;
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+  .settings-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-sub);
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 0.82rem;
+  }
+  .settings-panel {
+    background-color: var(--panel-bg);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+  }
+  .setting-item input {
+    width: 72px;
+    text-align: right;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background-color: var(--bg-color);
+    color: var(--text-main);
+  }
+  .reset-btn {
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.8rem;
+  }
+  .hint {
+    font-size: 0.68rem;
+    color: var(--text-sub);
+    line-height: 1.45;
+    margin-top: 8px;
+  }
+  .input-group {
+    background-color: var(--bg-color);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .input-label {
+    font-size: 0.8rem;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .price-input-wrapper {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .price-input {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: right;
+    flex: 1;
+    min-width: 0;
+    width: 70%;
+    outline: none;
+  }
+  .unit {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 1.1rem;
+    color: var(--text-sub);
+  }
+  .kanji-display {
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--text-sub);
+    margin: 4px 0 10px;
+  }
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .brackets {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .bracket {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 4px;
+    text-align: center;
+    font-size: 0.68rem;
+    color: var(--text-sub);
+    line-height: 1.35;
+  }
+  .bracket.on {
+    border-color: var(--accent);
+    color: var(--text-main);
+    background: rgba(56, 189, 248, 0.12);
+  }
+  .result-box {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .result-title {
+    font-size: 0.8rem;
+    color: var(--text-sub);
+    margin-bottom: 4px;
+  }
+  .result-amount {
+    font-size: 1.65rem;
+    font-weight: bold;
+    text-align: right;
+  }
+  .special-mode .result-box.special {
+    border-color: var(--warning);
+    background-color: rgba(251, 113, 133, 0.1);
+  }
+  .special-mode .result-box.special .result-title,
+  .special-mode .result-box.special .result-amount {
+    color: var(--warning);
+  }
+  .special-note, .calc-formula {
+    font-size: 0.72rem;
+    text-align: right;
+    margin-top: 4px;
+    color: var(--text-sub);
+  }
+  .special-note { color: var(--warning); }
+  .foot {
+    font-size: 0.68rem;
+    color: var(--text-sub);
+    line-height: 1.5;
+  }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="app-container">
+  <h1>仲介手数料チェッカー</h1>
+  <p class="sub">売買の媒介・依頼者の一方の上限<br>令和6年7月1日施行の告示</p>
+
+  <button id="toggleSettingsBtn" class="settings-toggle">改正・シミュレーション（この端末）</button>
+  <div id="settingsPanel" class="settings-panel hidden">
+    <div class="setting-item">
+      <label>消費税率 %</label>
+      <input type="number" id="setTaxRate" step="1">
+    </div>
+    <div class="setting-item">
+      <label>特例の対象 万円以下</label>
+      <input type="number" id="setSpecialBorder" step="100">
+    </div>
+    <div class="setting-item">
+      <label>特例上限 税込・万円</label>
+      <input type="number" id="setSpecialLimit" step="1">
+    </div>
+    <button type="button" id="resetBtn" class="reset-btn">現行法の数字に戻す</button>
+    <p class="hint">初期値は現行法です。変えてもこの端末にしか残りません。本則の5%・4%・3%は告示の固定なので、ここでは触れません。</p>
+  </div>
+
+  <div class="input-group">
+    <label class="input-label">売買価格（税抜）</label>
+    <div class="price-input-wrapper">
+      <input type="text" id="priceInput" class="price-input" inputmode="decimal" enterkeyhint="done">
+      <span class="unit">万円</span>
+    </div>
+    <div id="priceKanjiDisplay" class="kanji-display">= 0円</div>
+    <input type="range" id="priceSlider" min="0" max="10000" step="10">
+    <div class="brackets">
+      <div id="b1" class="bracket">〜200万<br>5%</div>
+      <div id="b2" class="bracket">200超〜400<br>4%＋2万</div>
+      <div id="b3" class="bracket">400万超<br>3%＋6万</div>
+    </div>
+  </div>
+
+  <div id="specialBox" class="result-box special hidden">
+    <div class="result-title">特例上限 (空家等)</div>
+    <div class="result-amount" id="specialAmount">0円</div>
+    <div class="special-note">※事前の説明と合意が必要です</div>
+  </div>
+
+  <div id="normalBox" class="result-box">
+    <div class="result-title">原則の法定上限（税込・片手）</div>
+    <div class="result-amount" id="normalAmount">0円</div>
+    <div class="calc-formula" id="formulaText">計算式</div>
+  </div>
+
+  <p class="foot">上限であり、必ずこの額ではありません。400万円を超えても全体が3%になるのではなく、超えた分が3%、下の帯は5%と4%のままです。</p>
+</div>
+<script>
+const LAW_NOW = {
+  taxRate: 10,
+  specialBorder: 800,
+  specialLimit: 33
+};
+
+let appSettings = Object.assign({}, LAW_NOW, JSON.parse(localStorage.getItem('fee_calculator_settings') || '{}'));
+
+const priceInput = document.getElementById('priceInput');
+const priceSlider = document.getElementById('priceSlider');
+const priceKanjiDisplay = document.getElementById('priceKanjiDisplay');
+const specialBox = document.getElementById('specialBox');
+const normalAmount = document.getElementById('normalAmount');
+const specialAmount = document.getElementById('specialAmount');
+const formulaText = document.getElementById('formulaText');
+const toggleSettingsBtn = document.getElementById('toggleSettingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const setTaxRate = document.getElementById('setTaxRate');
+const setSpecialBorder = document.getElementById('setSpecialBorder');
+const setSpecialLimit = document.getElementById('setSpecialLimit');
+
+function initSettingsUI() {
+  setTaxRate.value = appSettings.taxRate;
+  setSpecialBorder.value = appSettings.specialBorder;
+  setSpecialLimit.value = appSettings.specialLimit;
+}
+
+function saveSettings() {
+  appSettings.taxRate = parseFloat(setTaxRate.value) || 0;
+  appSettings.specialBorder = parseFloat(setSpecialBorder.value) || 0;
+  appSettings.specialLimit = parseFloat(setSpecialLimit.value) || 0;
+  localStorage.setItem('fee_calculator_settings', JSON.stringify(appSettings));
+  calculateFee();
+}
+
+toggleSettingsBtn.addEventListener('click', () => {
+  settingsPanel.classList.toggle('hidden');
+  toggleSettingsBtn.textContent = settingsPanel.classList.contains('hidden')
+    ? '改正・シミュレーション（この端末）'
+    : '設定を閉じる';
+});
+
+setTaxRate.addEventListener('input', saveSettings);
+setSpecialBorder.addEventListener('input', saveSettings);
+setSpecialLimit.addEventListener('input', saveSettings);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  appSettings = Object.assign({}, LAW_NOW);
+  localStorage.removeItem('fee_calculator_settings');
+  initSettingsUI();
+  calculateFee();
+});
+
+function addCommas(valStr) {
+  let clean = String(valStr).replace(/[^0-9.]/g, '');
+  let parts = clean.split('.');
+  if (parts.length > 2) parts = [parts[0], parts.slice(1).join('')];
+  if (parts[0]) parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
+
+function formatJapaneseCurrency(num) {
+  if (num === 0) return '0円';
+  let oku = Math.floor(num / 100000000);
+  let man = Math.floor((num % 100000000) / 10000);
+  let yen = num % 10000;
+  let parts = [];
+  if (oku > 0) parts.push(oku.toLocaleString() + '億');
+  if (man > 0) parts.push(man.toLocaleString() + '万');
+  if (yen > 0) parts.push(yen.toLocaleString());
+  return parts.join('') + '円';
+}
+
+function calculateFee() {
+  let inputMan = parseFloat(String(priceInput.value).replace(/,/g, '')) || 0;
+  let priceYen = Math.round(inputMan * 10000);
+  priceKanjiDisplay.textContent = '= ' + formatJapaneseCurrency(priceYen);
+
+  document.getElementById('b1').classList.toggle('on', priceYen > 0 && priceYen <= 2000000);
+  document.getElementById('b2').classList.toggle('on', priceYen > 2000000 && priceYen <= 4000000);
+  document.getElementById('b3').classList.toggle('on', priceYen > 4000000);
+
+  let feeExcTaxYen = 0;
+  let taxMul = appSettings.taxRate / 100;
+  let taxLabel = (1 + taxMul).toFixed(2).replace(/0$/, '').replace(/\.0$/, '');
+
+  if (priceYen <= 2000000) {
+    feeExcTaxYen = priceYen * 0.05;
+    formulaText.textContent = '(全体 × 5%) × ' + taxLabel;
+  } else if (priceYen <= 4000000) {
+    feeExcTaxYen = priceYen * 0.04 + 20000;
+    formulaText.textContent = '(全体 × 4% ＋ 2万円) × ' + taxLabel;
+  } else {
+    feeExcTaxYen = priceYen * 0.03 + 60000;
+    formulaText.textContent = '(全体 × 3% ＋ 6万円) × ' + taxLabel;
+  }
+
+  normalAmount.textContent = formatJapaneseCurrency(Math.floor(feeExcTaxYen * (1 + taxMul)));
+
+  let specialLimitYen = appSettings.specialLimit * 10000;
+  let specialBorderYen = appSettings.specialBorder * 10000;
+  if (priceYen > 0 && priceYen <= specialBorderYen) {
+    document.body.classList.add('special-mode');
+    specialBox.classList.remove('hidden');
+    specialAmount.textContent = formatJapaneseCurrency(specialLimitYen);
+  } else {
+    document.body.classList.remove('special-mode');
+    specialBox.classList.add('hidden');
+  }
+}
+
+priceInput.addEventListener('input', function() {
+  let cursorPosition = this.selectionStart;
+  let originalLength = this.value.length;
+  this.value = addCommas(this.value);
+  cursorPosition += this.value.length - originalLength;
+  try { this.setSelectionRange(cursorPosition, cursorPosition); } catch (e) {}
+  priceSlider.value = parseFloat(this.value.replace(/,/g, '')) || 0;
+  calculateFee();
+});
+
+priceSlider.addEventListener('input', function() {
+  priceInput.value = addCommas(this.value);
+  calculateFee();
+});
+
+initSettingsUI();
+priceInput.value = '400';
+priceInput.dispatchEvent(new Event('input'));
+</script>
+</body>
+</html>
