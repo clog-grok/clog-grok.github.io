@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="用途地域別の採光補正係数と有効採光面積をその場で計算します。上限3.0／下限0、住宅居室は床面積の1/7。">
+<meta name="description" content="用途地域別の採光補正係数と有効採光面積を計算します。居室用途は1/7・1/5・1/10・義務なしを選択可能。">
 <meta name="tool-tag" content="法規">
 <title>採光補正係数シミュレーター</title>
 <style>
@@ -36,18 +36,25 @@
   .tab.active { background: #e94560; color: #fff; }
   .control-group { background: #0f3460; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
   .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-  .control-row label { font-size: 0.9em; }
+  .control-row label { font-size: 0.9em; font-weight: bold; color: #fff; }
   .control-row span { font-weight: bold; color: #4ecca3; font-size: 1.1em; }
+  select {
+    width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px;
+    background: #0b132b; color: #4ecca3; border: 1px solid #4ecca3;
+    border-radius: 6px; font-size: 0.95em; font-weight: bold; outline: none;
+    cursor: pointer;
+  }
   input[type=range] { width: 100%; accent-color: #4ecca3; margin-bottom: 15px; }
   .result-area { background: #0b132b; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #4ecca3; }
   .formula-display { font-family: monospace; color: #a0a0a0; margin-bottom: 10px; font-size: 0.9em; }
   .factor-display { font-size: 2.2em; font-weight: bold; color: #e94560; margin: 10px 0; }
   .judgement { display: flex; justify-content: space-around; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #333; }
-  .judgement div { text-align: center; }
+  .judgement div { text-align: center; width: 45%; }
   .judgement div span { display: block; font-size: 1.2em; font-weight: bold; color: #fff; margin-top: 5px; }
-  .status { font-size: 1.5em; font-weight: bold; margin-top: 15px; }
-  .status.ok { color: #4ecca3; }
-  .status.ng { color: #e94560; }
+  .status { font-size: 1.3em; font-weight: bold; margin-top: 15px; padding: 10px; border-radius: 6px; }
+  .status.ok { color: #4ecca3; background: rgba(78, 204, 163, 0.1); }
+  .status.ng { color: #e94560; background: rgba(233, 69, 96, 0.1); }
+  .status.none { color: #f1c40f; background: rgba(241, 196, 15, 0.1); }
   .visualizer {
     position: relative; height: 180px; background: #87CEEB;
     border-radius: 8px; margin-top: 20px; overflow: hidden; border: 2px solid #333;
@@ -76,6 +83,15 @@
   </div>
   <div class="control-group">
     <div class="control-row">
+      <label>🏢 居室の用途 (法第28条・令14条の2)</label>
+    </div>
+    <select id="usage-select" onchange="calculate()">
+      <option value="1/7">住宅の居室・病院の病室など (床面積の 1/7)</option>
+      <option value="1/5">小中高の教室・保育室など (床面積の 1/5)</option>
+      <option value="1/10">大学・専修学校の教室など (床面積の 1/10)</option>
+      <option value="0">事務所・店舗・工場など (採光義務なし)</option>
+    </select>
+    <div class="control-row">
       <label>水平距離 D (隣地境界まで)</label>
       <span id="val-d">3.0 m</span>
     </div>
@@ -94,7 +110,7 @@
       <label>実際の窓面積 (開口部)</label>
       <span id="val-win">1.5 ㎡</span>
     </div>
-    <input type="range" id="slider-win" min="0.5" max="10.0" step="0.1" value="1.5" oninput="calculate()">
+    <input type="range" id="slider-win" min="0.0" max="10.0" step="0.1" value="1.5" oninput="calculate()">
   </div>
   <div class="result-area">
     <div class="formula-display" id="formula-text">式: D/H × 6.0 - 1.4</div>
@@ -102,7 +118,7 @@
     <div class="factor-display" id="factor-result">0.00</div>
     <div style="font-size:0.8em; color:#888;">(最大 3.0)</div>
     <div class="judgement">
-      <div>必要採光面積<br><span id="req-area">0.0 ㎡</span><br><small>(床面積の1/7)</small></div>
+      <div>必要採光面積<br><span id="req-area">0.0 ㎡</span><br><small id="ratio-label">(床面積の1/7)</small></div>
       <div>有効採光面積<br><span id="eff-area">0.0 ㎡</span><br><small>(窓面積 × 係数)</small></div>
     </div>
     <div class="status" id="status-text">判定</div>
@@ -130,6 +146,7 @@
     const H = parseFloat(document.getElementById('slider-h').value);
     const floorArea = parseFloat(document.getElementById('slider-floor').value);
     const winArea = parseFloat(document.getElementById('slider-win').value);
+    const usageRatio = document.getElementById('usage-select').value;
     document.getElementById('val-d').textContent = D.toFixed(1) + ' m';
     document.getElementById('val-h').textContent = H.toFixed(1) + ' m';
     document.getElementById('val-floor').textContent = floorArea.toFixed(1) + ' ㎡';
@@ -151,12 +168,30 @@
     if (factor > 3.0) factor = 3.0;
     document.getElementById('formula-text').textContent = formulaStr;
     document.getElementById('factor-result').textContent = factor.toFixed(2);
-    const reqArea = floorArea / 7.0;
+    let reqArea = 0;
+    let ratioLabelStr = '';
+    if (usageRatio === '1/7') {
+      reqArea = floorArea / 7.0;
+      ratioLabelStr = '(床面積の1/7)';
+    } else if (usageRatio === '1/5') {
+      reqArea = floorArea / 5.0;
+      ratioLabelStr = '(床面積の1/5)';
+    } else if (usageRatio === '1/10') {
+      reqArea = floorArea / 10.0;
+      ratioLabelStr = '(床面積の1/10)';
+    } else if (usageRatio === '0') {
+      reqArea = 0;
+      ratioLabelStr = '(規定なし)';
+    }
     const effArea = winArea * factor;
-    document.getElementById('req-area').textContent = reqArea.toFixed(2) + ' ㎡';
+    document.getElementById('req-area').textContent = (usageRatio === '0') ? '不要' : reqArea.toFixed(2) + ' ㎡';
+    document.getElementById('ratio-label').textContent = ratioLabelStr;
     document.getElementById('eff-area').textContent = effArea.toFixed(2) + ' ㎡';
     const statusText = document.getElementById('status-text');
-    if (effArea >= reqArea) {
+    if (usageRatio === '0') {
+      statusText.innerHTML = '💡 採光義務なし<br><span style="font-size:0.7em; opacity:0.8;">※排煙等の無窓居室（法35条）には要注意</span>';
+      statusText.className = 'status none';
+    } else if (effArea >= reqArea) {
       statusText.textContent = '✅ クリア！ (採光OK)';
       statusText.className = 'status ok';
     } else {
