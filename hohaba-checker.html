@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>内見用・歩幅チェッカー</title>
+<style>
+  :root {
+    --bg: #2c3e50;
+    --card: #34495e;
+    --text: #ecf0f1;
+    --muted: #95a5a6;
+    --accent: #f1c40f;
+    --danger: #e74c3c;
+    --grass: #27ae60;
+    --grass-line: #2ecc71;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 16px 12px calc(20px + env(safe-area-inset-bottom));
+  }
+  .app {
+    background: var(--card);
+    padding: 22px 18px 16px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+  h1 {
+    margin: 0 0 6px;
+    color: var(--accent);
+    font-size: 1.25rem;
+    letter-spacing: 0.02em;
+  }
+  .formula {
+    font-size: 0.9rem;
+    color: #bdc3c7;
+    margin-bottom: 16px;
+  }
+  .slider-block p,
+  .calc-block p.label {
+    margin: 0 0 8px;
+    font-size: 0.85rem;
+    color: #d5dbdb;
+  }
+  .value-display {
+    font-size: 1.7rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  input[type=range] {
+    width: 100%;
+    margin: 8px 0 4px;
+    accent-color: var(--accent);
+  }
+  .range-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .modes {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin: 4px 0 16px;
+  }
+  .modes button {
+    appearance: none;
+    border: 1px solid #4b6275;
+    background: #2c3e50;
+    color: #ecf0f1;
+    border-radius: 8px;
+    padding: 8px 4px;
+    font-size: 0.72rem;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+  .modes button.active {
+    background: var(--accent);
+    color: #2c3e50;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+  .result {
+    background: var(--danger);
+    padding: 14px 12px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+  }
+  .result p { margin: 0 0 4px; font-size: 0.85rem; }
+  .step-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.15;
+  }
+  .visualizer {
+    position: relative;
+    height: 108px;
+    background: var(--grass);
+    border-radius: 10px;
+    border: 2px dashed var(--grass-line);
+    overflow: hidden;
+  }
+  .foot {
+    position: absolute;
+    font-size: 28px;
+    line-height: 1;
+    width: 32px;
+    text-align: center;
+    transition: left 0.12s ease-out;
+    user-select: none;
+  }
+  #foot-L { top: 14px; }
+  #foot-R { top: 50px; }
+  .measure-line {
+    position: absolute;
+    height: 2px;
+    background: #fff;
+    top: 94px;
+    transition: left 0.12s ease-out, width 0.12s ease-out;
+  }
+  .measure-line::before,
+  .measure-line::after {
+    content: "";
+    position: absolute;
+    width: 2px;
+    height: 10px;
+    background: #fff;
+    top: -4px;
+  }
+  .measure-line::before { left: 0; }
+  .measure-line::after { right: 0; }
+  .hint {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin: 8px 0 16px;
+  }
+  .calc-block {
+    background: #2c3e50;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: left;
+  }
+  .calc-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+  }
+  .calc-row input {
+    width: 100%;
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 1rem;
+    background: #3d566e;
+    color: #fff;
+  }
+  .calc-row input:focus {
+    outline: 2px solid var(--accent);
+  }
+  .unit {
+    font-size: 0.85rem;
+    color: #bdc3c7;
+    min-width: 2.2em;
+  }
+  .out {
+    margin-top: 10px;
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+  .out strong { color: var(--accent); font-size: 1.15rem; }
+  .note {
+    margin: 12px 0 0;
+    font-size: 0.7rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <h1>内見用・歩幅チェッカー</h1>
+    <div class="formula" id="formula">身長 × 0.45 ≅ 歩幅</div>
+
+    <div class="slider-block">
+      <p>身長に合わせる</p>
+      <div class="value-display"><span id="height-val">170</span> cm</div>
+      <input type="range" id="height-slider" min="140" max="190" value="170" step="1">
+      <div class="range-meta"><span>140</span><span>190</span></div>
+    </div>
+
+    <div class="modes" role="tablist">
+      <button type="button" data-k="0.37">室内 0.37</button>
+      <button type="button" data-k="0.41">通常 0.41</button>
+      <button type="button" data-k="0.45" class="active">広め 0.45</button>
+    </div>
+
+    <div class="result">
+      <p>1歩の目安</p>
+      <div class="step-value"><span id="step-val">76.5</span> cm</div>
+    </div>
+
+    <div class="visualizer" id="visualizer">
+      <div class="foot" id="foot-L">👟</div>
+      <div class="foot" id="foot-R">👟</div>
+      <div class="measure-line" id="measure-line"></div>
+    </div>
+    <p class="hint">線の長さ＝1歩。枠に収まるよう縮尺は自動調整。</p>
+
+    <div class="calc-block">
+      <p class="label">歩数 → 距離</p>
+      <div class="calc-row">
+        <input id="steps-in" type="number" inputmode="decimal" min="0" step="0.5" value="8" aria-label="歩数">
+        <span class="unit">歩</span>
+      </div>
+      <div class="out" id="dist-out">約 <strong>6.12</strong> m</div>
+
+      <p class="label" style="margin-top:14px">距離 → 歩数</p>
+      <div class="calc-row">
+        <input id="meter-in" type="number" inputmode="decimal" min="0" step="0.1" value="3.6" aria-label="距離メートル">
+        <span class="unit">m</span>
+      </div>
+      <div class="out" id="steps-out">約 <strong>4.7</strong> 歩</div>
+    </div>
+    <p class="note">目安です。内見前に10歩歩いて実測すると精度が上がります。係数と身長は端末に保存されます。</p>
+  </div>
+
+<script>
+(function () {
+  const slider = document.getElementById("height-slider");
+  const heightVal = document.getElementById("height-val");
+  const stepVal = document.getElementById("step-val");
+  const formula = document.getElementById("formula");
+  const footL = document.getElementById("foot-L");
+  const footR = document.getElementById("foot-R");
+  const measureLine = document.getElementById("measure-line");
+  const visualizer = document.getElementById("visualizer");
+  const stepsIn = document.getElementById("steps-in");
+  const meterIn = document.getElementById("meter-in");
+  const distOut = document.getElementById("dist-out");
+  const stepsOut = document.getElementById("steps-out");
+  const modeBtns = document.querySelectorAll(".modes button");
+
+  const KEY_H = "stride.height";
+  const KEY_K = "stride.k";
+
+  let k = 0.45;
+  const savedH = localStorage.getItem(KEY_H);
+  const savedK = localStorage.getItem(KEY_K);
+  if (savedH) slider.value = savedH;
+  if (savedK && ["0.37", "0.41", "0.45"].indexOf(savedK) !== -1) k = parseFloat(savedK);
+
+  function setActiveMode() {
+    modeBtns.forEach(function (btn) {
+      btn.classList.toggle("active", parseFloat(btn.dataset.k) === k);
+    });
+  }
+  setActiveMode();
+
+  function strideCm() {
+    return parseFloat(slider.value) * k;
+  }
+
+  function fmt1(n) {
+    return (Math.round(n * 10) / 10).toFixed(1);
+  }
+
+  function update() {
+    const h = parseFloat(slider.value);
+    const step = strideCm();
+    heightVal.textContent = h;
+    stepVal.textContent = fmt1(step);
+    formula.textContent = "身長 × " + k + " ≅ 歩幅";
+    try {
+      localStorage.setItem(KEY_H, String(h));
+      localStorage.setItem(KEY_K, String(k));
+    } catch (e) {}
+    draw(step);
+    calc();
+  }
+
+  function draw(step) {
+    const box = visualizer.getBoundingClientRect();
+    const pad = 16;
+    const footW = 32;
+    const usable = Math.max(80, box.width - pad * 2 - footW);
+    const maxStep = 190 * 0.45;
+    const pxPerCm = usable / maxStep;
+    const dist = step * pxPerCm;
+    const left = pad;
+    footL.style.left = left + "px";
+    footR.style.left = (left + dist) + "px";
+    measureLine.style.left = (left + footW / 2) + "px";
+    measureLine.style.width = dist + "px";
+  }
+
+  function calc() {
+    const stepM = strideCm() / 100;
+    const steps = parseFloat(stepsIn.value);
+    const meters = parseFloat(meterIn.value);
+    if (!isNaN(steps) && steps >= 0) {
+      distOut.innerHTML = "約 <strong>" + (steps * stepM).toFixed(2) + "</strong> m";
+    } else {
+      distOut.innerHTML = "歩数を入力";
+    }
+    if (!isNaN(meters) && meters >= 0 && stepM > 0) {
+      stepsOut.innerHTML = "約 <strong>" + (meters / stepM).toFixed(1) + "</strong> 歩";
+    } else {
+      stepsOut.innerHTML = "距離を入力";
+    }
+  }
+
+  modeBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      k = parseFloat(btn.dataset.k);
+      setActiveMode();
+      update();
+    });
+  });
+
+  slider.addEventListener("input", update);
+  stepsIn.addEventListener("input", calc);
+  meterIn.addEventListener("input", calc);
+  window.addEventListener("resize", update);
+  update();
+})();
+</script>
+</body>
+</html>

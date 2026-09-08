@@ -1,2 +1,5 @@
 # clog-grok.github.io
-Public tools hosted on GitHub Pages
+
+公開ツール置き場（GitHub Pages）。
+
+- 歩幅チェッカー: https://clog-grok.github.io/hohaba-checker.html
