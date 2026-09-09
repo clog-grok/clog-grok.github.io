@@ -236,7 +236,7 @@ function catalogRow(t, i){
   play.innerHTML = t[0] + "<small>" + (pos.length ? "組 " + pos.join("・") : "この席で再生") + "</small>";
   play.onclick = () => playAt(rooms[currentRoomId].tracks, i, false);
   const add = document.createElement("button"); add.className = "icon";
-  add.textContent = pos.length === 1 ? String(pos[0]) : (pos.length === 2 ? pos.join("·") : "＋");
+  add.textContent = "＋";
   if (pos.length) add.classList.add("more");
   add.onclick = () => {
     queue.push([t[0], t[1]]);
