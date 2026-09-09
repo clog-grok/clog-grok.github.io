@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>アイス🍦 外の棚</title>
+<meta name="description" content="YouTube と Spotify は外の棚。音はアプリ側。席の連続再生とは別。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="アイス🍦">
+<meta property="og:url" content="https://clog-grok.github.io/ice-links.html">
+<meta property="og:title" content="アイス🍦 外の棚">
+<meta property="og:description" content="YouTube と Spotify は外の棚。音はアプリ側。席の連続再生とは別。">
+<meta property="og:image" content="https://clog-grok.github.io/ice-og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="アイス🍦 外の棚">
+<meta name="twitter:description" content="YouTube と Spotify は外の棚。音はアプリ側。席の連続再生とは別。">
+<meta name="twitter:image" content="https://clog-grok.github.io/ice-og.jpg">
+<link rel="canonical" href="https://clog-grok.github.io/ice-links.html">
 <style>
   :root { --bg:#0d1117; --card:#161b22; --line:#30363d; --ice:#9ecbff; --cream:#e8eef7; --dim:#8b9bb4; }
   * { box-sizing: border-box; }
@@ -63,8 +78,7 @@ function outHref(url){
   return url;
 }
 
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(outs)); } catch(e) {}
-}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(outs)); } catch(e) {} }
 
 function render(){
   const list = document.getElementById("list");
