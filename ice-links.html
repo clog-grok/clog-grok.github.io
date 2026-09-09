@@ -4,19 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>アイス🍦 外の棚</title>
-<meta name="description" content="YouTube と Spotify は外の棚。音はアプリ側。席の連続再生とは別。">
+<meta name="description" content="YouTube と Spotify は外の棚。リストのURLもここで再生。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="アイス🍦">
 <meta property="og:url" content="https://clog-grok.github.io/ice-links.html">
 <meta property="og:title" content="アイス🍦 外の棚">
-<meta property="og:description" content="YouTube と Spotify は外の棚。音はアプリ側。席の連続再生とは別。">
+<meta property="og:description" content="YouTube と Spotify は外の棚。リストのURLもここで再生。">
 <meta property="og:image" content="https://clog-grok.github.io/ice-og.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="アイス🍦 外の棚">
-<meta name="twitter:description" content="YouTube と Spotify は外の棚。音はアプリ側。席の連続再生とは別。">
+<meta name="twitter:description" content="YouTube と Spotify は外の棚。リストのURLもここで再生。">
 <meta name="twitter:image" content="https://clog-grok.github.io/ice-og.jpg">
 <link rel="canonical" href="https://clog-grok.github.io/ice-links.html">
 <style>
@@ -40,19 +40,20 @@
   .note { font-size:12px; color:var(--dim); line-height:1.65; margin-top:16px; }
   a { color:var(--ice); }
   .empty { color:var(--dim); font-size:13px; padding:8px 2px; }
+  .embed { width:100%; border:0; border-radius:12px; margin:0 0 14px; background:#11161d; }
 </style>
 </head>
 <body>
 <main>
   <h1>アイス🍦 外の棚</h1>
-  <p class="sub">ここで探して、共有したURLを置く。音はアプリ側。席の連続再生とは別。</p>
+  <p class="sub">曲でもリストでも、共有URLを置く。Spotifyのリストはこのページで再生できる。</p>
   <div class="jumps">
     <a href="https://music.youtube.com/" target="_blank" rel="noopener">YouTube Music</a>
     <a href="https://open.spotify.com/" target="_blank" rel="noopener">Spotify</a>
   </div>
   <div class="addbox">
-    <div class="field"><input id="extTitle" placeholder="曲名"><button type="button" class="wipe" data-for="extTitle">×</button></div>
-    <div class="field"><input id="extUrl" placeholder="YouTube / Spotify のURL"><button type="button" class="wipe" data-for="extUrl">×</button></div>
+    <div class="field"><input id="extTitle" placeholder="名前（空でも可）"><button type="button" class="wipe" data-for="extTitle">×</button></div>
+    <div class="field"><input id="extUrl" placeholder="曲またはリストのURL"><button type="button" class="wipe" data-for="extUrl">×</button></div>
     <button type="button" id="extAdd">棚に追加</button>
   </div>
   <div id="list"></div>
@@ -66,16 +67,43 @@ try { outs = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch(e) { outs = 
 function isFile(url){
   if (!url) return false;
   const u = url.toLowerCase();
-  if (/youtube\.com|youtu\.be|spotify\.com|music\.apple/.test(u)) return false;
+  if (/youtube\.com|youtu\.be|spotify\.com|spotify\.link|music\.apple/.test(u)) return false;
   return /\.(mp3|ogg|wav|m4a|aac)(\?|#|$)/.test(u) || /archive\.org\/download\//.test(u);
 }
 
+function parseSpotify(url){
+  if (!url) return null;
+  const u = url.trim();
+  const web = u.match(/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(playlist|track|album|artist|episode|show)\/([a-zA-Z0-9]+)/i);
+  if (web) return { type: web[1].toLowerCase(), id: web[2] };
+  const uri = u.match(/^spotify:(playlist|track|album|artist|episode|show):([a-zA-Z0-9]+)/i);
+  if (uri) return { type: uri[1].toLowerCase(), id: uri[2] };
+  return null;
+}
+
+const KIND = { playlist:"リスト", track:"曲", album:"アルバム", artist:"アーティスト", episode:"エピソード", show:"番組" };
+
 function outHref(url){
-  const s = url.match(/open\.spotify\.com\/(playlist|track|album|artist)\/([a-zA-Z0-9]+)/);
-  if (s) return "spotify:" + s[1] + ":" + s[2];
-  const y = url.match(/(?:youtu\.be\/|(?:music\.)?youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
-  if (y) return "https://www.youtube.com/watch?v=" + y[1];
+  const s = parseSpotify(url);
+  if (s) return "https://open.spotify.com/" + s.type + "/" + s.id;
+  const ylist = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+  const yvid = url.match(/(?:youtu\.be\/|(?:music\.)?youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+  if (ylist && !yvid) return "https://www.youtube.com/playlist?list=" + ylist[1];
+  if (yvid) return "https://www.youtube.com/watch?v=" + yvid[1] + (ylist ? "&list=" + ylist[1] : "");
   return url;
+}
+
+function embedSrc(url){
+  const s = parseSpotify(url);
+  if (s) return "https://open.spotify.com/embed/" + s.type + "/" + s.id + "?utm_source=generator&theme=0";
+  return null;
+}
+
+function defaultTitle(url){
+  const s = parseSpotify(url);
+  if (s) return "Spotify " + (KIND[s.type] || s.type);
+  if (/[?&]list=/.test(url) && /youtube\.com|youtu\.be/.test(url)) return "YouTube リスト";
+  return "外の曲";
 }
 
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(outs)); } catch(e) {} }
@@ -86,7 +114,7 @@ function render(){
   if (!outs.length) {
     const p = document.createElement("p");
     p.className = "empty";
-    p.textContent = "上で探して、共有URLを貼る。";
+    p.textContent = "曲でもリストでも、共有URLを貼る。";
     list.appendChild(p);
     return;
   }
@@ -98,7 +126,9 @@ function render(){
     a.href = outHref(t[1]);
     a.target = "_blank";
     a.rel = "noopener";
-    a.innerHTML = (i+1) + ". " + t[0] + "<small>外へ飛ぶ</small>";
+    const s = parseSpotify(t[1]);
+    const kind = s ? (KIND[s.type] || s.type) : "外へ飛ぶ";
+    a.innerHTML = (i+1) + ". " + t[0] + "<small>" + kind + "</small>";
     const up = document.createElement("button");
     up.className = "icon"; up.textContent = "↑";
     up.onclick = () => { if (i===0) return; [outs[i-1], outs[i]] = [outs[i], outs[i-1]]; save(); render(); };
@@ -110,6 +140,16 @@ function render(){
     del.onclick = () => { outs.splice(i,1); save(); render(); };
     wrap.append(a, up, down, del);
     list.appendChild(wrap);
+    const src = embedSrc(t[1]);
+    if (src) {
+      const frame = document.createElement("iframe");
+      frame.className = "embed";
+      frame.src = src;
+      frame.height = (s && (s.type === "playlist" || s.type === "album" || s.type === "artist")) ? "352" : "152";
+      frame.setAttribute("allow", "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture");
+      frame.loading = "lazy";
+      list.appendChild(frame);
+    }
   });
 }
 
@@ -119,7 +159,6 @@ document.querySelectorAll(".wipe").forEach(b => {
 document.getElementById("extAdd").onclick = () => {
   const titleEl = document.getElementById("extTitle");
   const urlEl = document.getElementById("extUrl");
-  const title = (titleEl.value || "").trim() || "外の曲";
   const url = (urlEl.value || "").trim();
   if (!url) return;
   if (isFile(url)) {
@@ -127,6 +166,7 @@ document.getElementById("extAdd").onclick = () => {
     titleEl.placeholder = "席の曲は音の席へ";
     return;
   }
+  const title = (titleEl.value || "").trim() || defaultTitle(url);
   outs.push([title, url]);
   save();
   titleEl.value = "";
