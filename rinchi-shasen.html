@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<title>斜線制限</title>
+<meta name="description" content="道路・隣地・北側。芯から柱半分を引いて制限高さ。Safariで開く。">
+<meta name="tool-tag" content="建築">
+<style>
+  :root {
+    --bg: #0b1220;
+    --card: #1e293b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --warn: #fb7185;
+    --ok: #34d399;
+    --line: #334155;
+    --key: #334155;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    overflow: hidden;
+  }
+  .app {
+    height: 100%; height: 100dvh; max-width: 430px; margin: 0 auto;
+    display: flex; flex-direction: column;
+    padding: calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));
+  }
+  .row3, .row4, .keys { display: grid; gap: 6px; }
+  .row3 { grid-template-columns: 1fr 1fr 1fr; }
+  .row4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  button { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; font: inherit; cursor: pointer; }
+  .chip { min-height: 36px; font-size: 13px; padding: 0 4px; }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+  .result { flex: 0 0 auto; background: #0f172a; border: 2px solid var(--accent); border-radius: 12px; padding: 8px 12px 10px; margin: 8px 0; }
+  .result.warn { border-color: var(--warn); }
+  .result-k { font-size: 12px; color: var(--muted); }
+  .result-h { font-size: 34px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; line-height: 1.1; color: var(--accent); }
+  .result-f { font-size: 12px; color: var(--muted); text-align: right; margin-top: 4px; }
+  .fields { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+  .field { display: flex; align-items: center; justify-content: space-between; background: #0f172a; border: 1px solid var(--line); border-radius: 10px; min-height: 48px; padding: 0 12px; width: 100%; color: var(--text); text-align: left; }
+  .field.on { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(56,189,248,.28); }
+  .field span { font-size: 13px; color: var(--muted); }
+  .field b { font-size: 22px; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .field b small { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+  .more { font-size: 12px; color: var(--muted); min-height: 32px; border: 0; text-align: left; padding: 0 4px; }
+  .sheet { display: none; flex-direction: column; gap: 6px; background: #0f172a; border-radius: 10px; padding: 8px; }
+  .sheet.open { display: flex; }
+  .tog { text-align: left; padding: 8px 10px; font-size: 13px; color: var(--text); }
+  .tog.on { border-color: var(--accent); color: #fff; background: rgba(56,189,248,.15); }
+  .keys { flex: 0 0 auto; grid-template-columns: repeat(3, 1fr); margin-top: 8px; }
+  .key { min-height: 48px; background: var(--key); border: 0; color: #fff; font-size: 22px; font-weight: 700; border-radius: 10px; }
+  .key:active { background: #0ea5e9; }
+  .key.fn { font-size: 15px; color: var(--warn); }
+  .key.go { font-size: 15px; color: var(--ok); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="row3" id="kinds">
+    <button type="button" class="chip" data-kind="road">道路</button>
+    <button type="button" class="chip on" data-kind="adj">隣地</button>
+    <button type="button" class="chip" data-kind="north">北側</button>
+  </div>
+  <div class="row4" id="zones" style="margin-top:6px">
+    <button type="button" class="chip on" data-zone="ju">住居系</button>
+    <button type="button" class="chip" data-zone="sho">商業工業</button>
+    <button type="button" class="chip" data-zone="low">低層</button>
+    <button type="button" class="chip" data-zone="none">指定なし</button>
+  </div>
+  <div class="result" id="box">
+    <div class="result-k" id="kicker">隣地斜線の高さ</div>
+    <div class="result-h" id="h">24.563m</div>
+    <div class="result-f" id="formula">20 + 1.25 × 3.650 = 24.563m　外面 3.650m（芯−柱半分）</div>
+  </div>
+  <div class="fields" id="fields">
+    <button type="button" class="field on" data-f="core"><span>通り芯 → 境界</span><b>4.00<small>m</small></b></button>
+    <button type="button" class="field" data-f="col"><span>柱成</span><b>700<small>mm</small></b></button>
+  </div>
+  <button type="button" class="more" id="moreBtn">緩和を開く</button>
+  <div class="sheet" id="sheet"></div>
+  <div class="keys" id="keys">
+    <button type="button" class="key" data-k="7">7</button>
+    <button type="button" class="key" data-k="8">8</button>
+    <button type="button" class="key" data-k="9">9</button>
+    <button type="button" class="key" data-k="4">4</button>
+    <button type="button" class="key" data-k="5">5</button>
+    <button type="button" class="key" data-k="6">6</button>
+    <button type="button" class="key" data-k="1">1</button>
+    <button type="button" class="key" data-k="2">2</button>
+    <button type="button" class="key" data-k="3">3</button>
+    <button type="button" class="key" data-k=".">・</button>
+    <button type="button" class="key" data-k="0">0</button>
+    <button type="button" class="key fn" data-k="bs">削る</button>
+    <button type="button" class="key fn" data-k="c">C</button>
+    <button type="button" class="key" data-k="00">00</button>
+    <button type="button" class="key go" data-k="next">次へ</button>
+  </div>
+</div>
+<script>
+const S = {
+  kind: "adj", zone: "ju", none31: false, active: "core", fresh: true, sheet: false,
+  flags: { water: false, delta: false, hisashi: false, nichi: false },
+  buf: { core: "4.00", col: "700", w: "6.00", water: "4.00", delta: "2.00" }
+};
+function n(k) { const v = parseFloat(S.buf[k]); return isFinite(v) ? v : 0; }
+function face() { return n("core") - n("col") / 2000; }
+function param() {
+  if (S.kind === "road") {
+    const k = (S.zone === "sho") ? 1.5 : (S.zone === "none" && S.none31 ? 1.5 : 1.25);
+    return { h0: 0, k: k, name: "道路" };
+  }
+  if (S.kind === "north") {
+    if (S.zone === "low") return { h0: 5, k: 1.25, name: "北側" };
+    if (S.zone === "ju") return { h0: 10, k: 1.25, name: "北側" };
+    return null;
+  }
+  if (S.zone === "low") return { abs: true };
+  if (S.zone === "sho" || (S.zone === "none" && S.none31)) return { h0: 31, k: 2.5, name: "隣地" };
+  return { h0: 20, k: 1.25, name: "隣地" };
+}
+function aEff() { let a = face(); if (S.flags.water) a += n("water") / 2; return a; }
+function calc() {
+  const p = param();
+  if (!p) return { ok: false, text: "この用途に北側はない", sub: "住居系か低層だけ" };
+  if (p.abs) return { ok: false, text: "隣地斜線なし", sub: "絶対高さ 10m または 12m" };
+  if (S.kind === "north" && S.zone === "ju" && S.flags.nichi) return { ok: false, text: "北側なし", sub: "日影規制がある中高層" };
+  const a = aEff();
+  let H, f;
+  if (S.kind === "road") {
+    const L = n("w") + a;
+    H = L * p.k;
+    if (S.flags.delta && n("delta") >= 1) H = H - (n("delta") + 1) / 2;
+    f = "(" + n("w").toFixed(2) + " + " + a.toFixed(3) + ") × " + p.k;
+  } else {
+    H = p.h0 + p.k * a;
+    if (S.flags.delta && n("delta") >= 1) H += (n("delta") - 1) / 2;
+    f = p.h0 + " + " + p.k + " × " + a.toFixed(3);
+  }
+  return { ok: true, H: H, f: f + " = " + H.toFixed(3) + "m", a: a };
+}
+function fields() {
+  const list = [
+    { k: "core", label: "通り芯 → 境界", unit: "m" },
+    { k: "col", label: "柱成", unit: "mm" }
+  ];
+  if (S.kind === "road") list.push({ k: "w", label: "道路幅員", unit: "m" });
+  if (S.flags.water && S.sheet) list.push({ k: "water", label: "水面の幅", unit: "m" });
+  if (S.flags.delta && S.sheet) list.push({ k: "delta", label: "高低差", unit: "m" });
+  return list;
+}
+function paint() {
+  document.querySelectorAll("#kinds .chip").forEach(function(b){ b.classList.toggle("on", b.dataset.kind === S.kind); });
+  document.querySelectorAll("#zones .chip").forEach(function(b){ b.classList.toggle("on", b.dataset.zone === S.zone); });
+  const fs = fields();
+  if (!fs.some(function(x){ return x.k === S.active; })) { S.active = fs[0].k; S.fresh = true; }
+  document.getElementById("fields").innerHTML = fs.map(function(x){
+    const on = x.k === S.active ? " on" : "";
+    return '<button type="button" class="field' + on + '" data-f="' + x.k + '"><span>' + x.label + '</span><b>' + S.buf[x.k] + '<small>' + x.unit + '</small></b></button>';
+  }).join("");
+  document.getElementById("moreBtn").textContent = S.sheet ? "緩和を閉じる" : "緩和を開く";
+  const sh = document.getElementById("sheet");
+  sh.classList.toggle("open", S.sheet);
+  if (S.sheet) {
+    const items = [];
+    items.push(['water', '水面・水路を幅の1/2外側に足す']);
+    items.push(['delta', '高低差緩和（1m以上）']);
+    if (S.kind === "north") items.push(['nichi', '中高層で日影あり（北側なし）']);
+    if (S.zone === "none") items.push(['none31', S.kind === "road" ? '勾配を1.5にする' : '31m + 2.5にする']);
+    sh.innerHTML = items.map(function(pair){
+      const id = pair[0], lab = pair[1];
+      const on = (id === "none31" ? S.none31 : S.flags[id]) ? " on" : "";
+      return '<button type="button" class="tog' + on + '" data-t="' + id + '">' + lab + '</button>';
+    }).join("");
+  }
+  const r = calc();
+  document.getElementById("box").classList.toggle("warn", !r.ok);
+  document.getElementById("kicker").textContent = S.kind === "road" ? "道路斜線の高さ（路面中心）" : S.kind === "north" ? "北側斜線の高さ" : "隣地斜線の高さ";
+  document.getElementById("h").textContent = r.ok ? r.H.toFixed(3) + "m" : r.text;
+  document.getElementById("h").style.fontSize = r.ok ? "34px" : "22px";
+  document.getElementById("formula").textContent = r.ok ? r.f + "　外面 " + face().toFixed(3) + "m（芯−柱半分）" : (r.sub || "");
+}
+function type(k) {
+  var v = S.buf[S.active];
+  if (S.fresh && /[0-9]/.test(k)) { v = ""; S.fresh = false; }
+  if (k === "c") v = "0";
+  else if (k === "bs") v = String(v).slice(0, -1);
+  else if (k === "00") v = (v === "0" || v === "" ? "0" : v + "00");
+  else if (k === ".") { if (String(v).indexOf(".") < 0) v = (v === "" ? "0." : v + "."); }
+  else if (k === "next") {
+    var fs = fields();
+    var i = fs.findIndex(function(x){ return x.k === S.active; });
+    S.active = fs[(i + 1) % fs.length].k;
+    S.fresh = true;
+    paint();
+    return;
+  } else if (/^[0-9]$/.test(k)) { v = (v === "0" ? k : String(v) + k); }
+  if (v === "" || v === "-") v = "0";
+  if ((String(v).match(/\d/g) || []).length > 6) return;
+  S.buf[S.active] = v;
+  paint();
+}
+document.getElementById("kinds").addEventListener("click", function(e) {
+  var b = e.target.closest("[data-kind]"); if (!b) return;
+  S.kind = b.dataset.kind; S.active = "core"; S.fresh = true; paint();
+});
+document.getElementById("zones").addEventListener("click", function(e) {
+  var b = e.target.closest("[data-zone]"); if (!b) return;
+  S.zone = b.dataset.zone; paint();
+});
+document.getElementById("fields").addEventListener("click", function(e) {
+  var b = e.target.closest("[data-f]"); if (!b) return;
+  S.active = b.dataset.f; S.fresh = true; paint();
+});
+document.getElementById("moreBtn").addEventListener("click", function() { S.sheet = !S.sheet; paint(); });
+document.getElementById("sheet").addEventListener("click", function(e) {
+  var b = e.target.closest("[data-t]"); if (!b) return;
+  var id = b.dataset.t;
+  if (id === "none31") S.none31 = !S.none31; else S.flags[id] = !S.flags[id];
+  paint();
+});
+document.getElementById("keys").addEventListener("click", function(e) {
+  var b = e.target.closest("[data-k]"); if (!b) return; type(b.dataset.k);
+});
+paint();
+</script>
+</body>
+</html>
