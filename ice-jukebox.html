@@ -31,23 +31,12 @@
   a { color:var(--ice); }
   .empty { color:var(--dim); font-size:13px; padding:8px 2px; }
   .mood { color:var(--ice); font-size:13px; margin:0 0 12px; min-height:1.4em; }
-  .addbox { background:var(--card); border:1px dashed var(--line); border-radius:12px; padding:12px; margin:0 0 12px; }
-  .field { position:relative; margin:0 0 8px; }
-  .field input { width:100%; padding:10px 40px 10px 10px; border-radius:8px; border:1px solid var(--line); background:#11161d; color:var(--cream); font-size:14px; }
-  .field .wipe { position:absolute; right:4px; top:4px; width:32px; height:32px; border:0; background:transparent; color:var(--dim); font-size:18px; }
-  .addbox > button { width:100%; padding:10px; border-radius:8px; border:1px solid var(--ice); background:#162436; color:var(--ice); font-size:14px; }
-  .jumps { display:flex; gap:8px; margin:0 0 12px; }
-  .jumps a { flex:1; text-align:center; text-decoration:none; border:1px solid var(--line); background:#11161d; color:var(--ice); border-radius:12px; padding:11px 8px; font-size:13px; }
 </style>
 </head>
 <body>
 <main>
   <h1>アイス🍦 音の席</h1>
-  <p class="sub">席で聴く。本格的な曲は下のボタンから探して、共有したURLをマイリストへ。</p>
-  <div class="jumps">
-    <a href="https://music.youtube.com/" target="_blank" rel="noopener">YouTube Music</a>
-    <a href="https://open.spotify.com/" target="_blank" rel="noopener">Spotify</a>
-  </div>
+  <p class="sub">席の曲だけここで鳴る。連続再生も席の曲だけ。</p>
   <div class="rooms" id="rooms"></div>
   <button type="button" class="queuebtn" id="queueBtn">組 マイリスト</button>
   <p class="mood" id="mood"></p>
@@ -63,130 +52,88 @@
   </div>
   <div id="list"></div>
   <p class="note" id="credit"></p>
+  <p class="note"><a href="ice-links.html">YouTube / Spotify は外の棚へ</a></p>
 </main>
 <script>
 const L = "https://archive.org/download/";
-const rooms = {
-  night: {
-    label: "夜 Lo-fi",
-    mood: "柔らかいカフェ。雨の窓。歌が前に出ない。",
-    credit: "Loyalty Freak Music「LOFI AMBIENT SONGS」CC0",
-    art: "https://archive.org/services/img/loyalty-freak-music-lofi-ambient-songs",
-    tracks: [
-      ["Drowning in your smile", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 01 Lack of Color - Drowning in your smile.mp3")],
-      ["Dancing in the street", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 02 Lack of Color - Dancing in the street.mp3")],
-      ["Aeroplane", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 03 Lack of Color - Aeroplane.mp3")],
-      ["I'm glad you are here with me", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 04 Lack of Color - I'm glad you are here with me.mp3")],
-      ["Crying those tears I've kept so long", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 05 Crying those tears I've kept so long.mp3")],
-      ["This pain is soft but here", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 06 This pain is soft but here.mp3")],
-      ["I hope you're happy", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 07 I hope you're happy.mp3")],
-      ["Sugar and coffee", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 08 Lack of Color - Sugar and coffee.mp3")]
-    ]
-  },
-  town: {
-    label: "街 メロディ",
-    mood: "歩きながら口ずさむ。夜よりはっきりした線。",
-    credit: "Loyalty Freak Music「MELODIES WITH A BEAT」CC0",
-    art: "https://archive.org/services/img/LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223",
-    tracks: [
-      ["Sweet You", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_01_-_Sweet_You.mp3"],
-      ["Old Saga", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_02_-_Old_Saga.mp3"],
-      ["Love Him", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_03_-_Love_Him.mp3"],
-      ["Love Her", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_04_-_Love_Her.mp3"],
-      ["Softly", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_06_-_Softly.mp3"],
-      ["Sweet Me", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_07_-_Sweet_Me.mp3"],
-      ["Beach", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_08_-_Beach.mp3"],
-      ["Shoepop", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_09_-_Shoepop.mp3"],
-      ["Hangover", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_10_-_Hangover.mp3"],
-      ["Standing", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_11_-_Standing.mp3"],
-      ["Untitled", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_12_-_Untitled.mp3"],
-      ["Work", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_13_-_Work.mp3"],
-      ["Sweet They", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_14_-_Sweet_They.mp3"]
-    ]
-  },
-  afternoon: {
-    label: "午後 ビート",
-    mood: "低めのビート。少し厚い。作業の下に置く。",
-    credit: "Loyalty Freak Music「INSTRUMENTAL R&B」CC0",
-    art: "https://archive.org/services/img/LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON",
-    tracks: [
-      ["Sunglasses", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_01_-_Sunglasses.mp3"],
-      ["Friend to friend", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_02_-_Friend_to_friend.mp3"],
-      ["Sensual Melancholia", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_03_-_Sensual_Melancholia.mp3"],
-      ["Dirty shoes blues", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_04_-_Dirty_shoes_blues.mp3"],
-      ["The candle", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_05_-_The_candle.mp3"],
-      ["Talk to me", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_06_-_Talk_to_me.mp3"],
-      ["Don't listen to the words they say", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_07_-_Dont_listen_to_the_words_they_say.mp3"],
-      ["I care", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_08_-_I_care.mp3"],
-      ["Dancing Fool", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_09_-_Dancing_Fool.mp3"],
-      ["Slow Pogo", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_10_-_Slow_Pogo.mp3"],
-      ["Let's be serious a second", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_11_-_Lets_be_serious_a_second.mp3"],
-      ["Enby", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_12_-_Enby.mp3"],
-      ["Harsh Love", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_13_-_Harsh_Love.mp3"],
-      ["The Decision", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_14_-_The_Decision.mp3"],
-      ["Walking Shoes", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_15_-_Walking_Shoes.mp3"],
-      ["Hope and Love", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_16_-_Hope_and_Love.mp3"],
-      ["Summer Pride", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_17_-_Summer_Pride.mp3"]
-    ]
-  },
-  deep: {
-    label: "奥 空気",
-    mood: "音が薄い。奥。ほぼ景色。",
-    credit: "josh korda「free archive of ambient music」CC0",
-    art: "https://archive.org/services/img/FreeArchiveOfAmbientMusic",
-    tracks: [
-      ["dim light peaking over the horizon", L+"FreeArchiveOfAmbientMusic/"+enc("dim light peaking over the horizon.mp3")],
-      ["hardly ever awake version 2", L+"FreeArchiveOfAmbientMusic/"+enc("hardly ever awake version 2.mp3")],
-      ["slow ambient arise and pass", L+"FreeArchiveOfAmbientMusic/"+enc("slow ambient arise and pass.mp3")],
-      ["slowing to a final descent", L+"FreeArchiveOfAmbientMusic/"+enc("slowing to a final descent.mp3")],
-      ["low visibility advisory", L+"FreeArchiveOfAmbientMusic/"+enc("low visibility advisory.mp3")],
-      ["The Romance Of Returning Signals", L+"FreeArchiveOfAmbientMusic/TheRomanceOfReturningSignals.mp3"],
-      ["Distant Echoes Arriving", L+"FreeArchiveOfAmbientMusic/DistantEchoesArriving.mp3"],
-      ["Heavenly Arrangements", L+"FreeArchiveOfAmbientMusic/HeavenlyArrangements.mp3"],
-      ["The Monk Makes Slow Passage", L+"FreeArchiveOfAmbientMusic/TheMonkMakesSlowPassage.mp3"],
-      ["stasis", L+"FreeArchiveOfAmbientMusic/stasis.mp3"],
-      ["Stretched Out And Sunbaked", L+"FreeArchiveOfAmbientMusic/StretchedOutAndSunbaked.mp3"],
-      ["Emerge And Eclipse", L+"FreeArchiveOfAmbientMusic/EmergeAndEclipse.mp3"]
-    ]
-  },
-  robot: {
-    label: "機械 ダンス",
-    mood: "電子。歩くより動く。夜の席とは別物。",
-    credit: "Loyalty Freak Music「ROBOT DANCE !」CC0",
-    art: "https://archive.org/services/img/ROBOTDANCE",
-    tracks: [
-      ["Everyone is so alive", L+"ROBOTDANCE/"+enc("Loyalty Freak Music - ROBOT DANCE ! - 01 Everyone is so alive.mp3")],
-      ["High Technologic Beat Explosion", L+"ROBOTDANCE/"+enc("Loyalty Freak Music - ROBOT DANCE ! - 02 High Technologic Beat Explosion.mp3")],
-      ["After Party", L+"ROBOTDANCE/"+enc("Loyalty Freak Music - ROBOT DANCE ! - 03 After Party.mp3")],
-      ["It feels good to be alive too", L+"ROBOTDANCE/"+enc("Loyalty Freak Music - ROBOT DANCE ! - 04 It feels good to be alive too.mp3")]
-    ]
-  },
-  picnic: {
-    label: "朝 ピクニック",
-    mood: "明るい短い曲。アイスの店先。",
-    credit: "Loyalty Freak Music「POSITIVE ATTITUDE !」CC0",
-    art: "https://archive.org/services/img/LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839",
-    tracks: [
-      ["Go to the Picnic", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_01_-_Go_to_the_Picnic.mp3"],
-      ["Hug Convoy", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_02_-_Hug_Convoy.mp3"],
-      ["Love Train", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_03_-_Love_Train.mp3"],
-      ["Sweet Sun", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_04_-_Sweet_Sun.mp3"],
-      ["Ice Cream with you", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_05_-_Ice_Cream_with_you.mp3"],
-      ["Street of love", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_06_-_Street_of_love.mp3"],
-      ["Anarchobliss", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_07_-_Anarchobliss.mp3"],
-      ["Yippee", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_08_-_Yippee_.mp3"]
-    ]
-  },
-  queue: {
-    label: "組 マイリスト",
-    mood: "席の曲はここで鳴る。YouTube / Spotify は外へ。",
-    credit: "＋で席の曲。下の欄で外のリンク。",
-    art: "https://archive.org/services/img/loyalty-freak-music-lofi-ambient-songs"
-  }
-};
-
 function enc(s){ return encodeURIComponent(s); }
-
+const rooms = {
+  night: { label: "夜 Lo-fi", mood: "柔らかいカフェ。雨の窓。歌が前に出ない。", credit: "Loyalty Freak Music「LOFI AMBIENT SONGS」CC0", art: "https://archive.org/services/img/loyalty-freak-music-lofi-ambient-songs", tracks: [
+    ["Drowning in your smile", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 01 Lack of Color - Drowning in your smile.mp3")],
+    ["Dancing in the street", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 02 Lack of Color - Dancing in the street.mp3")],
+    ["Aeroplane", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 03 Lack of Color - Aeroplane.mp3")],
+    ["I'm glad you are here with me", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 04 Lack of Color - I'm glad you are here with me.mp3")],
+    ["Crying those tears I've kept so long", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 05 Crying those tears I've kept so long.mp3")],
+    ["This pain is soft but here", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 06 This pain is soft but here.mp3")],
+    ["I hope you're happy", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 07 I hope you're happy.mp3")],
+    ["Sugar and coffee", L+"loyalty-freak-music-lofi-ambient-songs/"+enc("Loyalty Freak Music - LOFI AMBIENT SONGS ! - 08 Lack of Color - Sugar and coffee.mp3")]
+  ]},
+  town: { label: "街 メロディ", mood: "歩きながら口ずさむ。夜よりはっきりした線。", credit: "Loyalty Freak Music「MELODIES WITH A BEAT」CC0", art: "https://archive.org/services/img/LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223", tracks: [
+    ["Sweet You", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_01_-_Sweet_You.mp3"],
+    ["Old Saga", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_02_-_Old_Saga.mp3"],
+    ["Love Him", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_03_-_Love_Him.mp3"],
+    ["Love Her", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_04_-_Love_Her.mp3"],
+    ["Softly", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_06_-_Softly.mp3"],
+    ["Sweet Me", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_07_-_Sweet_Me.mp3"],
+    ["Beach", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_08_-_Beach.mp3"],
+    ["Shoepop", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_09_-_Shoepop.mp3"],
+    ["Hangover", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_10_-_Hangover.mp3"],
+    ["Standing", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_11_-_Standing.mp3"],
+    ["Untitled", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_12_-_Untitled.mp3"],
+    ["Work", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_13_-_Work.mp3"],
+    ["Sweet They", L+"LoyaltyFreakMusicMELODIESWITHABEAT2018030251947223/Loyalty_Freak_Music_-_14_-_Sweet_They.mp3"]
+  ]},
+  afternoon: { label: "午後 ビート", mood: "低めのビート。少し厚い。作業の下に置く。", credit: "Loyalty Freak Music「INSTRUMENTAL R&B」CC0", art: "https://archive.org/services/img/LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON", tracks: [
+    ["Sunglasses", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_01_-_Sunglasses.mp3"],
+    ["Friend to friend", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_02_-_Friend_to_friend.mp3"],
+    ["Sensual Melancholia", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_03_-_Sensual_Melancholia.mp3"],
+    ["Dirty shoes blues", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_04_-_Dirty_shoes_blues.mp3"],
+    ["The candle", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_05_-_The_candle.mp3"],
+    ["Talk to me", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_06_-_Talk_to_me.mp3"],
+    ["Don't listen to the words they say", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_07_-_Dont_listen_to_the_words_they_say.mp3"],
+    ["I care", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_08_-_I_care.mp3"],
+    ["Dancing Fool", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_09_-_Dancing_Fool.mp3"],
+    ["Slow Pogo", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_10_-_Slow_Pogo.mp3"],
+    ["Let's be serious a second", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_11_-_Lets_be_serious_a_second.mp3"],
+    ["Enby", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_12_-_Enby.mp3"],
+    ["Harsh Love", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_13_-_Harsh_Love.mp3"],
+    ["The Decision", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_14_-_The_Decision.mp3"],
+    ["Walking Shoes", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_15_-_Walking_Shoes.mp3"],
+    ["Hope and Love", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_16_-_Hope_and_Love.mp3"],
+    ["Summer Pride", L+"LoyaltyFreakMusic-INSTRUMENTALRBBEATSTOSINGORRAPON/Loyalty_Freak_Music_-_17_-_Summer_Pride.mp3"]
+  ]},
+  deep: { label: "奥 空気", mood: "音が薄い。奥。ほぼ景色。", credit: "josh korda「free archive of ambient music」CC0", art: "https://archive.org/services/img/FreeArchiveOfAmbientMusic", tracks: [
+    ["dim light peaking over the horizon", L+"FreeArchiveOfAmbientMusic/"+enc("dim light peaking over the horizon.mp3")],
+    ["hardly ever awake version 2", L+"FreeArchiveOfAmbientMusic/"+enc("hardly ever awake version 2.mp3")],
+    ["slow ambient arise and pass", L+"FreeArchiveOfAmbientMusic/"+enc("slow ambient arise and pass.mp3")],
+    ["slowing to a final descent", L+"FreeArchiveOfAmbientMusic/"+enc("slowing to a final descent.mp3")],
+    ["low visibility advisory", L+"FreeArchiveOfAmbientMusic/"+enc("low visibility advisory.mp3")],
+    ["The Romance Of Returning Signals", L+"FreeArchiveOfAmbientMusic/TheRomanceOfReturningSignals.mp3"],
+    ["Distant Echoes Arriving", L+"FreeArchiveOfAmbientMusic/DistantEchoesArriving.mp3"],
+    ["Heavenly Arrangements", L+"FreeArchiveOfAmbientMusic/HeavenlyArrangements.mp3"],
+    ["The Monk Makes Slow Passage", L+"FreeArchiveOfAmbientMusic/TheMonkMakesSlowPassage.mp3"],
+    ["stasis", L+"FreeArchiveOfAmbientMusic/stasis.mp3"],
+    ["Stretched Out And Sunbaked", L+"FreeArchiveOfAmbientMusic/StretchedOutAndSunbaked.mp3"],
+    ["Emerge And Eclipse", L+"FreeArchiveOfAmbientMusic/EmergeAndEclipse.mp3"]
+  ]},
+  robot: { label: "機械 ダンス", mood: "電子。歩くより動く。夜の席とは別物。", credit: "Loyalty Freak Music「ROBOT DANCE !」CC0", art: "https://archive.org/services/img/ROBOTDANCE", tracks: [
+    ["Everyone is so alive", L+"ROBOTDANCE/"+enc("Loyalty Freak Music - ROBOT DANCE ! - 01 Everyone is so alive.mp3")],
+    ["High Technologic Beat Explosion", L+"ROBOTDANCE/"+enc("Loyalty Freak Music - ROBOT DANCE ! - 02 High Technologic Beat Explosion.mp3")],
+    ["After Party", L+"ROBOTDANCE/"+enc("Loyalty Freak Music - ROBOT DANCE ! - 03 After Party.mp3")],
+    ["It feels good to be alive too", L+"ROBOTDANCE/"+enc("Loyalty Freak Music - ROBOT DANCE ! - 04 It feels good to be alive too.mp3")]
+  ]},
+  picnic: { label: "朝 ピクニック", mood: "明るい短い曲。アイスの店先。", credit: "Loyalty Freak Music「POSITIVE ATTITUDE !」CC0", art: "https://archive.org/services/img/LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839", tracks: [
+    ["Go to the Picnic", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_01_-_Go_to_the_Picnic.mp3"],
+    ["Hug Convoy", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_02_-_Hug_Convoy.mp3"],
+    ["Love Train", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_03_-_Love_Train.mp3"],
+    ["Sweet Sun", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_04_-_Sweet_Sun.mp3"],
+    ["Ice Cream with you", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_05_-_Ice_Cream_with_you.mp3"],
+    ["Street of love", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_06_-_Street_of_love.mp3"],
+    ["Anarchobliss", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_07_-_Anarchobliss.mp3"],
+    ["Yippee", L+"LoyaltyFreakMusicPOSITIVEATTITUDE20170920175908839/Loyalty_Freak_Music_-_08_-_Yippee_.mp3"]
+  ]},
+  queue: { label: "組 マイリスト", mood: "席から＋した曲。ここで連続再生。", credit: "外のリンクは入れない。YouTube は外の棚。", art: "https://archive.org/services/img/loyalty-freak-music-lofi-ambient-songs" }
+};
 const a = document.getElementById("a");
 const now = document.getElementById("now");
 const list = document.getElementById("list");
@@ -194,12 +141,10 @@ const roomsEl = document.getElementById("rooms");
 const credit = document.getElementById("credit");
 const KEY = "ice-queue-v1";
 const META = "ice-meta-v1";
-
 let currentRoomId = "night";
 let currentIndex = -1;
 let fromQueue = false;
 let queue = [];
-try { queue = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch(e) { queue = []; }
 try {
   const meta = JSON.parse(localStorage.getItem(META) || "{}");
   if (meta.room && rooms[meta.room]) currentRoomId = meta.room;
@@ -208,7 +153,6 @@ try {
     if (r) r.checked = true;
   }
 } catch(e) {}
-
 Object.keys(rooms).forEach(id => {
   if (id === "queue") return;
   const b = document.createElement("button");
@@ -218,36 +162,26 @@ Object.keys(rooms).forEach(id => {
   roomsEl.appendChild(b);
 });
 document.getElementById("queueBtn").onclick = () => openRoom("queue");
-
-function saveQueue(){
-  try { localStorage.setItem(KEY, JSON.stringify(queue)); } catch(e) {}
-  saveMeta();
-}
+function saveQueue(){ try { localStorage.setItem(KEY, JSON.stringify(queue)); } catch(e) {} saveMeta(); }
 function saveMeta(){
   const mode = (document.querySelector('input[name="mode"]:checked') || {}).value || "sequence";
   try { localStorage.setItem(META, JSON.stringify({ room: currentRoomId, mode })); } catch(e) {}
 }
 document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener("change", saveMeta));
-
-function activeList(){
-  return fromQueue ? queue : (rooms[currentRoomId].tracks || []);
-}
-
+function activeList(){ return fromQueue ? queue : (rooms[currentRoomId].tracks || []); }
 function isFile(url){
   if (!url) return false;
   const u = url.toLowerCase();
   if (/youtube\.com|youtu\.be|spotify\.com|music\.apple|freemusicarchive\.org\/music/.test(u)) return false;
   return /\.(mp3|ogg|wav|m4a|aac)(\?|#|$)/.test(u) || /archive\.org\/download\//.test(u);
 }
-
-function outHref(url){
-  const s = url.match(/open\.spotify\.com\/(playlist|track|album|artist)\/([a-zA-Z0-9]+)/);
-  if (s) return "spotify:" + s[1] + ":" + s[2];
-  const y = url.match(/(?:youtu\.be\/|(?:music\.)?youtube\.com\/watch\?v=)([\w-]{11})/);
-  if (y) return "https://www.youtube.com/watch?v=" + y[1];
-  return url;
-}
-
+try {
+  const raw = JSON.parse(localStorage.getItem(KEY) || "[]");
+  const outs = JSON.parse(localStorage.getItem("ice-out-v1") || "[]");
+  raw.forEach(t => { if (isFile(t[1])) queue.push(t); else outs.push(t); });
+  localStorage.setItem(KEY, JSON.stringify(queue));
+  localStorage.setItem("ice-out-v1", JSON.stringify(outs));
+} catch(e) { queue = []; }
 function openRoom(id){
   currentRoomId = id;
   currentIndex = -1;
@@ -258,151 +192,60 @@ function openRoom(id){
   saveMeta();
   renderList();
 }
-
-function addOutForm(){
-  const box = document.createElement("div");
-  box.className = "addbox";
-  box.innerHTML =
-    "<div class='field'><input id='extTitle' placeholder='曲名'><button type='button' class='wipe' data-for='extTitle'>×</button></div>"
-    + "<div class='field'><input id='extUrl' placeholder='YouTube / Spotify のURL'><button type='button' class='wipe' data-for='extUrl'>×</button></div>"
-    + "<button type='button' id='extAdd'>外へ追加</button>";
-  list.appendChild(box);
-  box.querySelectorAll(".wipe").forEach(b => {
-    b.onclick = () => { document.getElementById(b.dataset.for).value = ""; };
-  });
-  box.querySelector("#extAdd").onclick = () => {
-    const titleEl = document.getElementById("extTitle");
-    const urlEl = document.getElementById("extUrl");
-    const title = (titleEl.value || "").trim() || "外の曲";
-    const url = (urlEl.value || "").trim();
-    if (!url) return;
-    queue.push([title, url]);
-    saveQueue();
-    titleEl.value = "";
-    urlEl.value = "";
-    renderList();
-  };
-}
-
 function renderList(){
   list.innerHTML = "";
   if (currentRoomId === "queue") {
-    addOutForm();
     if (!queue.length) {
-      const p = document.createElement("p");
-      p.className = "empty";
-      p.textContent = "席で＋、または上にURL。";
-      list.appendChild(p);
-      return;
+      const p = document.createElement("p"); p.className = "empty"; p.textContent = "席の＋で入れる。ここで連続再生。"; list.appendChild(p); return;
     }
     queue.forEach((t, i) => list.appendChild(queueRow(t, i)));
-    const saved = document.createElement("p");
-    saved.className = "empty";
-    saved.textContent = "この端末に " + queue.length + " 曲保存。Safariで開くと閉じても残る。";
-    list.appendChild(saved);
-    return;
+    const saved = document.createElement("p"); saved.className = "empty"; saved.textContent = "この端末に " + queue.length + " 曲。閉じても残る。"; list.appendChild(saved); return;
   }
   rooms[currentRoomId].tracks.forEach((t, i) => list.appendChild(catalogRow(t, i)));
 }
-
 function catalogRow(t, i){
-  const wrap = document.createElement("div");
-  wrap.className = "row";
-  const play = document.createElement("button");
-  play.className = "seat";
+  const wrap = document.createElement("div"); wrap.className = "row";
+  const play = document.createElement("button"); play.className = "seat";
   play.innerHTML = t[0] + "<small>この席で再生</small>";
   play.onclick = () => playAt(rooms[currentRoomId].tracks, i, false);
-  const add = document.createElement("button");
-  add.className = "icon";
-  add.textContent = "＋";
-  add.onclick = () => {
-    queue.push([t[0], t[1]]);
-    saveQueue();
-    add.textContent = "✓";
-    setTimeout(() => add.textContent = "＋", 700);
-  };
-  wrap.append(play, add);
-  return wrap;
+  const add = document.createElement("button"); add.className = "icon"; add.textContent = "＋";
+  add.onclick = () => { queue.push([t[0], t[1]]); saveQueue(); add.textContent = "✓"; setTimeout(() => add.textContent = "＋", 700); };
+  wrap.append(play, add); return wrap;
 }
-
 function queueRow(t, i){
-  const wrap = document.createElement("div");
-  wrap.className = "row";
-  const play = isFile(t[1]) ? document.createElement("button") : document.createElement("a");
-  play.className = "seat";
-  if (!isFile(t[1])) {
-    play.href = outHref(t[1]);
-    play.target = "_blank";
-    play.rel = "noopener";
-  } else {
-    play.onclick = () => playAt(queue, i, true);
-  }
-  play.innerHTML = (i+1) + ". " + t[0] + "<small>" + (isFile(t[1]) ? "ここで再生" : "外へ飛ぶ") + "</small>";
-  const up = document.createElement("button");
-  up.className = "icon"; up.textContent = "↑";
+  const wrap = document.createElement("div"); wrap.className = "row";
+  const play = document.createElement("button"); play.className = "seat";
+  play.onclick = () => playAt(queue, i, true);
+  play.innerHTML = (i+1) + ". " + t[0] + "<small>ここで再生</small>";
+  const up = document.createElement("button"); up.className = "icon"; up.textContent = "↑";
   up.onclick = () => { if (i===0) return; [queue[i-1], queue[i]] = [queue[i], queue[i-1]]; saveQueue(); renderList(); };
-  const down = document.createElement("button");
-  down.className = "icon"; down.textContent = "↓";
+  const down = document.createElement("button"); down.className = "icon"; down.textContent = "↓";
   down.onclick = () => { if (i===queue.length-1) return; [queue[i+1], queue[i]] = [queue[i], queue[i+1]]; saveQueue(); renderList(); };
-  const del = document.createElement("button");
-  del.className = "icon"; del.textContent = "×";
+  const del = document.createElement("button"); del.className = "icon"; del.textContent = "×";
   del.onclick = () => { queue.splice(i,1); saveQueue(); renderList(); };
-  wrap.append(play, up, down, del);
-  return wrap;
+  wrap.append(play, up, down, del); return wrap;
 }
-
-function markOn(i){
-  list.querySelectorAll(".seat").forEach((x, n) => x.classList.toggle("on", n === i));
-}
-
+function markOn(i){ list.querySelectorAll(".seat").forEach((x, n) => x.classList.toggle("on", n === i)); }
 function playAt(arr, index, queued){
   if (index < 0 || index >= arr.length) return;
-  fromQueue = queued;
-  currentIndex = index;
-  const [title, url] = arr[index];
-  markOn(index);
-  if (!isFile(url)) {
-    a.pause();
-    now.textContent = title;
-    location.href = outHref(url);
-    return;
-  }
-  now.textContent = title;
-  document.title = title + " · アイス🍦";
-  a.src = url;
-  a.play().catch(() => { now.textContent = title + "（再生を押す）"; });
-  setNowPlaying(title);
+  fromQueue = queued; currentIndex = index;
+  const [title, url] = arr[index]; markOn(index);
+  now.textContent = title; document.title = title + " · アイス🍦";
+  a.src = url; a.play().catch(() => { now.textContent = title + "（再生を押す）"; }); setNowPlaying(title);
 }
-
 function setNowPlaying(title){
   const room = rooms[fromQueue ? "queue" : currentRoomId] || rooms.queue;
   const art = room.art || "https://archive.org/services/img/loyalty-freak-music-lofi-ambient-songs";
   if (!navigator.mediaSession) return;
   try {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: title,
-      artist: "アイス🍦",
-      album: room.label || "音の席",
-      artwork: [
-        { src: art, sizes: "96x96", type: "image/jpeg" },
-        { src: art, sizes: "256x256", type: "image/jpeg" },
-        { src: art, sizes: "512x512", type: "image/jpeg" }
-      ]
-    });
+    navigator.mediaSession.metadata = new MediaMetadata({ title: title, artist: "アイス🍦", album: room.label || "音の席", artwork: [{ src: art, sizes: "512x512", type: "image/jpeg" }] });
     navigator.mediaSession.playbackState = "playing";
     navigator.mediaSession.setActionHandler("play", () => a.play());
     navigator.mediaSession.setActionHandler("pause", () => a.pause());
-    navigator.mediaSession.setActionHandler("nexttrack", () => {
-      const listArr = activeList();
-      const i = nextFileIndex(listArr, currentIndex, true);
-      if (i >= 0) playAt(listArr, i, fromQueue);
-    });
-    navigator.mediaSession.setActionHandler("previoustrack", () => {
-      if (currentIndex > 0) playAt(activeList(), currentIndex - 1, fromQueue);
-    });
+    navigator.mediaSession.setActionHandler("nexttrack", () => { const i = nextFileIndex(activeList(), currentIndex, true); if (i >= 0) playAt(activeList(), i, fromQueue); });
+    navigator.mediaSession.setActionHandler("previoustrack", () => { if (currentIndex > 0) playAt(activeList(), currentIndex - 1, fromQueue); });
   } catch(e) {}
 }
-
 function nextFileIndex(arr, from, wrap){
   const n = arr.length;
   for (let k = 1; k <= n; k++) {
@@ -412,42 +255,19 @@ function nextFileIndex(arr, from, wrap){
   }
   return -1;
 }
-
-a.addEventListener("play", () => {
-  if (now.textContent) setNowPlaying(now.textContent.replace("（再生を押す）",""));
-});
-
+a.addEventListener("play", () => { if (now.textContent) setNowPlaying(now.textContent.replace("（再生を押す）","")); });
 a.addEventListener("ended", () => {
-  const arr = activeList();
-  if (!arr.length || currentIndex < 0) return;
+  const arr = activeList(); if (!arr.length || currentIndex < 0) return;
   const mode = document.querySelector('input[name="mode"]:checked').value;
   if (mode === "loop-one") a.play();
-  else if (mode === "sequence") {
-    const i = nextFileIndex(arr, currentIndex, false);
-    if (i >= 0) playAt(arr, i, fromQueue);
-  } else if (mode === "loop-all") {
-    const i = nextFileIndex(arr, currentIndex, true);
-    if (i >= 0) playAt(arr, i, fromQueue);
-  }
+  else if (mode === "sequence") { const i = nextFileIndex(arr, currentIndex, false); if (i >= 0) playAt(arr, i, fromQueue); }
+  else if (mode === "loop-all") { const i = nextFileIndex(arr, currentIndex, true); if (i >= 0) playAt(arr, i, fromQueue); }
 });
-
 a.addEventListener("error", () => {
-  const arr = activeList();
-  if (!arr.length || currentIndex < 0) return;
+  const arr = activeList(); if (!arr.length || currentIndex < 0) return;
   now.textContent = "読めない曲。次へ";
-  setTimeout(() => {
-    if (currentIndex + 1 < arr.length) playAt(arr, currentIndex + 1, fromQueue);
-    else now.textContent = "再生終了";
-  }, 800);
+  setTimeout(() => { if (currentIndex + 1 < arr.length) playAt(arr, currentIndex + 1, fromQueue); else now.textContent = "再生終了"; }, 800);
 });
-
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && a.src && a.paused && !a.ended && currentIndex >= 0) {
-    const t = activeList()[currentIndex];
-    if (t && isFile(t[1])) a.play().catch(() => {});
-  }
-});
-
 openRoom(rooms[currentRoomId] ? currentRoomId : "night");
 </script>
 </body>
