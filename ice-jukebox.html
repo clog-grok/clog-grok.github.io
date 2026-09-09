@@ -40,6 +40,7 @@
   button.seat.on, a.seat.on { border-color:var(--ice); color:var(--ice); background:#162436; }
   button.seat small, a.seat small { display:block; color:var(--dim); font-size:11px; margin-top:3px; }
   .icon { width:40px; border:1px solid var(--line); background:#11161d; color:var(--cream); border-radius:12px; font-size:16px; }
+  .icon.more { border-color:var(--ice); color:var(--ice); background:#162436; }
   .note { font-size:12px; color:var(--dim); line-height:1.65; margin-top:16px; }
   a { color:var(--ice); }
   .empty { color:var(--dim); font-size:13px; padding:8px 2px; }
@@ -229,6 +230,7 @@ function catalogRow(t, i){
   play.onclick = () => playAt(rooms[currentRoomId].tracks, i, false);
   const add = document.createElement("button"); add.className = "icon";
   add.textContent = pos.length === 1 ? String(pos[0]) : (pos.length === 2 ? pos.join("·") : "＋");
+  if (pos.length >= 3) add.classList.add("more");
   add.onclick = () => {
     queue.push([t[0], t[1]]);
     saveQueue();
