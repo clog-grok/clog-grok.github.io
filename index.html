@@ -98,7 +98,7 @@
       })
       .then(function (files) {
         const htmls = files.filter(function (f) {
-          return f.type === "file" && /\.html$/i.test(f.name) && !skip[f.name];
+          return f.type === "file" && /\.html$/i.test(f.name) && !skip[f.name] && !/^ice-/i.test(f.name);
         }).sort(function (a, b) { return a.name.localeCompare(b.name); });
         if (!htmls.length) {
           fail("表示できるHTMLがありません。");
