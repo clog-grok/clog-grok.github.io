@@ -65,7 +65,7 @@
   </div>
   <div id="list"></div>
   <p class="note" id="credit"></p>
-  <p class="note"><a href="ice-links.html">YouTube / Spotify は外の棚へ</a></p>
+  <p class="note"><a href="ice-links.html" target="_blank" rel="noopener">YouTube / Spotify は外の棚へ</a></p>
 </main>
 <script>
 const L = "https://archive.org/download/";
@@ -216,13 +216,28 @@ function renderList(){
   }
   rooms[currentRoomId].tracks.forEach((t, i) => list.appendChild(catalogRow(t, i)));
 }
+function queuePos(url){
+  return queue.findIndex(t => t[1] === url);
+}
 function catalogRow(t, i){
   const wrap = document.createElement("div"); wrap.className = "row";
+  const pos = queuePos(t[1]);
   const play = document.createElement("button"); play.className = "seat";
-  play.innerHTML = t[0] + "<small>この席で再生</small>";
+  play.innerHTML = t[0] + "<small>" + (pos >= 0 ? "組 " + (pos + 1) : "この席で再生") + "</small>";
   play.onclick = () => playAt(rooms[currentRoomId].tracks, i, false);
-  const add = document.createElement("button"); add.className = "icon"; add.textContent = "＋";
-  add.onclick = () => { queue.push([t[0], t[1]]); saveQueue(); add.textContent = "✓"; setTimeout(() => add.textContent = "＋", 700); };
+  const add = document.createElement("button"); add.className = "icon";
+  if (pos >= 0) {
+    add.textContent = String(pos + 1);
+    add.onclick = () => {};
+  } else {
+    add.textContent = "＋";
+    add.onclick = () => {
+      if (queuePos(t[1]) >= 0) { renderList(); return; }
+      queue.push([t[0], t[1]]);
+      saveQueue();
+      renderList();
+    };
+  }
   wrap.append(play, add); return wrap;
 }
 function queueRow(t, i){
