@@ -41,6 +41,7 @@
   button.seat small, a.seat small { display:block; color:var(--dim); font-size:11px; margin-top:3px; }
   .icon { width:40px; border:1px solid var(--line); background:#11161d; color:var(--cream); border-radius:12px; font-size:16px; }
   .icon.more { border-color:var(--ice); color:var(--ice); background:#162436; }
+  .icon.ghost { opacity:0; pointer-events:none; }
   .note { font-size:12px; color:var(--dim); line-height:1.65; margin-top:16px; }
   a { color:var(--ice); }
   .empty { color:var(--dim); font-size:13px; padding:8px 2px; }
@@ -158,6 +159,8 @@ const META = "ice-meta-v1";
 let currentRoomId = "night";
 let currentIndex = -1;
 let fromQueue = false;
+let playRoomId = "night";
+let playingUrl = "";
 let queue = [];
 try {
   const meta = JSON.parse(localStorage.getItem(META) || "{}");
@@ -198,7 +201,6 @@ try {
 } catch(e) { queue = []; }
 function openRoom(id){
   currentRoomId = id;
-  currentIndex = -1;
   roomsEl.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.id === id));
   document.getElementById("queueBtn").classList.toggle("on", id === "queue");
   document.getElementById("mood").textContent = rooms[id].mood || "";
@@ -213,9 +215,12 @@ function renderList(){
       const p = document.createElement("p"); p.className = "empty"; p.textContent = "席の＋で入れる。ここで連続再生。"; list.appendChild(p); return;
     }
     queue.forEach((t, i) => list.appendChild(queueRow(t, i)));
-    const saved = document.createElement("p"); saved.className = "empty"; saved.textContent = "この端末に " + queue.length + " 曲。閉じても残る。"; list.appendChild(saved); return;
+    const saved = document.createElement("p"); saved.className = "empty"; saved.textContent = "この端末に " + queue.length + " 曲。閉じても残る。"; list.appendChild(saved);
+    markPlaying();
+    return;
   }
   rooms[currentRoomId].tracks.forEach((t, i) => list.appendChild(catalogRow(t, i)));
+  markPlaying();
 }
 function queuePosAll(url){
   const out = [];
@@ -232,8 +237,21 @@ function removeOne(url){
 function catalogRow(t, i){
   const wrap = document.createElement("div"); wrap.className = "row";
   const pos = queuePosAll(t[1]);
+  const left = document.createElement("button");
+  left.className = "icon";
+  if (pos.length) {
+    left.textContent = "×";
+    left.onclick = () => removeOne(t[1]);
+  } else {
+    left.classList.add("ghost");
+    left.textContent = "×";
+    left.disabled = true;
+  }
   const play = document.createElement("button"); play.className = "seat";
-  play.innerHTML = t[0] + "<small>" + (pos.length ? "組 " + pos.join("・") : "この席で再生") + "</small>";
+  let hint = pos.length ? "組 " + pos.join("・") : "この席で再生";
+  if (playingUrl === t[1] && fromQueue) hint += " · 組で再生中";
+  if (playingUrl === t[1] && !fromQueue && playRoomId === currentRoomId && currentIndex === i) hint = "再生中";
+  play.innerHTML = t[0] + "<small>" + hint + "</small>";
   play.onclick = () => playAt(rooms[currentRoomId].tracks, i, false);
   const add = document.createElement("button"); add.className = "icon";
   add.textContent = "＋";
@@ -243,21 +261,15 @@ function catalogRow(t, i){
     saveQueue();
     renderList();
   };
-  wrap.append(play, add);
-  if (pos.length) {
-    const del = document.createElement("button");
-    del.className = "icon";
-    del.textContent = "×";
-    del.onclick = () => removeOne(t[1]);
-    wrap.append(del);
-  }
+  wrap.append(left, play, add);
   return wrap;
 }
 function queueRow(t, i){
   const wrap = document.createElement("div"); wrap.className = "row";
   const play = document.createElement("button"); play.className = "seat";
   play.onclick = () => playAt(queue, i, true);
-  play.innerHTML = (i+1) + ". " + t[0] + "<small>ここで再生</small>";
+  const hint = (fromQueue && currentIndex === i) ? "再生中" : "ここで再生";
+  play.innerHTML = (i+1) + ". " + t[0] + "<small>" + hint + "</small>";
   const up = document.createElement("button"); up.className = "icon"; up.textContent = "↑";
   up.onclick = () => { if (i===0) return; [queue[i-1], queue[i]] = [queue[i], queue[i-1]]; saveQueue(); renderList(); };
   const down = document.createElement("button"); down.className = "icon"; down.textContent = "↓";
@@ -266,16 +278,34 @@ function queueRow(t, i){
   del.onclick = () => { queue.splice(i,1); saveQueue(); renderList(); };
   wrap.append(play, up, down, del); return wrap;
 }
-function markOn(i){ list.querySelectorAll(".seat").forEach((x, n) => x.classList.toggle("on", n === i)); }
+function markPlaying(){
+  const seats = list.querySelectorAll(".seat");
+  if (currentRoomId === "queue") {
+    seats.forEach((x, n) => x.classList.toggle("on", fromQueue && n === currentIndex));
+  } else {
+    seats.forEach((x, n) => x.classList.toggle("on", !fromQueue && playRoomId === currentRoomId && n === currentIndex));
+  }
+}
+function playLabel(title, extra){
+  const where = fromQueue ? ("組 " + (currentIndex + 1)) : ((rooms[playRoomId] || {}).label || "席");
+  return where + " · " + title + (extra || "");
+}
 function playAt(arr, index, queued){
   if (index < 0 || index >= arr.length) return;
-  fromQueue = queued; currentIndex = index;
-  const [title, url] = arr[index]; markOn(index);
-  now.textContent = title; document.title = title + " · アイス🍦";
-  a.src = url; a.play().catch(() => { now.textContent = title + "（再生を押す）"; }); setNowPlaying(title);
+  fromQueue = queued;
+  currentIndex = index;
+  playRoomId = queued ? "queue" : currentRoomId;
+  const [title, url] = arr[index];
+  playingUrl = url;
+  now.textContent = playLabel(title);
+  document.title = title + " · アイス🍦";
+  a.src = url;
+  a.play().catch(() => { now.textContent = playLabel(title, "（再生を押す）"); });
+  setNowPlaying(title);
+  renderList();
 }
 function setNowPlaying(title){
-  const room = rooms[fromQueue ? "queue" : currentRoomId] || rooms.queue;
+  const room = rooms[fromQueue ? "queue" : playRoomId] || rooms.queue;
   const art = room.art || "https://archive.org/services/img/loyalty-freak-music-lofi-ambient-songs";
   if (!navigator.mediaSession) return;
   try {
@@ -296,7 +326,7 @@ function nextFileIndex(arr, from, wrap){
   }
   return -1;
 }
-a.addEventListener("play", () => { if (now.textContent) setNowPlaying(now.textContent.replace("（再生を押す）","")); });
+a.addEventListener("play", () => { const t = (activeList()[currentIndex] || [])[0]; if (t) setNowPlaying(t); });
 a.addEventListener("ended", () => {
   const arr = activeList(); if (!arr.length || currentIndex < 0) return;
   const mode = document.querySelector('input[name="mode"]:checked').value;
