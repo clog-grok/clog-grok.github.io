@@ -222,6 +222,13 @@ function queuePosAll(url){
   queue.forEach((t, i) => { if (t[1] === url) out.push(i + 1); });
   return out;
 }
+function removeOne(url){
+  for (let i = queue.length - 1; i >= 0; i--) {
+    if (queue[i][1] === url) { queue.splice(i, 1); break; }
+  }
+  saveQueue();
+  renderList();
+}
 function catalogRow(t, i){
   const wrap = document.createElement("div"); wrap.className = "row";
   const pos = queuePosAll(t[1]);
@@ -230,13 +237,21 @@ function catalogRow(t, i){
   play.onclick = () => playAt(rooms[currentRoomId].tracks, i, false);
   const add = document.createElement("button"); add.className = "icon";
   add.textContent = pos.length === 1 ? String(pos[0]) : (pos.length === 2 ? pos.join("·") : "＋");
-  if (pos.length >= 3) add.classList.add("more");
+  if (pos.length) add.classList.add("more");
   add.onclick = () => {
     queue.push([t[0], t[1]]);
     saveQueue();
     renderList();
   };
-  wrap.append(play, add); return wrap;
+  wrap.append(play, add);
+  if (pos.length) {
+    const del = document.createElement("button");
+    del.className = "icon";
+    del.textContent = "×";
+    del.onclick = () => removeOne(t[1]);
+    wrap.append(del);
+  }
+  return wrap;
 }
 function queueRow(t, i){
   const wrap = document.createElement("div"); wrap.className = "row";
