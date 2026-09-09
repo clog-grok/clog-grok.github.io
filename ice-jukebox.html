@@ -237,22 +237,20 @@ function removeOne(url){
 function catalogRow(t, i){
   const wrap = document.createElement("div"); wrap.className = "row";
   const pos = queuePosAll(t[1]);
-  const left = document.createElement("button");
-  left.className = "icon";
-  if (pos.length) {
-    left.textContent = "×";
-    left.onclick = () => removeOne(t[1]);
-  } else {
-    left.classList.add("ghost");
-    left.textContent = "×";
-    left.disabled = true;
-  }
   const play = document.createElement("button"); play.className = "seat";
   let hint = pos.length ? "組 " + pos.join("・") : "この席で再生";
   if (playingUrl === t[1] && fromQueue) hint += " · 組で再生中";
   if (playingUrl === t[1] && !fromQueue && playRoomId === currentRoomId && currentIndex === i) hint = "再生中";
   play.innerHTML = t[0] + "<small>" + hint + "</small>";
   play.onclick = () => playAt(rooms[currentRoomId].tracks, i, false);
+  wrap.append(play);
+  if (pos.length) {
+    const del = document.createElement("button");
+    del.className = "icon";
+    del.textContent = "×";
+    del.onclick = () => removeOne(t[1]);
+    wrap.append(del);
+  }
   const add = document.createElement("button"); add.className = "icon";
   add.textContent = "＋";
   if (pos.length) add.classList.add("more");
@@ -261,7 +259,7 @@ function catalogRow(t, i){
     saveQueue();
     renderList();
   };
-  wrap.append(left, play, add);
+  wrap.append(add);
   return wrap;
 }
 function queueRow(t, i){
