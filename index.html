@@ -17,8 +17,7 @@
       --line: #2c2c2e;
       --text: #f2f2f7;
       --muted: #8e8e93;
-      --gold: #f1c40f;
-      --green: #30d158;
+      --ice: #9ecbff;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
@@ -34,16 +33,19 @@
     h1 { font-size: 1.55rem; margin: 0 0 8px; }
     .lead { margin: 0 0 22px; color: var(--muted); font-size: 0.92rem; line-height: 1.55; }
     .list { display: grid; gap: 12px; }
+    .section { margin: 28px 0 10px; font-size: 0.78rem; letter-spacing: 0.08em; color: var(--ice); }
     a.card {
       display: block; text-decoration: none; color: inherit;
       background: var(--card); border: 1px solid var(--line);
       border-radius: 16px; padding: 16px 16px 14px;
     }
+    a.card.ice { border-color: #243044; }
     .tag {
       display: inline-block; font-size: 0.68rem; padding: 3px 8px;
       border-radius: 999px; margin-bottom: 8px; font-weight: 600;
       background: #2c2c2e; color: #d1d1d6;
     }
+    a.card.ice .tag { background: #162436; color: var(--ice); }
     .name { font-size: 1.12rem; font-weight: 700; margin: 0 0 6px; }
     .desc { margin: 0; color: var(--muted); font-size: 0.86rem; line-height: 1.5; }
     .go { margin-top: 12px; font-size: 0.82rem; color: #fff; }
@@ -57,12 +59,16 @@
     <h1>ツール</h1>
     <p class="lead">リポジトリのHTMLを見て自動で並べます。足したら出て、消したら落ちます。</p>
     <div class="list" id="list"><p class="status">読み込み中…</p></div>
+    <p class="section" id="iceHead" hidden>隣のアイス</p>
+    <div class="list" id="iceList"></div>
     <footer>一覧の名前は各ファイルの＜title＞を使います。</footer>
   </main>
   <script>
   (function () {
     const REPO = "https://api.github.com/repos/clog-grok/clog-grok.github.io/contents/?ref=main";
     const list = document.getElementById("list");
+    const iceList = document.getElementById("iceList");
+    const iceHead = document.getElementById("iceHead");
     const skip = { "index.html": true };
 
     function text(html, re) {
@@ -70,14 +76,14 @@
       return m ? m[1].replace(/\s+/g, " ").trim() : "";
     }
 
-    function card(item) {
+    function card(item, ice) {
       const a = document.createElement("a");
-      a.className = "card";
+      a.className = ice ? "card ice" : "card";
       a.href = "./" + item.file;
       a.innerHTML =
-        (item.tag ? '<span class="tag"></span>' : "") +
+        '<span class="tag"></span>' +
         '<p class="name"></p><p class="desc"></p><p class="go">開く →</p>';
-      if (item.tag) a.querySelector(".tag").textContent = item.tag;
+      a.querySelector(".tag").textContent = ice ? "アイス" : (item.tag || "ツール");
       a.querySelector(".name").textContent = item.name;
       a.querySelector(".desc").textContent = item.desc || item.file;
       return a;
@@ -91,6 +97,17 @@
       list.appendChild(p);
     }
 
+    function meta(f) {
+      return fetch("./" + f.name).then(function (r) { return r.ok ? r.text() : ""; }).then(function (html) {
+        return {
+          file: f.name,
+          name: text(html, /<title>([^<]+)<\/title>/i) || f.name.replace(/\.html$/i, ""),
+          desc: text(html, /<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i),
+          tag: text(html, /<meta\s+name=["']tool-tag["']\s+content=["']([^"']+)["']/i)
+        };
+      });
+    }
+
     fetch(REPO, { headers: { Accept: "application/vnd.github+json" } })
       .then(function (res) {
         if (!res.ok) throw new Error("list " + res.status);
@@ -98,24 +115,25 @@
       })
       .then(function (files) {
         const htmls = files.filter(function (f) {
-          return f.type === "file" && /\.html$/i.test(f.name) && !skip[f.name] && !/^ice-/i.test(f.name);
+          return f.type === "file" && /\.html$/i.test(f.name) && !skip[f.name];
         }).sort(function (a, b) { return a.name.localeCompare(b.name); });
-        if (!htmls.length) {
+        const hot = htmls.filter(function (f) { return !/^ice-/i.test(f.name); });
+        const ice = htmls.filter(function (f) { return /^ice-/i.test(f.name); });
+        if (!hot.length && !ice.length) {
           fail("表示できるHTMLがありません。");
           return Promise.resolve();
         }
-        return Promise.all(htmls.map(function (f) {
-          return fetch("./" + f.name).then(function (r) { return r.ok ? r.text() : ""; }).then(function (html) {
-            return {
-              file: f.name,
-              name: text(html, /<title>([^<]+)<\/title>/i) || f.name.replace(/\.html$/i, ""),
-              desc: text(html, /<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i),
-              tag: text(html, /<meta\s+name=["']tool-tag["']\s+content=["']([^"']+)["']/i)
-            };
-          });
-        })).then(function (items) {
+        return Promise.all([
+          Promise.all(hot.map(meta)),
+          Promise.all(ice.map(meta))
+        ]).then(function (parts) {
           list.innerHTML = "";
-          items.forEach(function (item) { list.appendChild(card(item)); });
+          parts[0].forEach(function (item) { list.appendChild(card(item, false)); });
+          if (parts[1].length) {
+            iceHead.hidden = false;
+            iceList.innerHTML = "";
+            parts[1].forEach(function (item) { iceList.appendChild(card(item, true)); });
+          }
         });
       })
       .catch(function () {
