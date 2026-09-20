@@ -79,7 +79,7 @@
       <div class="chips" id="assetChips"></div>
     </div>
     <div class="field">
-      <label for="nowRate">基準レート</label>
+      <label for="nowRate">為替レート（基準）</label>
       <div class="box">
         <input id="nowRate" type="number" inputmode="decimal" value="157">
         <span class="unit">円/$</span>
@@ -92,7 +92,7 @@
       <h2>想定</h2>
       <div class="field">
         <div class="sim-row">
-          <label for="tgtNum">想定レート</label>
+          <label for="tgtNum">為替レート（想定）</label>
           <div class="numbox"><input id="tgtNum" type="number" inputmode="decimal" step="0.1" value="157"><span class="unit">円/$</span></div>
         </div>
         <input id="tgt" type="range" min="100" max="200" step="1" value="157">
@@ -196,7 +196,7 @@ function calc() {
   const tgt = tgtVal();
   const chg = chgVal();
   if (assetMan <= 0 || now <= 0 || tgt <= 0) {
-    $("finalYen").textContent = "—"; $("alertBox").className = "alert"; $("alertBox").textContent = "資産額と基準レートを入れてください"; return;
+    $("finalYen").textContent = "—"; $("alertBox").className = "alert"; $("alertBox").textContent = "資産額と為替レートを入れてください"; return;
   }
   const usd = (assetMan * 10000) / now;
   const usdNext = usd * (1 + chg / 100);
