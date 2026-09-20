@@ -13,11 +13,13 @@
   header { background: #0f172a; color: #fff; padding: 16px 16px 10px; text-align: center; }
   header h1 { margin: 0; font-size: 1.1rem; }
   header p { margin: 6px 0 0; font-size: .75rem; color: #cbd5e1; }
-  .switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 16px 10px; background: #0f172a; }
+  .switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 16px 14px; background: #0f172a; }
   .switch a { text-align: center; text-decoration: none; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; padding: 8px; font-size: .78rem; font-weight: 700; }
   .switch a.on { background: #fff; color: #0f172a; border-color: #fff; }
-  .listbar { display: flex; justify-content: center; align-items: center; gap: 16px; background: #0f172a; padding: 0 16px 12px; }
-  .listbar a, .listbar button { background: none; border: 0; color: #94a3b8; font-size: .72rem; text-decoration: none; padding: 0; }
+  .share { width: 100%; border: 0; background: #1d9bf0; color: #fff; font-weight: 700; font-size: 16px; border-radius: 12px; padding: 14px; }
+  .share-hint { margin: 8px 0 0; font-size: .68rem; color: #64748b; text-align: center; }
+  .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .foot a, .foot button { background: none; border: 0; color: #64748b; font-size: .78rem; text-decoration: none; padding: 10px 4px; }
   .pad { padding: 16px; }
   label { display: block; font-size: .78rem; font-weight: 700; margin-bottom: 6px; }
   .field { margin-bottom: 14px; }
@@ -63,10 +65,6 @@
     <a href="./enkawase.html">円高ショック</a>
     <a class="on" href="./fx-leverage.html">FX損益</a>
   </nav>
-  <div class="listbar">
-    <a href="./">一覧</a>
-    <button type="button" id="resetBtn" aria-label="リセット">↺</button>
-  </div>
   <div class="pad">
     <div class="field"><label>1ロット</label><div class="seg two" id="sizeSeg"></div></div>
     <div class="field"><label for="lotsIn">ロット数</label><div class="box"><input id="lotsIn" type="text" inputmode="decimal" value="1"><span class="unit">ロット</span><button type="button" class="x" id="clrLots">×</button></div><p class="hint" id="unitsHint"></p></div>
@@ -76,6 +74,9 @@
     <div class="alert" id="alertBox"></div>
     <div class="result"><div class="k">想定損益 <span class="tap">数字を変えると想定レートが動きます</span></div><div class="row"><input id="plIn" type="text" inputmode="decimal"><span class="yen">円</span></div><div class="grid"><div class="cell">必要証拠金<div><input id="marginIn" type="text" inputmode="decimal"><span class="yen">円</span></div></div><div class="cell">証拠金に対する損益<div class="locked" id="roe">—</div></div><div class="cell">名目（約定時）<div class="locked" id="notional">—</div></div><div class="cell">1円動いたとき<div><input id="perYenIn" type="text" inputmode="decimal"><span class="yen">円</span></div></div></div></div>
     <div class="field"><label>レバレッジ（証拠金の目安）</label><div class="seg three" id="levSeg"></div><p class="hint">損益の式には入りません。</p></div>
+    <button type="button" class="share" id="shareBtn">共有</button>
+    <p class="share-hint">スマホでは共有シートが開きます。</p>
+    <div class="foot"><a href="./">一覧</a><button type="button" id="resetBtn" aria-label="リセット">↺</button></div>
   </div>
 </div>
 <script>
@@ -116,9 +117,7 @@ function paint() {
 function pinSlider(v) { if (isFinite(v)) $("exit").value = String(Math.max(100, Math.min(200, v))); }
 function setExit(v) { if (!isFinite(v)) return; const n = Math.round(v * 1000) / 1000; $("exitNum").value = String(n); pinSlider(n); }
 function save() {
-  try {
-    localStorage.setItem(STORE, JSON.stringify({ lotSize, lots, side, lev, entry: $("entry").value, exit: $("exitNum").value }));
-  } catch (e) {}
+  try { localStorage.setItem(STORE, JSON.stringify({ lotSize, lots, side, lev, entry: $("entry").value, exit: $("exitNum").value })); } catch (e) {}
 }
 function load() {
   try {
@@ -135,9 +134,7 @@ function load() {
 function resetAll() {
   try { localStorage.removeItem(STORE); } catch (e) {}
   lotSize = 10000; lots = 1; side = 1; lev = 25; lock = "";
-  $("lotsIn").value = "1";
-  $("entry").value = "157";
-  setExit(140);
+  $("lotsIn").value = "1"; $("entry").value = "157"; setExit(140);
   $("rateHint").textContent = "取得は公開の為替データです。ずれたら手入力。";
   calc();
 }
@@ -211,6 +208,16 @@ $("perYenIn").addEventListener("input", () => {
   const n = parseNum($("perYenIn").value); if (!isFinite(n) || n === 0) return;
   side = n > 0 ? 1 : -1; lots = Math.abs(n) / lotSize; $("lotsIn").value = String(lots); calc();
 });
+$("shareBtn").onclick = async () => {
+  const text = (side === 1 ? "買い" : "売り") + " " + lots + "ロット（" + comma(units()) + "通貨）\n" + $("entry").value + " → " + $("exitNum").value + "\n想定損益 " + $("plIn").value + "円 / 証拠金 " + $("marginIn").value + "円";
+  if (navigator.share) {
+    try { await navigator.share({ title: "FX損益計算機", text }); return; }
+    catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(text); } catch (e) {}
+  $("shareBtn").textContent = "コピーした";
+  setTimeout(() => { $("shareBtn").textContent = "共有"; }, 1400);
+};
 $("resetBtn").onclick = resetAll;
 load();
 paint(); calc();
