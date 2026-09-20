@@ -6,5 +6,482 @@
 <title>円高ショック計算機</title>
 <meta name="description" content="ドル建て資産の為替リスクを体感">
 <meta name="tool-tag" content="金融">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 12px;
+    background: #e2e8f0;
+    color: #1e293b;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif;
+    overflow-x: hidden;
+  }
+  .app {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(15,23,42,.15);
+  }
+  header {
+    background: #0f172a;
+    color: #fff;
+    padding: 16px;
+    text-align: center;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; }
+  header p { margin: 6px 0 0; font-size: .78rem; color: #cbd5e1; }
+  .pad { padding: 16px; }
+  label { display: block; font-size: .78rem; font-weight: 700; margin-bottom: 6px; }
+  .field { margin-bottom: 14px; }
+  .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .seg button {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #64748b;
+  }
+  .seg button.on { background: #0f172a; color: #fff; border-color: #0f172a; }
+  .box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 0 8px 0 12px;
+  }
+  .box input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 12px 0;
+    text-align: right;
+    outline: none;
+  }
+  .unit { margin: 0 6px; color: #64748b; font-size: .78rem; white-space: nowrap; }
+  .x, .get {
+    border: 0;
+    background: #e2e8f0;
+    color: #334155;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    flex: 0 0 36px;
+  }
+  .get { width: auto; padding: 0 10px; font-size: .75rem; font-weight: 700; margin-left: 4px; }
+  .hint { margin: 6px 0 0; font-size: .68rem; color: #64748b; line-height: 1.45; }
+  .chips {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .chips button {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    border-radius: 999px;
+    padding: 6px 0;
+    font-size: .65rem;
+    color: #475569;
+    white-space: nowrap;
+  }
+  .chips button.on {
+    background: #0f172a;
+    color: #fff;
+    border-color: #0f172a;
+  }
+  .sim {
+    background: #f1f5f9;
+    border-radius: 12px;
+    padding: 14px 12px;
+    margin-bottom: 14px;
+  }
+  .sim h2 { margin: 0 0 12px; font-size: .88rem; }
+  .sim-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    gap: 8px;
+  }
+  .numbox {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0 8px;
+  }
+  .numbox input {
+    width: 72px;
+    border: 0;
+    font-size: 16px;
+    font-weight: 800;
+    text-align: right;
+    padding: 8px 0;
+    outline: none;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #cbd5e1;
+    border-radius: 3px;
+    margin: 8px 0;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #0f172a;
+  }
+  .ends { display: flex; justify-content: space-between; font-size: .65rem; color: #64748b; }
+  .alert {
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 12px;
+    border-left: 4px solid #94a3b8;
+    background: #f8fafc;
+  }
+  .alert.loss { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
+  .alert.gain { background: #ecfdf5; border-color: #10b981; color: #065f46; }
+  .alert .big { font-size: 1.2rem; margin: 4px 0; }
+  .result {
+    background: #0f172a;
+    color: #fff;
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .result .k { color: #94a3b8; font-size: .75rem; }
+  .result .v { font-size: 1.7rem; font-weight: 800; margin: 4px 0 10px; }
+  .usd {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    border-top: 1px solid #334155;
+    padding-top: 10px;
+    font-size: .72rem;
+    color: #94a3b8;
+  }
+  .usd b { display: block; color: #e2e8f0; margin-top: 3px; font-size: .85rem; }
+  .share {
+    width: 100%;
+    border: 0;
+    background: #1d9bf0;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .share-hint { margin: 8px 0 0; font-size: .68rem; color: #64748b; text-align: center; }
+</style>
 </head>
+<body>
+<div class="app">
+  <header>
+    <h1>円高ショック計算機</h1>
+    <p>ドル建て資産の為替リスクを体感</p>
+  </header>
+  <div class="pad">
+    <div class="field">
+      <label for="asset">いまの円評価</label>
+      <div class="seg" role="group">
+        <button type="button" id="uMan" class="on">万円</button>
+        <button type="button" id="uOku">億円</button>
+      </div>
+      <div class="box">
+        <input id="asset" type="number" inputmode="decimal" value="100">
+        <span class="unit" id="unitLab">万円</span>
+        <button type="button" class="x" id="clrAsset" aria-label="消す">×</button>
+      </div>
+      <div class="chips" id="assetChips"></div>
+    </div>
+
+    <div class="field">
+      <label for="nowRate">いまのドル円</label>
+      <div class="box">
+        <input id="nowRate" type="number" inputmode="decimal" value="157">
+        <span class="unit">円/$</span>
+        <button type="button" class="x" id="clrRate" aria-label="消す">×</button>
+        <button type="button" class="get" id="fetchBtn">取得</button>
+      </div>
+      <p class="hint" id="rateHint">取得は公開の為替データです。ずれたら手入力。</p>
+    </div>
+
+    <div class="sim">
+      <h2>想定</h2>
+      <div class="field">
+        <div class="sim-row">
+          <label for="tgtNum">想定のドル円</label>
+          <div class="numbox">
+            <input id="tgtNum" type="number" inputmode="decimal" step="0.1" value="157">
+            <span class="unit">円/$</span>
+          </div>
+        </div>
+        <input id="tgt" type="range" min="100" max="200" step="1" value="157">
+        <div class="ends"><span>100</span><span>150</span><span>200</span></div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <div class="sim-row">
+          <label for="chgNum">資産の変化</label>
+          <div class="numbox">
+            <input id="chgNum" type="number" inputmode="decimal" value="0">
+            <span class="unit">%</span>
+          </div>
+        </div>
+        <input id="chg" type="range" min="-200" max="200" step="1" value="0">
+        <div class="ends"><span>-200%</span><span>0</span><span>+200%</span></div>
+        <div class="chips" id="chgChips"></div>
+      </div>
+    </div>
+
+    <div class="alert" id="alertBox"></div>
+    <div class="result">
+      <div class="k">想定後の円評価</div>
+      <div class="v" id="finalYen">—</div>
+      <div class="usd">
+        <div>いまのドル建<b id="usdNow">—</b></div>
+        <div>想定のドル建<b id="usdNext">—</b></div>
+      </div>
+    </div>
+
+    <button type="button" class="share" id="shareBtn">共有</button>
+    <p class="share-hint">スマホでは共有シートが開きます。</p>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let unit = "man";
+const MAN_CHIPS = [[100, "100万"], [500, "500万"], [1000, "1000万"]];
+const OKU_CHIPS = [[10000, "1億"], [100000, "10億"], [1000000, "100億"]];
+const CHG_CHIPS = [-20, -10, 0, 10, 20];
+
+function toMan() {
+  const n = parseFloat($("asset").value) || 0;
+  return unit === "oku" ? n * 10000 : n;
+}
+function yenMan(n) {
+  if (!isFinite(n)) return "—";
+  if (Math.abs(n) >= 10000) return (n / 10000).toFixed(2).replace(/\.00$/, "") + "億円";
+  return Math.round(n).toLocaleString("ja-JP") + "万円";
+}
+function signedMan(n) {
+  return (n >= 0 ? "+" : "−") + yenMan(Math.abs(n));
+}
+function tgtVal() {
+  const n = parseFloat($("tgtNum").value);
+  return n > 0 ? n : parseFloat($("tgt").value);
+}
+function chgVal() {
+  const n = parseFloat($("chgNum").value);
+  return isFinite(n) ? n : 0;
+}
+
+function renderAssetChips() {
+  const host = $("assetChips");
+  host.innerHTML = "";
+  const list = unit === "oku" ? OKU_CHIPS : MAN_CHIPS;
+  const nowMan = toMan();
+  list.forEach(([man, lab]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = lab;
+    if (nowMan === man) b.className = "on";
+    b.onclick = () => {
+      if (man >= 10000) {
+        unit = "oku";
+        $("asset").value = String(man / 10000);
+      } else {
+        unit = "man";
+        $("asset").value = String(man);
+      }
+      renderAssetChips();
+      calc();
+    };
+    host.appendChild(b);
+  });
+}
+
+function renderChgChips() {
+  const host = $("chgChips");
+  host.innerHTML = "";
+  const cur = chgVal();
+  CHG_CHIPS.forEach((v) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = (v > 0 ? "+" : "") + v;
+    if (cur === v) b.className = "on";
+    b.onclick = () => {
+      $("chgNum").value = String(v);
+      $("chg").value = String(v);
+      renderChgChips();
+      calc();
+    };
+    host.appendChild(b);
+  });
+}
+
+function paintUnit() {
+  $("uMan").className = unit === "man" ? "on" : "";
+  $("uOku").className = unit === "oku" ? "on" : "";
+  $("unitLab").textContent = unit === "oku" ? "億円" : "万円";
+}
+
+function calc() {
+  paintUnit();
+  const assetMan = toMan();
+  const now = parseFloat($("nowRate").value) || 0;
+  const tgt = tgtVal();
+  const chg = chgVal();
+
+  if (assetMan <= 0 || now <= 0 || tgt <= 0) {
+    $("finalYen").textContent = "—";
+    $("alertBox").className = "alert";
+    $("alertBox").textContent = "円評価と、いまのドル円を入れてください";
+    return;
+  }
+
+  const usd = (assetMan * 10000) / now;
+  const usdNext = usd * (1 + chg / 100);
+  const finalMan = (usdNext * tgt) / 10000;
+  const fxOnly = (usd * tgt) / 10000 - assetMan;
+  const asOnly = (usdNext * now) / 10000 - assetMan;
+  const both = finalMan - assetMan;
+  const pct = (both / assetMan) * 100;
+
+  $("finalYen").textContent = yenMan(finalMan);
+  $("usdNow").textContent = "$" + Math.round(usd).toLocaleString("en-US");
+  $("usdNext").textContent = "$" + Math.round(usdNext).toLocaleString("en-US");
+
+  const box = $("alertBox");
+  if (Math.abs(both) < 0.05) {
+    box.className = "alert";
+    box.textContent = "想定はいまと同じです。";
+  } else {
+    box.className = "alert " + (both < 0 ? "loss" : "gain");
+    box.innerHTML =
+      "為替だけ " + signedMan(fxOnly) + " / 資産だけ " + signedMan(asOnly) +
+      "<div class=\"big\">合計 " + signedMan(both) + "（" + (pct >= 0 ? "+" : "") + pct.toFixed(1) + "%）</div>";
+  }
+}
+
+async function fetchRate() {
+  $("rateHint").textContent = "取得中…";
+  const urls = [
+    "https://open.er-api.com/v6/latest/USD",
+    "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json"
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) continue;
+      const d = await res.json();
+      let jpy = null;
+      if (d.rates && d.rates.JPY) jpy = d.rates.JPY;
+      if (d.usd && d.usd.jpy) jpy = d.usd.jpy;
+      if (!jpy) continue;
+      const v = Math.round(jpy * 10) / 10;
+      $("nowRate").value = v;
+      $("tgtNum").value = v;
+      $("tgt").value = String(Math.min(200, Math.max(100, Math.round(v))));
+      $("rateHint").textContent = "取得 " + v + "円/$";
+      calc();
+      return;
+    } catch (e) {}
+  }
+  $("rateHint").textContent = "取得できませんでした。手入力してください。";
+}
+
+$("uMan").onclick = () => {
+  const man = toMan();
+  unit = "man";
+  $("asset").value = man ? String(man) : "";
+  renderAssetChips();
+  calc();
+};
+$("uOku").onclick = () => {
+  const man = toMan();
+  unit = "oku";
+  $("asset").value = man ? String(man / 10000) : "";
+  renderAssetChips();
+  calc();
+};
+$("clrAsset").onclick = () => { $("asset").value = ""; $("asset").focus(); renderAssetChips(); calc(); };
+$("clrRate").onclick = () => { $("nowRate").value = ""; $("nowRate").focus(); calc(); };
+$("fetchBtn").onclick = fetchRate;
+
+$("tgt").addEventListener("input", () => {
+  $("tgtNum").value = $("tgt").value;
+  calc();
+});
+$("tgtNum").addEventListener("input", () => {
+  const v = parseFloat($("tgtNum").value);
+  if (v > 0) $("tgt").value = String(Math.max(100, Math.min(200, Math.round(v))));
+  calc();
+});
+$("chg").addEventListener("input", () => {
+  $("chgNum").value = $("chg").value;
+  renderChgChips();
+  calc();
+});
+$("chgNum").addEventListener("input", () => {
+  const v = parseFloat($("chgNum").value);
+  if (isFinite(v)) $("chg").value = String(Math.max(-200, Math.min(200, v)));
+  renderChgChips();
+  calc();
+});
+
+$("shareBtn").onclick = async () => {
+  const text =
+    "円評価 " + yenMan(toMan()) + "（いま " + $("nowRate").value + "円/$）\n" +
+    "想定 " + tgtVal() + "円/$ ・資産 " + chgVal() + "%\n" +
+    "→ " + $("finalYen").textContent + "\n" +
+    $("alertBox").innerText.replace(/\s+/g, " ");
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "円高ショック計算機", text });
+      return;
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+    }
+  }
+  try { await navigator.clipboard.writeText(text); } catch (e) {}
+  $("shareBtn").textContent = "コピーした";
+  setTimeout(() => { $("shareBtn").textContent = "共有"; }, 1400);
+};
+
+["asset", "nowRate"].forEach((id) => $(id).addEventListener("input", () => {
+  renderAssetChips();
+  calc();
+}));
+
+renderAssetChips();
+renderChgChips();
+calc();
+</script>
+</body>
 </html>
