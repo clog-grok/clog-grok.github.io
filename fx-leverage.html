@@ -6,8 +6,180 @@
 <title>FX損益計算機</title>
 <meta name="description" content="ドル円のロット損益と証拠金">
 <meta name="tool-tag" content="金融">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 12px; background: #e2e8f0; color: #1e293b; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; overflow-x: hidden; }
+  .app { max-width: 420px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(15,23,42,.15); }
+  header { background: #0f172a; color: #fff; padding: 16px 16px 10px; text-align: center; }
+  header h1 { margin: 0; font-size: 1.1rem; }
+  header p { margin: 6px 0 0; font-size: .75rem; color: #cbd5e1; }
+  .switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 16px 10px; background: #0f172a; }
+  .switch a { text-align: center; text-decoration: none; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; padding: 8px; font-size: .78rem; font-weight: 700; }
+  .switch a.on { background: #fff; color: #0f172a; border-color: #fff; }
+  .list { display: block; text-align: center; background: #0f172a; color: #94a3b8; font-size: .72rem; padding: 0 16px 12px; text-decoration: none; }
+  .pad { padding: 16px; }
+  label { display: block; font-size: .78rem; font-weight: 700; margin-bottom: 6px; }
+  .field { margin-bottom: 14px; }
+  .seg { display: grid; gap: 6px; margin-bottom: 8px; }
+  .seg.two { grid-template-columns: 1fr 1fr; }
+  .seg.three { grid-template-columns: 1fr 1fr 1fr; }
+  .seg button { border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 8px 0; font-size: .75rem; font-weight: 700; color: #64748b; }
+  .seg button.on { background: #0f172a; color: #fff; border-color: #0f172a; }
+  .box, .numbox { display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 10px; background: #f8fafc; padding: 0 8px 0 12px; }
+  input[type=text], input[type=number] { flex: 1; min-width: 0; border: 0; background: transparent; font-size: 16px; font-weight: 700; padding: 12px 0; text-align: right; outline: none; color: inherit; }
+  .unit { margin: 0 6px; color: #64748b; font-size: .75rem; white-space: nowrap; }
+  .x, .get { border: 0; background: #e2e8f0; color: #334155; border-radius: 8px; height: 36px; font-size: .75rem; font-weight: 700; }
+  .x { width: 36px; font-size: 16px; }
+  .get { padding: 0 10px; margin-left: 4px; }
+  .hint { margin: 6px 0 0; font-size: .68rem; color: #64748b; line-height: 1.45; }
+  .sim { background: #f1f5f9; border-radius: 12px; padding: 14px 12px; margin-bottom: 14px; }
+  .sim h2 { margin: 0 0 12px; font-size: .88rem; }
+  input[type=range] { -webkit-appearance: none; width: 100%; height: 6px; background: #cbd5e1; border-radius: 3px; margin: 8px 0; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #0f172a; }
+  .ends { display: flex; justify-content: space-between; font-size: .65rem; color: #64748b; }
+  .alert { border-radius: 12px; padding: 12px; text-align: center; font-weight: 700; margin-bottom: 12px; background: #f8fafc; border-left: 4px solid #94a3b8; }
+  .alert.loss { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
+  .alert.gain { background: #ecfdf5; border-color: #10b981; color: #065f46; }
+  .result { background: #0f172a; color: #fff; border-radius: 12px; padding: 16px 12px 12px; text-align: center; margin-bottom: 14px; }
+  .result .k { color: #94a3b8; font-size: .75rem; }
+  .result .row { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin: 4px 0 12px; }
+  .result input { width: 12rem; color: #fff; font-size: 1.35rem; font-weight: 800; text-align: right; padding: 4px 0; }
+  .result .yen { font-size: .9rem; color: #94a3b8; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 8px; border-top: 1px solid #334155; padding-top: 10px; font-size: .72rem; color: #94a3b8; text-align: left; }
+  .grid .cell input { width: calc(100% - 1.4rem); color: #e2e8f0; font-size: .92rem; font-weight: 700; text-align: left; padding: 4px 0; display: inline-block; }
+  .grid .cell .yen { margin-left: 4px; }
+  .grid .locked { color: #e2e8f0; font-size: .92rem; font-weight: 700; margin-top: 4px; }
+  .tap { font-size: .62rem; color: #64748b; }
+</style>
 </head>
 <body>
-<p>placeholder</p>
+<div class="app">
+  <header>
+    <h1>FX損益計算機</h1>
+    <p>ドル円の値動き（スワップなし）</p>
+  </header>
+  <nav class="switch">
+    <a href="./enkawase.html">円高ショック</a>
+    <a class="on" href="./fx-leverage.html">FX損益</a>
+  </nav>
+  <a class="list" href="./">一覧</a>
+  <div class="pad">
+    <div class="field"><label>1ロット</label><div class="seg two" id="sizeSeg"></div></div>
+    <div class="field"><label for="lotsIn">ロット数</label><div class="box"><input id="lotsIn" type="text" inputmode="decimal" value="1"><span class="unit">ロット</span><button type="button" class="x" id="clrLots">×</button></div><p class="hint" id="unitsHint"></p></div>
+    <div class="field"><label>売買</label><div class="seg two" id="sideSeg"></div></div>
+    <div class="field"><label for="entry">約定レート</label><div class="box"><input id="entry" type="number" inputmode="decimal" step="0.001" value="157"><span class="unit">円/$</span><button type="button" class="x" id="clrEntry">×</button><button type="button" class="get" id="fetchBtn">取得</button></div><p class="hint" id="rateHint">取得は公開の為替データです。ずれたら手入力。</p></div>
+    <div class="sim"><h2>想定</h2><div class="field" style="margin-bottom:0"><label for="exitNum">想定レート</label><div class="numbox"><input id="exitNum" type="text" inputmode="decimal" value="140"><span class="unit">円/$</span></div><input id="exit" type="range" min="100" max="200" step="0.1" value="140"><div class="ends"><span>100</span><span>150</span><span>200</span></div></div></div>
+    <div class="alert" id="alertBox"></div>
+    <div class="result"><div class="k">想定損益 <span class="tap">数字を変えると想定レートが動きます</span></div><div class="row"><input id="plIn" type="text" inputmode="decimal"><span class="yen">円</span></div><div class="grid"><div class="cell">必要証拠金<div><input id="marginIn" type="text" inputmode="decimal"><span class="yen">円</span></div></div><div class="cell">証拠金に対する損益<div class="locked" id="roe">—</div></div><div class="cell">名目（約定時）<div class="locked" id="notional">—</div></div><div class="cell">1円動いたとき<div><input id="perYenIn" type="text" inputmode="decimal"><span class="yen">円</span></div></div></div></div>
+    <div class="field"><label>レバレッジ（証拠金の目安）</label><div class="seg three" id="levSeg"></div><p class="hint">損益の式には入りません。</p></div>
+  </div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const SIZES = [1000, 10000];
+const LEVS = [1, 10, 25];
+let lotSize = 10000;
+let lots = 1;
+let side = 1;
+let lev = 25;
+let lock = "";
+function units() { return lots * lotSize; }
+function parseNum(s) {
+  if (s === "-" || s === "+" || s === "" || s === ".") return NaN;
+  const n = parseFloat(String(s).replace(/,/g, "").replace(/−/g, "-"));
+  return isFinite(n) ? n : NaN;
+}
+function comma(n) { if (!isFinite(n)) return ""; return Math.round(n).toLocaleString("en-US"); }
+function signedComma(n) { if (!isFinite(n)) return ""; const sign = n > 0 ? "+" : n < 0 ? "-" : ""; return sign + Math.round(Math.abs(n)).toLocaleString("en-US"); }
+function paintSeg(host, items, current, labelFn, onPick) {
+  host.innerHTML = "";
+  items.forEach((v) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = labelFn(v);
+    if (v === current) b.className = "on";
+    b.onclick = () => onPick(v);
+    host.appendChild(b);
+  });
+}
+function paint() {
+  paintSeg($("sizeSeg"), SIZES, lotSize, (v) => (v === 1000 ? "1,000通貨" : "10,000通貨"), (v) => { lotSize = v; calc(); });
+  paintSeg($("sideSeg"), [1, -1], side, (v) => (v === 1 ? "買い" : "売り"), (v) => { side = v; calc(); });
+  const levItems = LEVS.includes(lev) ? LEVS : [...LEVS, lev];
+  paintSeg($("levSeg"), levItems, lev, (v) => (Number.isInteger(v) ? v + "倍" : v.toFixed(1) + "倍"), (v) => { lev = v; calc(); });
+}
+function pinSlider(v) { if (isFinite(v)) $("exit").value = String(Math.max(100, Math.min(200, v))); }
+function setExit(v) { if (!isFinite(v)) return; const n = Math.round(v * 1000) / 1000; $("exitNum").value = String(n); pinSlider(n); }
+function calc() {
+  paint();
+  const u = units();
+  $("unitsHint").textContent = "合計 " + comma(u) + "通貨";
+  const entry = parseNum($("entry").value);
+  const exit = parseNum($("exitNum").value);
+  pinSlider(exit);
+  if (!(entry > 0) || !(u > 0) || !isFinite(exit)) { $("alertBox").textContent = "ロット数と約定レートを入れてください"; $("alertBox").className = "alert"; return; }
+  const pl = u * (exit - entry) * side;
+  const notional = u * entry;
+  const margin = notional / lev;
+  const roe = margin ? (pl / margin) * 100 : 0;
+  const perYen = u * side;
+  if (lock !== "pl") $("plIn").value = signedComma(pl);
+  if (lock !== "margin") $("marginIn").value = comma(margin);
+  if (lock !== "perYen") $("perYenIn").value = signedComma(perYen);
+  $("notional").textContent = comma(notional) + "円";
+  $("roe").textContent = (roe >= 0 ? "+" : "") + roe.toFixed(1) + "%";
+  const box = $("alertBox");
+  if (Math.abs(pl) < 0.5) { box.className = "alert"; box.textContent = "想定は約定と同じです。"; }
+  else { box.className = "alert " + (pl < 0 ? "loss" : "gain"); box.textContent = (side === 1 ? "買い" : "売り") + " " + lots + "ロット（" + comma(u) + "通貨） / " + entry + " → " + exit; }
+}
+async function fetchRate() {
+  $("rateHint").textContent = "取得中…";
+  const urls = ["https://open.er-api.com/v6/latest/USD", "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json"];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) continue;
+      const d = await res.json();
+      let jpy = null;
+      if (d.rates && d.rates.JPY) jpy = d.rates.JPY;
+      if (d.usd && d.usd.jpy) jpy = d.usd.jpy;
+      if (!jpy) continue;
+      const v = Math.round(jpy * 1000) / 1000;
+      $("entry").value = String(v);
+      setExit(v);
+      $("rateHint").textContent = "取得 " + v + "円/$";
+      calc();
+      return;
+    } catch (e) {}
+  }
+  $("rateHint").textContent = "取得できませんでした。手入力してください。";
+}
+$("lotsIn").addEventListener("input", () => { const n = parseNum($("lotsIn").value); if (n > 0) lots = n; calc(); });
+$("clrLots").onclick = () => { $("lotsIn").value = ""; $("lotsIn").focus(); };
+$("clrEntry").onclick = () => { $("entry").value = ""; $("entry").focus(); calc(); };
+$("fetchBtn").onclick = fetchRate;
+$("exit").addEventListener("input", () => { $("exitNum").value = $("exit").value; calc(); });
+$("exitNum").addEventListener("input", () => { pinSlider(parseNum($("exitNum").value)); calc(); });
+$("entry").addEventListener("input", calc);
+$("plIn").addEventListener("focus", () => { lock = "pl"; });
+$("marginIn").addEventListener("focus", () => { lock = "margin"; });
+$("perYenIn").addEventListener("focus", () => { lock = "perYen"; });
+["plIn", "marginIn", "perYenIn"].forEach((id) => { $(id).addEventListener("blur", () => { lock = ""; calc(); }); });
+$("plIn").addEventListener("input", () => {
+  const pl = parseNum($("plIn").value); const entry = parseNum($("entry").value); const u = units();
+  if (!isFinite(pl) || !(entry > 0) || !u) return;
+  setExit(entry + pl / (u * side)); calc();
+});
+$("marginIn").addEventListener("input", () => {
+  const margin = parseNum($("marginIn").value); const entry = parseNum($("entry").value); const u = units();
+  if (!(margin > 0) || !(entry > 0) || !u) return;
+  lev = Math.round(((u * entry) / margin) * 10) / 10; if (lev <= 0) return; calc();
+});
+$("perYenIn").addEventListener("input", () => {
+  const n = parseNum($("perYenIn").value); if (!isFinite(n) || n === 0) return;
+  side = n > 0 ? 1 : -1; lots = Math.abs(n) / lotSize; $("lotsIn").value = String(lots); calc();
+});
+paint(); calc();
+</script>
 </body>
 </html>
