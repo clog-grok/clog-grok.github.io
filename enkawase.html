@@ -52,6 +52,14 @@
   .usd b { display: block; color: #e2e8f0; margin-top: 3px; font-size: .85rem; }
   .share { width: 100%; border: 0; background: #1d9bf0; color: #fff; font-weight: 700; font-size: 16px; border-radius: 12px; padding: 14px; }
   .share-hint { margin: 8px 0 0; font-size: .68rem; color: #64748b; text-align: center; }
+
+  .result .k { color: #94a3b8; font-size: .75rem; }
+  .result .row { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin: 4px 0 12px; }
+  .result input#plIn { width: 12rem; border: 0; background: transparent; color: #fff; font-size: 1.35rem; font-weight: 800; text-align: right; padding: 4px 0; outline: none; }
+  .result .yen { font-size: .9rem; color: #94a3b8; }
+  .tap { font-size: .62rem; color: #94a3b8; font-weight: 500; }
+  .rev { margin: 0 0 12px; width: 100%; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-weight: 700; font-size: .85rem; border-radius: 10px; padding: 10px; }
+  .rev:active { background: #334155; }
 </style>
 </head>
 <body>
@@ -110,6 +118,9 @@
     </div>
     <div class="alert" id="alertBox"></div>
     <div class="result">
+      <div class="k">想定損益 <span class="tap">数字を変えると想定レートが動きます</span></div>
+      <div class="row"><input id="plIn" type="text" inputmode="decimal" value=""><span class="yen">円</span></div>
+      <button type="button" class="rev" id="revBtn">この損益で想定レートを逆算</button>
       <div class="k">円評価</div>
       <div class="v" id="finalYen">—</div>
       <div class="usd">
@@ -126,6 +137,7 @@
 const $ = (id) => document.getElementById(id);
 const STORE = "enkawase-v1";
 let unit = "man";
+let lock = "";
 const MAN_CHIPS = [[100, "100万"], [500, "500万"], [1000, "1000万"]];
 const OKU_CHIPS = [[10000, "1億"], [100000, "10億"], [1000000, "100億"]];
 const CHG_CHIPS = [-20, -10, 0, 10, 20];
@@ -136,6 +148,40 @@ function yenMan(n) {
   return Math.round(n).toLocaleString("ja-JP") + "万円";
 }
 function signedMan(n) { return (n >= 0 ? "+" : "−") + yenMan(Math.abs(n)); }
+
+function parseNum(s) {
+  if (s == null || s === "") return NaN;
+  const n = parseFloat(String(s).replace(/,/g, "").replace(/−/g, "-").replace(/＋/g, "+"));
+  return n;
+}
+function signedCommaYen(n) {
+  if (!isFinite(n)) return "";
+  const sign = n > 0 ? "+" : n < 0 ? "-" : "";
+  return sign + Math.round(Math.abs(n)).toLocaleString("en-US");
+}
+function setTgt(v) {
+  if (!(v > 0)) return;
+  const n = Math.round(v * 1000) / 1000;
+  $("tgtNum").value = String(n);
+  $("tgt").value = String(Math.max(100, Math.min(200, Math.round(n))));
+}
+function reverseFromPl() {
+  const assetMan = toMan();
+  const now = parseFloat($("nowRate").value) || 0;
+  const chg = chgVal();
+  const plYen = parseNum($("plIn").value);
+  if (!(assetMan > 0) || !(now > 0) || !isFinite(plYen)) return false;
+  const usd = (assetMan * 10000) / now;
+  const usdNext = usd * (1 + chg / 100);
+  if (!(usdNext > 0)) return false;
+  const targetFinalYen = assetMan * 10000 + plYen;
+  const tgt = targetFinalYen / usdNext;
+  if (!(tgt > 0)) return false;
+  lock = "pl";
+  setTgt(tgt);
+  calc();
+  return true;
+}
 function tgtVal() { const n = parseFloat($("tgtNum").value); return n > 0 ? n : parseFloat($("tgt").value); }
 function chgVal() { const n = parseFloat($("chgNum").value); return isFinite(n) ? n : 0; }
 function renderAssetChips() {
@@ -184,6 +230,7 @@ function load() {
 }
 function resetAll() {
   try { localStorage.removeItem(STORE); } catch (e) {}
+  lock = "";
   unit = "man";
   $("asset").value = "100"; $("nowRate").value = "157"; $("tgtNum").value = "157"; $("tgt").value = "157"; $("chgNum").value = "0"; $("chg").value = "0";
   $("rateHint").textContent = "取得は公開の為替データです。ずれたら手入力。";
@@ -196,7 +243,7 @@ function calc() {
   const tgt = tgtVal();
   const chg = chgVal();
   if (assetMan <= 0 || now <= 0 || tgt <= 0) {
-    $("finalYen").textContent = "—"; $("alertBox").className = "alert"; $("alertBox").textContent = "資産額と為替レートを入れてください"; return;
+    $("finalYen").textContent = "—"; if (lock !== "pl") $("plIn").value = ""; $("alertBox").className = "alert"; $("alertBox").textContent = "資産額と為替レートを入れてください"; return;
   }
   const usd = (assetMan * 10000) / now;
   const usdNext = usd * (1 + chg / 100);
@@ -205,6 +252,8 @@ function calc() {
   const asOnly = (usdNext * now) / 10000 - assetMan;
   const both = finalMan - assetMan;
   const pct = (both / assetMan) * 100;
+  const plYen = both * 10000;
+  if (lock !== "pl") $("plIn").value = signedCommaYen(plYen);
   $("finalYen").textContent = yenMan(finalMan);
   $("usdNow").textContent = "$" + Math.round(usd).toLocaleString("en-US");
   $("usdNext").textContent = "$" + Math.round(usdNext).toLocaleString("en-US");
@@ -245,6 +294,11 @@ $("tgt").addEventListener("input", () => { $("tgtNum").value = $("tgt").value; c
 $("tgtNum").addEventListener("input", () => { const v = parseFloat($("tgtNum").value); if (v > 0) $("tgt").value = String(Math.max(100, Math.min(200, Math.round(v)))); calc(); });
 $("chg").addEventListener("input", () => { $("chgNum").value = $("chg").value; renderChgChips(); calc(); });
 $("chgNum").addEventListener("input", () => { const v = parseFloat($("chgNum").value); if (isFinite(v)) $("chg").value = String(Math.max(-200, Math.min(200, v))); renderChgChips(); calc(); });
+
+$("plIn").addEventListener("focus", () => { lock = "pl"; });
+$("plIn").addEventListener("blur", () => { lock = ""; calc(); });
+$("plIn").addEventListener("input", () => { reverseFromPl(); });
+$("revBtn").onclick = () => { if (!reverseFromPl()) { $("alertBox").className = "alert"; $("alertBox").textContent = "想定損益と資産額・基準レートを入れてください"; } };
 $("shareBtn").onclick = async () => {
   const text = "資産額 " + yenMan(toMan()) + "（基準 " + $("nowRate").value + "円/$）\n想定 " + tgtVal() + "円/$ ・値動き " + chgVal() + "%\n→ " + $("finalYen").textContent + "\n" + $("alertBox").innerText.replace(/\s+/g, " ");
   if (navigator.share) {
