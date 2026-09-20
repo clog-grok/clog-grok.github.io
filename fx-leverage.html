@@ -16,7 +16,8 @@
   .switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 16px 10px; background: #0f172a; }
   .switch a { text-align: center; text-decoration: none; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; padding: 8px; font-size: .78rem; font-weight: 700; }
   .switch a.on { background: #fff; color: #0f172a; border-color: #fff; }
-  .list { display: block; text-align: center; background: #0f172a; color: #94a3b8; font-size: .72rem; padding: 0 16px 12px; text-decoration: none; }
+  .listbar { display: flex; justify-content: center; align-items: center; gap: 16px; background: #0f172a; padding: 0 16px 12px; }
+  .listbar a, .listbar button { background: none; border: 0; color: #94a3b8; font-size: .72rem; text-decoration: none; padding: 0; }
   .pad { padding: 16px; }
   label { display: block; font-size: .78rem; font-weight: 700; margin-bottom: 6px; }
   .field { margin-bottom: 14px; }
@@ -62,7 +63,10 @@
     <a href="./enkawase.html">円高ショック</a>
     <a class="on" href="./fx-leverage.html">FX損益</a>
   </nav>
-  <a class="list" href="./">一覧</a>
+  <div class="listbar">
+    <a href="./">一覧</a>
+    <button type="button" id="resetBtn" aria-label="リセット">↺</button>
+  </div>
   <div class="pad">
     <div class="field"><label>1ロット</label><div class="seg two" id="sizeSeg"></div></div>
     <div class="field"><label for="lotsIn">ロット数</label><div class="box"><input id="lotsIn" type="text" inputmode="decimal" value="1"><span class="unit">ロット</span><button type="button" class="x" id="clrLots">×</button></div><p class="hint" id="unitsHint"></p></div>
@@ -76,6 +80,7 @@
 </div>
 <script>
 const $ = (id) => document.getElementById(id);
+const STORE = "fxpl-v1";
 const SIZES = [1000, 10000];
 const LEVS = [1, 10, 25];
 let lotSize = 10000;
@@ -110,6 +115,32 @@ function paint() {
 }
 function pinSlider(v) { if (isFinite(v)) $("exit").value = String(Math.max(100, Math.min(200, v))); }
 function setExit(v) { if (!isFinite(v)) return; const n = Math.round(v * 1000) / 1000; $("exitNum").value = String(n); pinSlider(n); }
+function save() {
+  try {
+    localStorage.setItem(STORE, JSON.stringify({ lotSize, lots, side, lev, entry: $("entry").value, exit: $("exitNum").value }));
+  } catch (e) {}
+}
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE) || "null");
+    if (!s) return;
+    if (s.lotSize === 1000 || s.lotSize === 10000) lotSize = s.lotSize;
+    if (s.lots > 0) { lots = s.lots; $("lotsIn").value = String(s.lots); }
+    if (s.side === 1 || s.side === -1) side = s.side;
+    if (s.lev > 0) lev = s.lev;
+    if (s.entry != null) $("entry").value = s.entry;
+    if (s.exit != null) setExit(parseNum(s.exit));
+  } catch (e) {}
+}
+function resetAll() {
+  try { localStorage.removeItem(STORE); } catch (e) {}
+  lotSize = 10000; lots = 1; side = 1; lev = 25; lock = "";
+  $("lotsIn").value = "1";
+  $("entry").value = "157";
+  setExit(140);
+  $("rateHint").textContent = "取得は公開の為替データです。ずれたら手入力。";
+  calc();
+}
 function calc() {
   paint();
   const u = units();
@@ -131,6 +162,7 @@ function calc() {
   const box = $("alertBox");
   if (Math.abs(pl) < 0.5) { box.className = "alert"; box.textContent = "想定は約定と同じです。"; }
   else { box.className = "alert " + (pl < 0 ? "loss" : "gain"); box.textContent = (side === 1 ? "買い" : "売り") + " " + lots + "ロット（" + comma(u) + "通貨） / " + entry + " → " + exit; }
+  save();
 }
 async function fetchRate() {
   $("rateHint").textContent = "取得中…";
@@ -179,6 +211,8 @@ $("perYenIn").addEventListener("input", () => {
   const n = parseNum($("perYenIn").value); if (!isFinite(n) || n === 0) return;
   side = n > 0 ? 1 : -1; lots = Math.abs(n) / lotSize; $("lotsIn").value = String(lots); calc();
 });
+$("resetBtn").onclick = resetAll;
+load();
 paint(); calc();
 </script>
 </body>
