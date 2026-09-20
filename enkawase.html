@@ -171,11 +171,12 @@ function reverseFromPl() {
   const chg = chgVal();
   const plYen = parseNum($("plIn").value);
   if (!(assetMan > 0) || !(now > 0) || !isFinite(plYen)) return false;
-  const usd = (assetMan * 10000) / now;
-  const usdNext = usd * (1 + chg / 100);
-  if (!(usdNext > 0)) return false;
-  const targetFinalYen = assetMan * 10000 + plYen;
-  const tgt = targetFinalYen / usdNext;
+  const assetYen = assetMan * 10000;
+  const chgFactor = 1 + chg / 100;
+  if (!(chgFactor > 0)) return false;
+  // 1円の差 = 資産の1%。 final = asset * (1+(tgt-now)/100) * (1+chg/100)
+  const ratio = (1 + plYen / assetYen) / chgFactor;
+  const tgt = now + 100 * (ratio - 1);
   if (!(tgt > 0)) return false;
   lock = "pl";
   setTgt(tgt);
@@ -245,11 +246,16 @@ function calc() {
   if (assetMan <= 0 || now <= 0 || tgt <= 0) {
     $("finalYen").textContent = "—"; if (lock !== "pl") $("plIn").value = ""; $("alertBox").className = "alert"; $("alertBox").textContent = "資産額と為替レートを入れてください"; return;
   }
-  const usd = (assetMan * 10000) / now;
+  // 損益: 1円のレート差 = 資産の1%（例: 500万円・157→156 → −5万円）
+  // 値動き%は別レイヤ（乗算）。ドル建表示は参考（基準円÷基準レート）
+  const assetYen = assetMan * 10000;
+  const usd = assetYen / now;
   const usdNext = usd * (1 + chg / 100);
-  const finalMan = (usdNext * tgt) / 10000;
-  const fxOnly = (usd * tgt) / 10000 - assetMan;
-  const asOnly = (usdNext * now) / 10000 - assetMan;
+  const fxFactor = 1 + (tgt - now) / 100;
+  const chgFactor = 1 + chg / 100;
+  const finalMan = assetMan * fxFactor * chgFactor;
+  const fxOnly = assetMan * (tgt - now) / 100;
+  const asOnly = assetMan * chg / 100;
   const both = finalMan - assetMan;
   const pct = (both / assetMan) * 100;
   const plYen = both * 10000;
