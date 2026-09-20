@@ -28,11 +28,38 @@
   header {
     background: #0f172a;
     color: #fff;
-    padding: 16px;
+    padding: 16px 16px 10px;
     text-align: center;
   }
   header h1 { margin: 0; font-size: 1.15rem; }
   header p { margin: 6px 0 0; font-size: .78rem; color: #cbd5e1; }
+  .switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 0 16px 10px;
+    background: #0f172a;
+  }
+  .switch a {
+    text-align: center;
+    text-decoration: none;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: .78rem;
+    font-weight: 700;
+  }
+  .switch a.on { background: #fff; color: #0f172a; border-color: #fff; }
+  .list {
+    display: block;
+    text-align: center;
+    background: #0f172a;
+    color: #94a3b8;
+    font-size: .72rem;
+    padding: 0 16px 12px;
+    text-decoration: none;
+  }
   .pad { padding: 16px; }
   label { display: block; font-size: .78rem; font-weight: 700; margin-bottom: 6px; }
   .field { margin-bottom: 14px; }
@@ -205,6 +232,11 @@
     <h1>円高ショック計算機</h1>
     <p>ドル建て資産の為替リスクを体感</p>
   </header>
+  <nav class="switch">
+    <a class="on" href="./enkawase.html">円高ショック</a>
+    <a href="./fx-leverage.html">FX損益</a>
+  </nav>
+  <a class="list" href="./">一覧</a>
   <div class="pad">
     <div class="field">
       <label for="asset">資産額（円）</label>
