@@ -207,7 +207,7 @@
   </header>
   <div class="pad">
     <div class="field">
-      <label for="asset">いまの円評価</label>
+      <label for="asset">資産額（円）</label>
       <div class="seg" role="group">
         <button type="button" id="uMan" class="on">万円</button>
         <button type="button" id="uOku">億円</button>
@@ -219,9 +219,8 @@
       </div>
       <div class="chips" id="assetChips"></div>
     </div>
-
     <div class="field">
-      <label for="nowRate">いまのドル円</label>
+      <label for="nowRate">基準レート</label>
       <div class="box">
         <input id="nowRate" type="number" inputmode="decimal" value="157">
         <span class="unit">円/$</span>
@@ -230,12 +229,11 @@
       </div>
       <p class="hint" id="rateHint">取得は公開の為替データです。ずれたら手入力。</p>
     </div>
-
     <div class="sim">
       <h2>想定</h2>
       <div class="field">
         <div class="sim-row">
-          <label for="tgtNum">想定のドル円</label>
+          <label for="tgtNum">想定レート</label>
           <div class="numbox">
             <input id="tgtNum" type="number" inputmode="decimal" step="0.1" value="157">
             <span class="unit">円/$</span>
@@ -246,7 +244,7 @@
       </div>
       <div class="field" style="margin-bottom:0">
         <div class="sim-row">
-          <label for="chgNum">資産の変化</label>
+          <label for="chgNum">値動き（為替以外）</label>
           <div class="numbox">
             <input id="chgNum" type="number" inputmode="decimal" value="0">
             <span class="unit">%</span>
@@ -257,29 +255,25 @@
         <div class="chips" id="chgChips"></div>
       </div>
     </div>
-
     <div class="alert" id="alertBox"></div>
     <div class="result">
-      <div class="k">想定後の円評価</div>
+      <div class="k">円に直すと</div>
       <div class="v" id="finalYen">—</div>
       <div class="usd">
-        <div>いまのドル建<b id="usdNow">—</b></div>
+        <div>基準のドル建<b id="usdNow">—</b></div>
         <div>想定のドル建<b id="usdNext">—</b></div>
       </div>
     </div>
-
     <button type="button" class="share" id="shareBtn">共有</button>
     <p class="share-hint">スマホでは共有シートが開きます。</p>
   </div>
 </div>
-
 <script>
 const $ = (id) => document.getElementById(id);
 let unit = "man";
 const MAN_CHIPS = [[100, "100万"], [500, "500万"], [1000, "1000万"]];
 const OKU_CHIPS = [[10000, "1億"], [100000, "10億"], [1000000, "100億"]];
 const CHG_CHIPS = [-20, -10, 0, 10, 20];
-
 function toMan() {
   const n = parseFloat($("asset").value) || 0;
   return unit === "oku" ? n * 10000 : n;
@@ -300,7 +294,6 @@ function chgVal() {
   const n = parseFloat($("chgNum").value);
   return isFinite(n) ? n : 0;
 }
-
 function renderAssetChips() {
   const host = $("assetChips");
   host.innerHTML = "";
@@ -325,7 +318,6 @@ function renderAssetChips() {
     host.appendChild(b);
   });
 }
-
 function renderChgChips() {
   const host = $("chgChips");
   host.innerHTML = "";
@@ -344,27 +336,23 @@ function renderChgChips() {
     host.appendChild(b);
   });
 }
-
 function paintUnit() {
   $("uMan").className = unit === "man" ? "on" : "";
   $("uOku").className = unit === "oku" ? "on" : "";
   $("unitLab").textContent = unit === "oku" ? "億円" : "万円";
 }
-
 function calc() {
   paintUnit();
   const assetMan = toMan();
   const now = parseFloat($("nowRate").value) || 0;
   const tgt = tgtVal();
   const chg = chgVal();
-
   if (assetMan <= 0 || now <= 0 || tgt <= 0) {
     $("finalYen").textContent = "—";
     $("alertBox").className = "alert";
-    $("alertBox").textContent = "円評価と、いまのドル円を入れてください";
+    $("alertBox").textContent = "資産額と基準レートを入れてください";
     return;
   }
-
   const usd = (assetMan * 10000) / now;
   const usdNext = usd * (1 + chg / 100);
   const finalMan = (usdNext * tgt) / 10000;
@@ -372,23 +360,20 @@ function calc() {
   const asOnly = (usdNext * now) / 10000 - assetMan;
   const both = finalMan - assetMan;
   const pct = (both / assetMan) * 100;
-
   $("finalYen").textContent = yenMan(finalMan);
   $("usdNow").textContent = "$" + Math.round(usd).toLocaleString("en-US");
   $("usdNext").textContent = "$" + Math.round(usdNext).toLocaleString("en-US");
-
   const box = $("alertBox");
   if (Math.abs(both) < 0.05) {
     box.className = "alert";
-    box.textContent = "想定はいまと同じです。";
+    box.textContent = "想定は基準と同じです。";
   } else {
     box.className = "alert " + (both < 0 ? "loss" : "gain");
     box.innerHTML =
-      "為替だけ " + signedMan(fxOnly) + " / 資産だけ " + signedMan(asOnly) +
+      "為替だけ " + signedMan(fxOnly) + " / 値動きだけ " + signedMan(asOnly) +
       "<div class=\"big\">合計 " + signedMan(both) + "（" + (pct >= 0 ? "+" : "") + pct.toFixed(1) + "%）</div>";
   }
 }
-
 async function fetchRate() {
   $("rateHint").textContent = "取得中…";
   const urls = [
@@ -415,7 +400,6 @@ async function fetchRate() {
   }
   $("rateHint").textContent = "取得できませんでした。手入力してください。";
 }
-
 $("uMan").onclick = () => {
   const man = toMan();
   unit = "man";
@@ -433,7 +417,6 @@ $("uOku").onclick = () => {
 $("clrAsset").onclick = () => { $("asset").value = ""; $("asset").focus(); renderAssetChips(); calc(); };
 $("clrRate").onclick = () => { $("nowRate").value = ""; $("nowRate").focus(); calc(); };
 $("fetchBtn").onclick = fetchRate;
-
 $("tgt").addEventListener("input", () => {
   $("tgtNum").value = $("tgt").value;
   calc();
@@ -454,11 +437,10 @@ $("chgNum").addEventListener("input", () => {
   renderChgChips();
   calc();
 });
-
 $("shareBtn").onclick = async () => {
   const text =
-    "円評価 " + yenMan(toMan()) + "（いま " + $("nowRate").value + "円/$）\n" +
-    "想定 " + tgtVal() + "円/$ ・資産 " + chgVal() + "%\n" +
+    "資産額 " + yenMan(toMan()) + "（基準 " + $("nowRate").value + "円/$）\n" +
+    "想定 " + tgtVal() + "円/$ ・値動き " + chgVal() + "%\n" +
     "→ " + $("finalYen").textContent + "\n" +
     $("alertBox").innerText.replace(/\s+/g, " ");
   if (navigator.share) {
@@ -473,12 +455,10 @@ $("shareBtn").onclick = async () => {
   $("shareBtn").textContent = "コピーした";
   setTimeout(() => { $("shareBtn").textContent = "共有"; }, 1400);
 };
-
 ["asset", "nowRate"].forEach((id) => $(id).addEventListener("input", () => {
   renderAssetChips();
   calc();
 }));
-
 renderAssetChips();
 renderChgChips();
 calc();
