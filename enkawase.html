@@ -1,1 +1,482 @@
-PLACEHOLDER_LOAD_FROM_DISK
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>円高ショック計算機</title>
+<meta name="description" content="ドル建て資産の為替リスクを体感">
+<meta name="tool-tag" content="金融">
+<script>(function(){try{var t=localStorage.getItem("fx-theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();</script>
+<style>
+
+  :root {
+    --page-bg: #e2e8f0;
+    --text: #1e293b;
+    --app-bg: #fff;
+    --app-shadow: 0 8px 24px rgba(15,23,42,.15);
+    --header-bg: #0f172a;
+    --header-text: #fff;
+    --header-sub: #cbd5e1;
+    --tab-bg: #0f172a;
+    --tab-text: #94a3b8;
+    --tab-border: #334155;
+    --tab-on-bg: #fff;
+    --tab-on-text: #0f172a;
+    --tab-on-border: #fff;
+    --label: #1e293b;
+    --muted: #64748b;
+    --border: #cbd5e1;
+    --input-bg: #f8fafc;
+    --input-text: #1e293b;
+    --chip-bg: #fff;
+    --chip-text: #475569;
+    --chip-on-bg: #0f172a;
+    --chip-on-text: #fff;
+    --chip-on-border: #0f172a;
+    --seg-bg: #fff;
+    --seg-text: #64748b;
+    --seg-on-bg: #0f172a;
+    --seg-on-text: #fff;
+    --seg-on-border: #0f172a;
+    --btn-soft: #e2e8f0;
+    --btn-soft-text: #334155;
+    --sim-bg: #f1f5f9;
+    --numbox-bg: #fff;
+    --range-track: #cbd5e1;
+    --range-thumb: #0f172a;
+    --alert-bg: #f8fafc;
+    --alert-border: #94a3b8;
+    --alert-loss-bg: #fef2f2;
+    --alert-loss-border: #ef4444;
+    --alert-loss-text: #991b1b;
+    --alert-gain-bg: #ecfdf5;
+    --alert-gain-border: #10b981;
+    --alert-gain-text: #065f46;
+    --result-bg: #0f172a;
+    --result-text: #fff;
+    --result-muted: #94a3b8;
+    --result-line: #334155;
+    --result-em: #e2e8f0;
+    --rev-bg: #1e293b;
+    --rev-border: #334155;
+    --rev-text: #e2e8f0;
+    --share: #1d9bf0;
+    --theme-btn: rgba(255,255,255,.12);
+    --theme-btn-hover: rgba(255,255,255,.22);
+    --accent: #58a6ff;
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0d1117;
+    --text: #e6edf3;
+    --app-bg: #161b22;
+    --app-shadow: 0 8px 28px rgba(0,0,0,.45);
+    --header-bg: #0d1117;
+    --header-text: #f0f6fc;
+    --header-sub: #8b949e;
+    --tab-bg: #0d1117;
+    --tab-text: #8b949e;
+    --tab-border: #30363d;
+    --tab-on-bg: #21262d;
+    --tab-on-text: #f0f6fc;
+    --tab-on-border: #30363d;
+    --label: #e6edf3;
+    --muted: #8b949e;
+    --border: #30363d;
+    --input-bg: #0d1117;
+    --input-text: #f0f6fc;
+    --chip-bg: #21262d;
+    --chip-text: #c9d1d9;
+    --chip-on-bg: #1f6feb;
+    --chip-on-text: #fff;
+    --chip-on-border: #58a6ff;
+    --seg-bg: #21262d;
+    --seg-text: #8b949e;
+    --seg-on-bg: #1f6feb;
+    --seg-on-text: #fff;
+    --seg-on-border: #58a6ff;
+    --btn-soft: #21262d;
+    --btn-soft-text: #c9d1d9;
+    --sim-bg: #0d1117;
+    --numbox-bg: #161b22;
+    --range-track: #30363d;
+    --range-thumb: #58a6ff;
+    --alert-bg: #21262d;
+    --alert-border: #484f58;
+    --alert-loss-bg: #3d1214;
+    --alert-loss-border: #f85149;
+    --alert-loss-text: #ffb4ae;
+    --alert-gain-bg: #0d2818;
+    --alert-gain-border: #3fb950;
+    --alert-gain-text: #aff5b4;
+    --result-bg: #0d1117;
+    --result-text: #f0f6fc;
+    --result-muted: #8b949e;
+    --result-line: #30363d;
+    --result-em: #e6edf3;
+    --rev-bg: #21262d;
+    --rev-border: #30363d;
+    --rev-text: #e6edf3;
+    --share: #1d9bf0;
+    --theme-btn: rgba(255,255,255,.1);
+    --theme-btn-hover: rgba(255,255,255,.18);
+    --accent: #58a6ff;
+  }
+  body { margin: 0; padding: 12px; background: var(--page-bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; overflow-x: hidden; }
+  .app { width: 100%; max-width: 420px; margin: 0 auto; background: var(--app-bg); border-radius: 16px; overflow: hidden; box-shadow: var(--app-shadow); }
+  header { position: relative; background: var(--header-bg); color: var(--header-text); padding: 16px 44px 10px; text-align: center; }
+  header h1 { margin: 0; font-size: 1.15rem; }
+  header p { margin: 6px 0 0; font-size: .78rem; color: var(--header-sub); }
+  .theme-btn { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 0; border-radius: 10px; background: var(--theme-btn); color: var(--header-text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+  .theme-btn:hover { background: var(--theme-btn-hover); }
+  .theme-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  html[data-theme="dark"] .theme-btn .ico-moon { display: none; }
+  html:not([data-theme="dark"]) .theme-btn .ico-sun { display: none; }
+  .switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 16px 14px; background: var(--tab-bg); }
+  .switch a { text-align: center; text-decoration: none; color: var(--tab-text); border: 1px solid var(--tab-border); border-radius: 8px; padding: 8px; font-size: .78rem; font-weight: 700; }
+  .switch a.on { background: var(--tab-on-bg); color: var(--tab-on-text); border-color: var(--tab-on-border); }
+  .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .foot a, .foot button { background: none; border: 0; color: var(--muted); font-size: .78rem; text-decoration: none; padding: 10px 4px; }
+  .pad { padding: 16px; }
+  label { display: block; font-size: .78rem; font-weight: 700; margin-bottom: 6px; color: var(--label); }
+  .field { margin-bottom: 14px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+  .seg button { border: 1px solid var(--border); background: var(--seg-bg); border-radius: 8px; padding: 8px; font-size: .78rem; font-weight: 700; color: var(--seg-text); }
+  .seg button.on { background: var(--seg-on-bg); color: var(--seg-on-text); border-color: var(--seg-on-border); }
+  .box { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--input-bg); padding: 0 8px 0 12px; color: var(--input-text); }
+  .box input { flex: 1; min-width: 0; border: 0; background: transparent; font-size: 16px; font-weight: 700; padding: 12px 0; text-align: right; outline: none; color: inherit; }
+  .unit { margin: 0 6px; color: var(--muted); font-size: .78rem; white-space: nowrap; }
+  .x, .get { border: 0; background: var(--btn-soft); color: var(--btn-soft-text); border-radius: 8px; width: 36px; height: 36px; font-size: 16px; flex: 0 0 36px; }
+  .get { width: auto; padding: 0 10px; font-size: .75rem; font-weight: 700; margin-left: 4px; }
+  .hint { margin: 6px 0 0; font-size: .68rem; color: var(--muted); line-height: 1.45; }
+  .chips { display: flex; flex-wrap: nowrap; gap: 6px; margin-top: 8px; }
+  .chips button { flex: 1; min-width: 0; border: 1px solid var(--border); background: var(--chip-bg); border-radius: 999px; padding: 6px 0; font-size: .65rem; color: var(--chip-text); white-space: nowrap; }
+  .chips button.on { background: var(--chip-on-bg); color: var(--chip-on-text); border-color: var(--chip-on-border); }
+  .sim { background: var(--sim-bg); border-radius: 12px; padding: 14px 12px; margin-bottom: 14px; border: 1px solid transparent; }
+  html[data-theme="dark"] .sim { border-color: var(--border); }
+  .sim h2 { margin: 0 0 12px; font-size: .88rem; color: var(--label); }
+  .sim-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 8px; }
+  .numbox { display: flex; align-items: center; background: var(--numbox-bg); border: 1px solid var(--border); border-radius: 8px; padding: 0 8px; color: var(--input-text); }
+  .numbox input { width: 72px; border: 0; background: transparent; font-size: 16px; font-weight: 800; text-align: right; padding: 8px 0; outline: none; color: inherit; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: var(--range-track); border-radius: 3px; margin: 8px 0; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--range-thumb); }
+  input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border: 0; border-radius: 50%; background: var(--range-thumb); }
+  .ends { display: flex; justify-content: space-between; font-size: .65rem; color: var(--muted); }
+  .alert { border-radius: 12px; padding: 12px; text-align: center; font-weight: 700; margin-bottom: 12px; border-left: 4px solid var(--alert-border); background: var(--alert-bg); color: var(--text); }
+  .alert.loss { background: var(--alert-loss-bg); border-color: var(--alert-loss-border); color: var(--alert-loss-text); }
+  .alert.gain { background: var(--alert-gain-bg); border-color: var(--alert-gain-border); color: var(--alert-gain-text); }
+  .alert .big { font-size: 1.2rem; margin: 4px 0; }
+  .result { background: var(--result-bg); color: var(--result-text); border-radius: 12px; padding: 16px 12px; text-align: center; margin-bottom: 12px; border: 1px solid transparent; }
+  html[data-theme="dark"] .result { border-color: var(--border); }
+  .result .k { color: var(--result-muted); font-size: .75rem; }
+  .result .v { font-size: 1.7rem; font-weight: 800; margin: 4px 0 10px; }
+  .usd { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid var(--result-line); padding-top: 10px; font-size: .72rem; color: var(--result-muted); }
+  .usd b { display: block; color: var(--result-em); margin-top: 3px; font-size: .85rem; }
+  .share { width: 100%; border: 0; background: var(--share); color: #fff; font-weight: 700; font-size: 16px; border-radius: 12px; padding: 14px; }
+  .share-hint { margin: 8px 0 0; font-size: .68rem; color: var(--muted); text-align: center; }
+  .result .row { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin: 4px 0 12px; }
+  .result input#plIn { width: 12rem; border: 0; background: transparent; color: var(--result-text); font-size: 1.35rem; font-weight: 800; text-align: right; padding: 4px 0; outline: none; }
+  .result .yen { font-size: .9rem; color: var(--result-muted); }
+  .tap { font-size: .62rem; color: var(--result-muted); font-weight: 500; }
+  .rev { margin: 0 0 12px; width: 100%; border: 1px solid var(--rev-border); background: var(--rev-bg); color: var(--rev-text); font-weight: 700; font-size: .85rem; border-radius: 10px; padding: 10px; }
+  .rev:active { filter: brightness(1.15); }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <button type="button" class="theme-btn" id="themeBtn" aria-label="テーマ切替">
+      <svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z"/></svg>
+      <svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+    <h1>円高ショック計算機</h1>
+    <p>ドル建て資産の為替リスクを体感</p>
+  </header>
+  <nav class="switch">
+    <a class="on" href="./enkawase.html">円高ショック</a>
+    <a href="./fx-leverage.html">FX損益</a>
+  </nav>
+  <div class="pad">
+    <div class="field">
+      <label for="asset">ドル建て資産額（円）</label>
+      <div class="seg" role="group">
+        <button type="button" id="uMan" class="on">万円</button>
+        <button type="button" id="uOku">億円</button>
+      </div>
+      <div class="box">
+        <input id="asset" type="number" inputmode="decimal" value="100">
+        <span class="unit" id="unitLab">万円</span>
+        <button type="button" class="x" id="clrAsset" aria-label="消す">×</button>
+      </div>
+      <div class="chips" id="assetChips"></div>
+    </div>
+    <div class="field">
+      <label for="nowRate">為替レート（基準）</label>
+      <div class="box">
+        <input id="nowRate" type="number" inputmode="decimal" value="157">
+        <span class="unit">円/$</span>
+        <button type="button" class="x" id="clrRate" aria-label="消す">×</button>
+        <button type="button" class="get" id="fetchBtn">取得</button>
+      </div>
+      <p class="hint" id="rateHint">取得は公開の為替データです。ずれたら手入力。</p>
+    </div>
+    <div class="sim">
+      <h2>想定</h2>
+      <div class="field">
+        <div class="sim-row">
+          <label for="tgtNum">為替レート（想定）</label>
+          <div class="numbox"><input id="tgtNum" type="number" inputmode="decimal" step="0.1" value="157"><span class="unit">円/$</span></div>
+        </div>
+        <input id="tgt" type="range" min="100" max="200" step="1" value="157">
+        <div class="ends"><span>100</span><span>150</span><span>200</span></div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <div class="sim-row">
+          <label for="chgNum">値動き（為替以外）</label>
+          <div class="numbox"><input id="chgNum" type="number" inputmode="decimal" value="0"><span class="unit">%</span></div>
+        </div>
+        <input id="chg" type="range" min="-200" max="200" step="1" value="0">
+        <div class="ends"><span>-200%</span><span>0</span><span>+200%</span></div>
+        <div class="chips" id="chgChips"></div>
+      </div>
+    </div>
+    <div class="alert" id="alertBox"></div>
+    <div class="result">
+      <div class="k">想定損益 <span class="tap">数字を変えると想定レートが動きます</span></div>
+      <div class="row"><input id="plIn" type="text" inputmode="decimal" value=""><span class="yen">円</span></div>
+      <button type="button" class="rev" id="revBtn">この損益で想定レートを逆算</button>
+      <div class="k">円評価</div>
+      <div class="v" id="finalYen">—</div>
+      <div class="usd">
+        <div>基準のドル建<b id="usdNow">—</b></div>
+        <div>想定のドル建<b id="usdNext">—</b></div>
+      </div>
+    </div>
+    <button type="button" class="share" id="shareBtn">共有</button>
+    <p class="share-hint">スマホでは共有シートが開きます。</p>
+    <div class="foot"><a href="./">一覧</a><button type="button" id="resetBtn" aria-label="リセット">↺</button></div>
+  </div>
+</div>
+<script>
+
+
+(function(){
+  const KEY = "fx-theme";
+  const root = document.documentElement;
+  function systemTheme(){
+    try { return (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light"; }
+    catch (e) { return "light"; }
+  }
+  function apply(t, persist){
+    root.setAttribute("data-theme", t);
+    if (persist) { try { localStorage.setItem(KEY, t); } catch (e) {} }
+  }
+  function stored(){
+    try {
+      const t = localStorage.getItem(KEY);
+      return (t === "light" || t === "dark") ? t : null;
+    } catch (e) { return null; }
+  }
+  function cur(){ return root.getAttribute("data-theme") === "dark" ? "dark" : "light"; }
+  function syncFromPreference(){
+    const s = stored();
+    apply(s || systemTheme(), false);
+  }
+  syncFromPreference();
+  try {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => { if (!stored()) apply(systemTheme(), false); };
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+    else if (mq.addListener) mq.addListener(onChange);
+  } catch (e) {}
+  const btn = document.getElementById("themeBtn");
+  if (btn) btn.addEventListener("click", () => apply(cur() === "dark" ? "light" : "dark", true));
+})();
+
+const $ = (id) => document.getElementById(id);
+const STORE = "enkawase-v1";
+let unit = "man";
+let lock = "";
+const MAN_CHIPS = [[100, "100万"], [500, "500万"], [1000, "1000万"]];
+const OKU_CHIPS = [[10000, "1億"], [100000, "10億"], [1000000, "100億"]];
+const CHG_CHIPS = [-20, -10, 0, 10, 20];
+function toMan() { const n = parseFloat($("asset").value) || 0; return unit === "oku" ? n * 10000 : n; }
+function yenMan(n) {
+  if (!isFinite(n)) return "—";
+  if (Math.abs(n) >= 10000) return (n / 10000).toFixed(2).replace(/\.00$/, "") + "億円";
+  return Math.round(n).toLocaleString("ja-JP") + "万円";
+}
+function signedMan(n) { return (n >= 0 ? "+" : "−") + yenMan(Math.abs(n)); }
+
+function parseNum(s) {
+  if (s == null || s === "") return NaN;
+  const n = parseFloat(String(s).replace(/,/g, "").replace(/−/g, "-").replace(/＋/g, "+"));
+  return n;
+}
+function signedCommaYen(n) {
+  if (!isFinite(n)) return "";
+  const sign = n > 0 ? "+" : n < 0 ? "-" : "";
+  return sign + Math.round(Math.abs(n)).toLocaleString("en-US");
+}
+function setTgt(v) {
+  if (!(v > 0)) return;
+  const n = Math.round(v * 1000) / 1000;
+  $("tgtNum").value = String(n);
+  $("tgt").value = String(Math.max(100, Math.min(200, Math.round(n))));
+}
+function reverseFromPl() {
+  const assetMan = toMan();
+  const now = parseFloat($("nowRate").value) || 0;
+  const chg = chgVal();
+  const plYen = parseNum($("plIn").value);
+  if (!(assetMan > 0) || !(now > 0) || !isFinite(plYen)) return false;
+  const assetYen = assetMan * 10000;
+  const chgFactor = 1 + chg / 100;
+  if (!(chgFactor > 0)) return false;
+  // 1円の差 = 資産の1%。 final = asset * (1+(tgt-now)/100) * (1+chg/100)
+  const ratio = (1 + plYen / assetYen) / chgFactor;
+  const tgt = now + 100 * (ratio - 1);
+  if (!(tgt > 0)) return false;
+  lock = "pl";
+  setTgt(tgt);
+  calc();
+  return true;
+}
+function tgtVal() { const n = parseFloat($("tgtNum").value); return n > 0 ? n : parseFloat($("tgt").value); }
+function chgVal() { const n = parseFloat($("chgNum").value); return isFinite(n) ? n : 0; }
+function renderAssetChips() {
+  const host = $("assetChips"); host.innerHTML = "";
+  const list = unit === "oku" ? OKU_CHIPS : MAN_CHIPS;
+  const nowMan = toMan();
+  list.forEach(([man, lab]) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = lab;
+    if (nowMan === man) b.className = "on";
+    b.onclick = () => {
+      if (man >= 10000) { unit = "oku"; $("asset").value = String(man / 10000); }
+      else { unit = "man"; $("asset").value = String(man); }
+      renderAssetChips(); calc();
+    };
+    host.appendChild(b);
+  });
+}
+function renderChgChips() {
+  const host = $("chgChips"); host.innerHTML = "";
+  const cur = chgVal();
+  CHG_CHIPS.forEach((v) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = (v > 0 ? "+" : "") + v;
+    if (cur === v) b.className = "on";
+    b.onclick = () => { $("chgNum").value = String(v); $("chg").value = String(v); renderChgChips(); calc(); };
+    host.appendChild(b);
+  });
+}
+function paintUnit() {
+  $("uMan").className = unit === "man" ? "on" : "";
+  $("uOku").className = unit === "oku" ? "on" : "";
+  $("unitLab").textContent = unit === "oku" ? "億円" : "万円";
+}
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify({ unit, asset: $("asset").value, nowRate: $("nowRate").value, tgt: $("tgtNum").value, chg: $("chgNum").value })); } catch (e) {}
+}
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE) || "null");
+    if (!s) return;
+    if (s.unit === "oku" || s.unit === "man") unit = s.unit;
+    if (s.asset != null) $("asset").value = s.asset;
+    if (s.nowRate != null) $("nowRate").value = s.nowRate;
+    if (s.tgt != null) { $("tgtNum").value = s.tgt; const v = parseFloat(s.tgt); if (v > 0) $("tgt").value = String(Math.max(100, Math.min(200, Math.round(v)))); }
+    if (s.chg != null) { $("chgNum").value = s.chg; const v = parseFloat(s.chg); if (isFinite(v)) $("chg").value = String(Math.max(-200, Math.min(200, v))); }
+  } catch (e) {}
+}
+function resetAll() {
+  try { localStorage.removeItem(STORE); } catch (e) {}
+  lock = "";
+  unit = "man";
+  $("asset").value = "100"; $("nowRate").value = "157"; $("tgtNum").value = "157"; $("tgt").value = "157"; $("chgNum").value = "0"; $("chg").value = "0";
+  $("rateHint").textContent = "取得は公開の為替データです。ずれたら手入力。";
+  renderAssetChips(); renderChgChips(); calc();
+}
+function calc() {
+  paintUnit();
+  const assetMan = toMan();
+  const now = parseFloat($("nowRate").value) || 0;
+  const tgt = tgtVal();
+  const chg = chgVal();
+  if (assetMan <= 0 || now <= 0 || tgt <= 0) {
+    $("finalYen").textContent = "—"; if (lock !== "pl") $("plIn").value = ""; $("alertBox").className = "alert"; $("alertBox").textContent = "資産額と為替レートを入れてください"; return;
+  }
+  // 損益: 1円のレート差 = 資産の1%（例: 500万円・157→156 → −5万円）
+  // 値動き%は別レイヤ（乗算）。ドル建表示は参考（基準円÷基準レート）
+  const assetYen = assetMan * 10000;
+  const usd = assetYen / now;
+  const usdNext = usd * (1 + chg / 100);
+  const fxFactor = 1 + (tgt - now) / 100;
+  const chgFactor = 1 + chg / 100;
+  const finalMan = assetMan * fxFactor * chgFactor;
+  const fxOnly = assetMan * (tgt - now) / 100;
+  const asOnly = assetMan * chg / 100;
+  const both = finalMan - assetMan;
+  const pct = (both / assetMan) * 100;
+  const plYen = both * 10000;
+  if (lock !== "pl") $("plIn").value = signedCommaYen(plYen);
+  $("finalYen").textContent = yenMan(finalMan);
+  $("usdNow").textContent = "$" + Math.round(usd).toLocaleString("en-US");
+  $("usdNext").textContent = "$" + Math.round(usdNext).toLocaleString("en-US");
+  const box = $("alertBox");
+  if (Math.abs(both) < 0.05) { box.className = "alert"; box.textContent = "想定は基準と同じです。"; }
+  else {
+    box.className = "alert " + (both < 0 ? "loss" : "gain");
+    box.innerHTML = "為替だけ " + signedMan(fxOnly) + " / 値動きだけ " + signedMan(asOnly) + "<div class=\"big\">合計 " + signedMan(both) + "（" + (pct >= 0 ? "+" : "") + pct.toFixed(1) + "%）</div>";
+  }
+  save();
+}
+async function fetchRate() {
+  $("rateHint").textContent = "取得中…";
+  const urls = ["https://open.er-api.com/v6/latest/USD", "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json"];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) continue;
+      const d = await res.json();
+      let jpy = null;
+      if (d.rates && d.rates.JPY) jpy = d.rates.JPY;
+      if (d.usd && d.usd.jpy) jpy = d.usd.jpy;
+      if (!jpy) continue;
+      const v = Math.round(jpy * 10) / 10;
+      $("nowRate").value = v; $("tgtNum").value = v; $("tgt").value = String(Math.min(200, Math.max(100, Math.round(v))));
+      $("rateHint").textContent = "取得 " + v + "円/$";
+      calc(); return;
+    } catch (e) {}
+  }
+  $("rateHint").textContent = "取得できませんでした。手入力してください。";
+}
+$("uMan").onclick = () => { const man = toMan(); unit = "man"; $("asset").value = man ? String(man) : ""; renderAssetChips(); calc(); };
+$("uOku").onclick = () => { const man = toMan(); unit = "oku"; $("asset").value = man ? String(man / 10000) : ""; renderAssetChips(); calc(); };
+$("clrAsset").onclick = () => { $("asset").value = ""; $("asset").focus(); renderAssetChips(); calc(); };
+$("clrRate").onclick = () => { $("nowRate").value = ""; $("nowRate").focus(); calc(); };
+$("fetchBtn").onclick = fetchRate;
+$("tgt").addEventListener("input", () => { $("tgtNum").value = $("tgt").value; calc(); });
+$("tgtNum").addEventListener("input", () => { const v = parseFloat($("tgtNum").value); if (v > 0) $("tgt").value = String(Math.max(100, Math.min(200, Math.round(v)))); calc(); });
+$("chg").addEventListener("input", () => { $("chgNum").value = $("chg").value; renderChgChips(); calc(); });
+$("chgNum").addEventListener("input", () => { const v = parseFloat($("chgNum").value); if (isFinite(v)) $("chg").value = String(Math.max(-200, Math.min(200, v))); renderChgChips(); calc(); });
+
+$("plIn").addEventListener("focus", () => { lock = "pl"; });
+$("plIn").addEventListener("blur", () => { lock = ""; calc(); });
+$("plIn").addEventListener("input", () => { reverseFromPl(); });
+$("revBtn").onclick = () => { if (!reverseFromPl()) { $("alertBox").className = "alert"; $("alertBox").textContent = "想定損益と資産額・基準レートを入れてください"; } };
+$("shareBtn").onclick = async () => {
+  const text = "資産額 " + yenMan(toMan()) + "（基準 " + $("nowRate").value + "円/$）\n想定 " + tgtVal() + "円/$ ・値動き " + chgVal() + "%\n→ " + $("finalYen").textContent + "\n" + $("alertBox").innerText.replace(/\s+/g, " ");
+  if (navigator.share) {
+    try { await navigator.share({ title: "円高ショック計算機", text }); return; }
+    catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(text); } catch (e) {}
+  $("shareBtn").textContent = "コピーした";
+  setTimeout(() => { $("shareBtn").textContent = "共有"; }, 1400);
+};
+["asset", "nowRate"].forEach((id) => $(id).addEventListener("input", () => { renderAssetChips(); calc(); }));
+$("resetBtn").onclick = resetAll;
+load(); renderAssetChips(); renderChgChips(); calc();
+</script>
+</body>
+</html>
