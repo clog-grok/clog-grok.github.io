@@ -119,7 +119,7 @@ body.fs #exitFs{display:inline-flex}
   </div>
 </div>
 <section class="sheet" id="sheet">
-  <h2>ソース</h2>
+  <h2>ソース（直すとすぐ反映）</h2>
   <textarea id="src" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="ここに貼っても表示されます"></textarea>
 </section>
 <div class="toast" id="toast"></div>
@@ -218,20 +218,33 @@ body.fs #exitFs{display:inline-flex}
     exitFS();
     toast('空に戻しました');
   }
-  function show(text, label){
-    var t=text==null?src.value:text;
-    if(t!=null) src.value=t;
-    t=src.value;
-    if(!t || !t.trim()){
-      clearAll();
+  function applyView(t, label, keepSheet){
+    if(!t || !String(t).trim()){
+      if(!keepSheet) clearAll();
       return;
     }
     empty.style.display='none';
     hasContent=true;
-    fileName=label||fileName||'貼り付け';
-    nameEl.textContent=fileName;
-    sheet.classList.remove('on');
+    if(label){
+      fileName=label;
+      nameEl.textContent=fileName;
+    }
+    if(!keepSheet) sheet.classList.remove('on');
     loadHtml(t);
+  }
+  function show(text, label){
+    var t=text==null?src.value:text;
+    if(t!=null) src.value=t;
+    applyView(src.value, label||fileName||'貼り付け', false);
+  }
+  var liveTimer=null;
+  function liveFromSource(){
+    clearTimeout(liveTimer);
+    liveTimer=setTimeout(function(){
+      var t=src.value;
+      if(!t || !t.trim()) return;
+      applyView(t, fileName||'ソース', true);
+    }, 280);
   }
   function readFile(f){
     if(!f) return;
@@ -275,6 +288,8 @@ body.fs #exitFs{display:inline-flex}
   document.getElementById('clearBtn').onclick=clearAll;
   document.getElementById('fsBtn').onclick=enterFS;
   document.getElementById('exitFs').onclick=exitFS;
+  src.addEventListener('input', liveFromSource);
+  src.addEventListener('change', liveFromSource);
   document.getElementById('srcBtn').onclick=function(){
     if(document.body.classList.contains('fs')) return;
     sheet.classList.toggle('on');
@@ -286,7 +301,7 @@ body.fs #exitFs{display:inline-flex}
   });
   document.addEventListener('paste', function(e){
     if(e.target===src){
-      setTimeout(function(){ show(src.value, '貼り付け'); toast('貼り付けました'); }, 0);
+      setTimeout(function(){ applyView(src.value, '貼り付け', true); toast('貼り付けました'); }, 0);
       return;
     }
     var t=clipText(e);
