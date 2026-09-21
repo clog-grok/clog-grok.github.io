@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>HTMLプレビュー</title>
+<meta name="description" content="HTMLを貼るかファイルを開いて全画面で見る">
+<meta name="theme-color" content="#151c25">
+<style>
+:root{
+  --bg:#0f1419;--bar:#151c25;--text:#f3f6fa;--muted:#93a0b0;
+  --btn:#243041;--accent:#7dd3fc;--line:#2d3a4a;
+  --bar-h:52px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Helvetica Neue",sans-serif;
+  overflow:hidden}
+body{padding-top:env(safe-area-inset-top)}
+.bar{
+  position:fixed;z-index:5;left:0;right:0;top:env(safe-area-inset-top);
+  height:var(--bar-h);display:flex;align-items:center;gap:6px;
+  padding:0 8px;background:var(--bar);border-bottom:1px solid var(--line);
+}
+.bar b{font-size:.78rem;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:28vw}
+button,.filebtn{
+  min-height:36px;padding:0 10px;border:0;border-radius:10px;
+  background:var(--btn);color:var(--text);font:inherit;font-weight:700;font-size:.8rem;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+button.primary,.filebtn.primary{background:var(--accent);color:#082f49}
+button.ghost{background:transparent;color:var(--muted)}
+button:active,.filebtn:active{filter:brightness(1.12)}
+.filebtn{display:inline-flex;align-items:center;cursor:pointer}
+.filebtn input{display:none}
+.stage{position:fixed;left:0;right:0;bottom:0;top:calc(env(safe-area-inset-top) + var(--bar-h));background:#fff}
+iframe{width:100%;height:100%;border:0;background:#fff;display:block}
+.empty{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;padding:24px;text-align:center;background:var(--bg);color:var(--text);
+}
+.empty h1{font-size:1.05rem;margin:0}
+.empty p{margin:0;color:var(--muted);font-size:.85rem;line-height:1.5;max-width:22em}
+.sheet{
+  position:fixed;z-index:6;left:0;right:0;bottom:0;
+  height:min(52vh,420px);background:#1a222c;border-top:1px solid var(--line);
+  transform:translateY(110%);transition:transform .2s ease;display:flex;flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.sheet.on{transform:none}
+.sheet h2{margin:0;padding:10px 12px;font-size:.75rem;color:var(--muted);font-weight:600}
+textarea{
+  flex:1;width:100%;border:0;resize:none;padding:12px;
+  background:transparent;color:var(--text);
+  font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.note{margin:0;padding:8px 12px;font-size:.7rem;color:var(--muted);line-height:1.4}
+.toast{
+  position:fixed;z-index:8;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(80px);opacity:0;
+  background:#111827;color:#fff;padding:8px 14px;border-radius:999px;
+  font-size:.78rem;font-weight:700;pointer-events:none;transition:.2s ease;
+}
+.toast.on{transform:translateX(-50%);opacity:1}
+</style>
+</head>
+<body>
+<header class="bar">
+  <b id="name">HTMLプレビュー</b>
+  <button type="button" class="primary" id="paste">貼る</button>
+  <label class="filebtn"><input id="file" type="file" accept=".html,.htm,.txt,text/html,text/plain"><span>ファイル</span></label>
+  <button type="button" id="open">別タブ</button>
+  <button type="button" class="ghost" id="srcBtn">ソース</button>
+</header>
+<div class="stage">
+  <iframe id="frame" title="preview" sandbox="allow-scripts allow-forms allow-modals allow-popups"></iframe>
+  <div class="empty" id="empty">
+    <h1>貼るか、ファイルを開く</h1>
+    <p>AIが出したHTMLや、保存した.htmlをこの画面で全画面表示します。貼った直後にプレビューへ切り替わります。</p>
+    <button type="button" class="primary" id="paste2">クリップボードから貼る</button>
+    <label class="filebtn primary"><input id="file2" type="file" accept=".html,.htm,.txt,text/html,text/plain"><span>ファイルを開く</span></label>
+  </div>
+</div>
+<section class="sheet" id="sheet">
+  <h2>ソース（必要なときだけ）</h2>
+  <textarea id="src" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="ここに貼ってもプレビューされます"></textarea>
+</section>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+  var src=document.getElementById('src');
+  var frame=document.getElementById('frame');
+  var empty=document.getElementById('empty');
+  var sheet=document.getElementById('sheet');
+  var nameEl=document.getElementById('name');
+  var toastEl=document.getElementById('toast');
+  var lastUrl=null;
+  var fileName='HTMLプレビュー';
+  var toastTimer=null;
+
+  function toast(msg){
+    toastEl.textContent=msg;
+    toastEl.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){ toastEl.classList.remove('on'); }, 1800);
+  }
+
+  function revoke(){
+    if(lastUrl){ try{ URL.revokeObjectURL(lastUrl);}catch(e){} lastUrl=null; }
+  }
+
+  function preview(text, label){
+    var t=text==null?src.value:text;
+    if(t!=null) src.value=t;
+    t=src.value;
+    if(!t || !t.trim()){
+      empty.style.display='flex';
+      revoke();
+      frame.removeAttribute('src');
+      nameEl.textContent='HTMLプレビュー';
+      return;
+    }
+    empty.style.display='none';
+    revoke();
+    var blob=new Blob([t],{type:'text/html;charset=utf-8'});
+    lastUrl=URL.createObjectURL(blob);
+    frame.src=lastUrl;
+    fileName=label||fileName||'貼り付け';
+    nameEl.textContent=fileName;
+    sheet.classList.remove('on');
+  }
+
+  function readFile(f){
+    if(!f) return;
+    var ok=/\.(html?|txt)$/i.test(f.name) || /html|text/.test(f.type||'');
+    if(!ok){
+      toast('HTML / TXT を選んでください');
+      return;
+    }
+    var reader=new FileReader();
+    reader.onload=function(){
+      preview(String(reader.result||''), f.name);
+      toast(f.name+' を開きました');
+    };
+    reader.onerror=function(){ toast('ファイルを読めませんでした'); };
+    reader.readAsText(f);
+  }
+
+  function fromClipboard(){
+    if(navigator.clipboard && navigator.clipboard.readText){
+      navigator.clipboard.readText().then(function(t){
+        if(!t || !t.trim()){ toast('クリップボードが空です'); return; }
+        preview(t, '貼り付け');
+        toast('貼り付けました');
+      }).catch(function(){
+        sheet.classList.add('on');
+        src.focus();
+        toast('長押しで貼り付けてください');
+      });
+    }else{
+      sheet.classList.add('on');
+      src.focus();
+      toast('長押しで貼り付けてください');
+    }
+  }
+
+  document.getElementById('paste').onclick=fromClipboard;
+  document.getElementById('paste2').onclick=fromClipboard;
+  document.getElementById('srcBtn').onclick=function(){
+    sheet.classList.toggle('on');
+    if(sheet.classList.contains('on')) setTimeout(function(){ src.focus(); }, 50);
+  };
+  document.getElementById('open').onclick=function(){
+    var t=src.value;
+    if(!t || !t.trim()){ toast('先に貼るかファイルを開いてください'); return; }
+    var blob=new Blob([t],{type:'text/html;charset=utf-8'});
+    var u=URL.createObjectURL(blob);
+    var w=window.open(u,'_blank');
+    if(!w){
+      toast('ポップアップがブロックされました');
+      URL.revokeObjectURL(u);
+      return;
+    }
+    setTimeout(function(){ try{URL.revokeObjectURL(u);}catch(e){} }, 60000);
+  };
+  document.getElementById('file').addEventListener('change', function(e){
+    readFile(e.target.files && e.target.files[0]);
+    e.target.value='';
+  });
+  document.getElementById('file2').addEventListener('change', function(e){
+    readFile(e.target.files && e.target.files[0]);
+    e.target.value='';
+  });
+
+  document.addEventListener('paste', function(e){
+    if(e.target===src){
+      setTimeout(function(){ preview(src.value, '貼り付け'); toast('貼り付けました'); }, 0);
+      return;
+    }
+    var t=e.clipboardData && e.clipboardData.getData('text/plain');
+    if(!t || !t.trim()) return;
+    e.preventDefault();
+    preview(t, '貼り付け');
+    toast('貼り付けました');
+  });
+
+  document.addEventListener('dragover', function(e){ e.preventDefault(); });
+  document.addEventListener('drop', function(e){
+    e.preventDefault();
+    var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f) readFile(f);
+  });
+
+  empty.style.display='flex';
+})();
+</script>
+</body>
+</html>
