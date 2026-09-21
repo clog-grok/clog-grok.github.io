@@ -22,20 +22,21 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
 body{padding-top:env(safe-area-inset-top)}
 .bar{
   position:fixed;z-index:5;left:0;right:0;top:env(safe-area-inset-top);
-  height:var(--bar-h);display:flex;align-items:center;gap:6px;
+  height:var(--bar-h);display:flex;align-items:center;gap:5px;
   padding:0 8px;background:var(--bar);border-bottom:1px solid var(--line);
 }
-.bar b{font-size:.78rem;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:28vw}
+.bar b{font-size:.74rem;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:22vw}
 button,.filebtn{
-  min-height:36px;padding:0 10px;border:0;border-radius:10px;
-  background:var(--btn);color:var(--text);font:inherit;font-weight:700;font-size:.8rem;
+  min-height:36px;padding:0 9px;border:0;border-radius:10px;
+  background:var(--btn);color:var(--text);font:inherit;font-weight:700;font-size:.78rem;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
 }
 button.primary,.filebtn.primary{background:var(--accent);color:#082f49}
 button.ghost{background:transparent;color:var(--muted)}
 button:active,.filebtn:active{filter:brightness(1.12)}
-.filebtn{display:inline-flex;align-items:center;cursor:pointer}
 .filebtn input{display:none}
+.icon{width:16px;height:16px;display:block;flex:none}
 .stage{position:fixed;left:0;right:0;bottom:0;top:calc(env(safe-area-inset-top) + var(--bar-h));background:#fff}
 iframe{width:100%;height:100%;border:0;background:#fff;display:block}
 .empty{
@@ -64,6 +65,17 @@ textarea{
   font-size:.78rem;font-weight:700;pointer-events:none;transition:.2s ease;
 }
 .toast.on{transform:translateX(-50%);opacity:1}
+.exitfs{
+  display:none;position:fixed;z-index:9;
+  top:calc(8px + env(safe-area-inset-top));right:8px;
+  min-height:40px;padding:0 14px;border-radius:999px;
+  background:rgba(15,20,25,.82);color:#fff;border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(10px);font-weight:700;font-size:.82rem;
+}
+body.fs{padding-top:0}
+body.fs .bar,body.fs .sheet{display:none}
+body.fs .stage{top:0}
+body.fs .exitfs{display:inline-flex}
 </style>
 </head>
 <body>
@@ -71,9 +83,14 @@ textarea{
   <b id="name">HTML表示</b>
   <button type="button" class="primary" id="paste">貼る</button>
   <label class="filebtn"><input id="file" type="file" accept=".html,.htm,.txt,text/html,text/plain"><span>ファイル</span></label>
+  <button type="button" id="fsBtn" aria-label="全画面">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    全画面
+  </button>
   <button type="button" class="ghost" id="srcBtn">ソース</button>
-  <button type="button" id="clearBtn">消す</button>
+  <button type="button" id="clearBtn" aria-label="消す">消す</button>
 </header>
+<button type="button" class="exitfs" id="exitFs">戻る</button>
 <div class="stage">
   <iframe id="frame" title="view" sandbox="allow-scripts allow-forms allow-modals allow-popups"></iframe>
   <div class="empty" id="empty">
@@ -99,12 +116,50 @@ textarea{
   var toastTimer=null;
   var fileName='HTML表示';
   var token=0;
+  var hasContent=false;
   function toast(msg){
     toastEl.textContent=msg;
     toastEl.classList.add('on');
     clearTimeout(toastTimer);
     toastTimer=setTimeout(function(){ toastEl.classList.remove('on'); }, 1800);
   }
+  function nativeFsEl(){
+    return document.fullscreenElement||document.webkitFullscreenElement||null;
+  }
+  function reqFs(el){
+    var fn=el.requestFullscreen||el.webkitRequestFullscreen||el.webkitRequestFullScreen;
+    if(!fn) return Promise.resolve(false);
+    try{
+      var p=fn.call(el);
+      if(p&&p.then) return p.then(function(){return true;}).catch(function(){return false;});
+    }catch(e){}
+    return Promise.resolve(!!nativeFsEl());
+  }
+  function exitNativeFs(){
+    var fn=document.exitFullscreen||document.webkitExitFullscreen;
+    if(fn&&nativeFsEl()){
+      try{ fn.call(document); }catch(e){}
+    }
+  }
+  function enterFS(){
+    if(!hasContent){
+      toast('先に貼るかファイルを開いてください');
+      return;
+    }
+    sheet.classList.remove('on');
+    document.body.classList.add('fs');
+    reqFs(document.documentElement);
+  }
+  function exitFS(){
+    document.body.classList.remove('fs');
+    exitNativeFs();
+  }
+  document.addEventListener('fullscreenchange', function(){
+    if(!nativeFsEl()) document.body.classList.remove('fs');
+  });
+  document.addEventListener('webkitfullscreenchange', function(){
+    if(!nativeFsEl()) document.body.classList.remove('fs');
+  });
   function blankFrame(){
     try{ frame.removeAttribute('src'); }catch(e){}
     frame.srcdoc='';
@@ -113,9 +168,11 @@ textarea{
     src.value='';
     fileName='HTML表示';
     nameEl.textContent=fileName;
+    hasContent=false;
     blankFrame();
     empty.style.display='flex';
     sheet.classList.remove('on');
+    exitFS();
     toast('空に戻しました');
   }
   function show(text, label){
@@ -127,6 +184,7 @@ textarea{
       return;
     }
     empty.style.display='none';
+    hasContent=true;
     fileName=label||fileName||'貼り付け';
     nameEl.textContent=fileName;
     sheet.classList.remove('on');
@@ -178,7 +236,10 @@ textarea{
   document.getElementById('paste').onclick=fromClipboard;
   document.getElementById('paste2').onclick=fromClipboard;
   document.getElementById('clearBtn').onclick=clearAll;
+  document.getElementById('fsBtn').onclick=enterFS;
+  document.getElementById('exitFs').onclick=exitFS;
   document.getElementById('srcBtn').onclick=function(){
+    if(document.body.classList.contains('fs')) return;
     sheet.classList.toggle('on');
     if(sheet.classList.contains('on')) setTimeout(function(){ src.focus(); }, 50);
   };
@@ -200,6 +261,9 @@ textarea{
     e.preventDefault();
     show(t, '貼り付け');
     toast('貼り付けました');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape') exitFS();
   });
   document.addEventListener('dragover', function(e){ e.preventDefault(); });
   document.addEventListener('drop', function(e){
