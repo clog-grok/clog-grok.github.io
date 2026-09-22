@@ -6,6 +6,7 @@
 <title>マンション工事費ざっくり</title>
 <meta name="description" content="土地と建蔽・容積・階数から延べと本体工事費の超超概算。売値の坪単価ではない。">
 <meta name="tool-tag" content="建築">
+<meta name="tool-status" content="wip">
 <style>
   :root {
     --bg-color: #0f172a;
@@ -166,9 +167,9 @@
 </head>
 <body>
 <div class="app-container">
-  <a class="back" href="./">← 一覧</a>
+  <a class="back" href="./wip.html">← 試作</a>
   <h1>マンション工事費ざっくり</h1>
-  <p class="sub">営業のGo / NoGo用・超超概算<br>売値の坪単価ではない。本体工事費の目安。</p>
+  <p class="sub">試作・Step 1　営業の超超概算<br>売値の坪単価ではない。本番一覧には出ません。</p>
 
   <div class="input-group">
     <div class="seg" id="unitSeg">
@@ -254,16 +255,8 @@
 </div>
 <script>
 const M2_PER_TSUBO = 3.305785;
-const PRESET = {
-  S: 114,
-  RC: 120,
-  SRC: 135
-};
-const TYPE = {
-  oneroom: { unitM2: 25, eff: 0.75 },
-  family: { unitM2: 65, eff: 0.82 }
-};
-
+const PRESET = { S: 114, RC: 120, SRC: 135 };
+const TYPE = { oneroom: { unitM2: 25, eff: 0.75 }, family: { unitM2: 65, eff: 0.82 } };
 const land = document.getElementById("land");
 const kenpei = document.getElementById("kenpei");
 const yoseki = document.getElementById("yoseki");
@@ -274,11 +267,9 @@ const eff = document.getElementById("eff");
 const extra = document.getElementById("extra");
 const landLabel = document.getElementById("landLabel");
 const landConv = document.getElementById("landConv");
-
 let landUnit = "m2";
 let struct = "RC";
 let housing = "oneroom";
-
 function yen(n) {
   if (!isFinite(n) || n <= 0) return "—";
   const oku = Math.floor(n / 100000000);
@@ -290,13 +281,11 @@ function yen(n) {
   if (yenPart && !oku) parts.push(yenPart.toLocaleString("ja-JP"));
   return (parts.join("") || "0") + "円";
 }
-
 function area(m2) {
   if (!isFinite(m2) || m2 <= 0) return "—";
   const tsubo = m2 / M2_PER_TSUBO;
   return m2.toFixed(1) + "㎡（" + tsubo.toFixed(1) + "坪）";
 }
-
 function bindSeg(id, attr, onPick) {
   const root = document.getElementById(id);
   root.addEventListener("click", function (e) {
@@ -308,7 +297,6 @@ function bindSeg(id, attr, onPick) {
     calc();
   });
 }
-
 bindSeg("unitSeg", "data-unit", function (v) {
   const m2Now = landM2();
   landUnit = v;
@@ -320,24 +308,20 @@ bindSeg("unitSeg", "data-unit", function (v) {
     land.value = m2Now ? String(Math.round((m2Now / M2_PER_TSUBO) * 10) / 10) : "";
   }
 });
-
 bindSeg("typeSeg", "data-type", function (v) {
   housing = v;
   unitM2.value = TYPE[v].unitM2;
   eff.value = TYPE[v].eff;
 });
-
 bindSeg("structSeg", "data-struct", function (v) {
   struct = v;
   tsuboPrice.value = PRESET[v];
 });
-
 function landM2() {
   const n = parseFloat(land.value);
   if (!isFinite(n) || n <= 0) return 0;
   return landUnit === "tsubo" ? n * M2_PER_TSUBO : n;
 }
-
 function calc() {
   const m2 = landM2();
   const k = (parseFloat(kenpei.value) || 0) / 100;
@@ -346,13 +330,11 @@ function calc() {
   const priceMan = parseFloat(tsuboPrice.value) || 0;
   const u = parseFloat(unitM2.value) || 0;
   const e = parseFloat(eff.value) || 0;
-
   if (landUnit === "m2") {
     landConv.textContent = m2 ? "≈ " + (m2 / M2_PER_TSUBO).toFixed(1) + "坪" : "";
   } else {
     landConv.textContent = m2 ? "≈ " + m2.toFixed(1) + "㎡" : "";
   }
-
   const arch = m2 * k;
   const far = m2 * y;
   const byFloor = arch * f;
@@ -363,7 +345,6 @@ function calc() {
   const exclusive = gfa * e;
   const units = u > 0 ? Math.floor(exclusive / u) : 0;
   const per = units > 0 ? body / units : 0;
-
   document.getElementById("capLabel").textContent = useFar ? "容積で頭打ち" : "建蔽×階数で頭打ち";
   document.getElementById("gfaText").textContent = area(gfa);
   document.getElementById("archText").textContent = area(arch);
@@ -371,13 +352,10 @@ function calc() {
   document.getElementById("floorText").textContent = area(byFloor);
   document.getElementById("bodyText").textContent = yen(body);
   document.getElementById("formulaText").textContent =
-    (isFinite(gfaTsubo) && gfaTsubo > 0)
-      ? gfaTsubo.toFixed(1) + "坪 × " + priceMan + "万円"
-      : "—";
+    (isFinite(gfaTsubo) && gfaTsubo > 0) ? gfaTsubo.toFixed(1) + "坪 × " + priceMan + "万円" : "—";
   document.getElementById("unitsText").textContent = units ? units + "戸" : "—";
   document.getElementById("perUnitText").textContent = yen(per);
   document.getElementById("exText").textContent = area(exclusive);
-
   const extraBox = document.getElementById("extraBox");
   if (extra.checked) {
     extraBox.classList.remove("hidden");
@@ -386,7 +364,6 @@ function calc() {
     extraBox.classList.add("hidden");
   }
 }
-
 ["land", "kenpei", "yoseki", "floors", "tsuboPrice", "unitM2", "eff"].forEach(function (id) {
   document.getElementById(id).addEventListener("input", calc);
 });
