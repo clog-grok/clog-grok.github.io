@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>ツール一覧 | clog-grok</title>
-  <meta name="description" content="リポジトリのHTMLツールを自動で並べます。">
+  <meta name="description" content="公開中のHTMLツール一覧。">
   <meta name="theme-color" content="#111111">
   <meta property="og:title" content="ツール一覧 | clog-grok">
-  <meta property="og:description" content="タップしてすぐ使えます。HTMLを足したら一覧に出ます。">
+  <meta property="og:description" content="タップしてすぐ使えます。">
   <meta property="og:url" content="https://clog-grok.github.io/">
   <meta name="twitter:card" content="summary">
   <style>
@@ -57,7 +57,7 @@
   <main>
     <p class="kicker">CLOG-GROK</p>
     <h1>ツール</h1>
-    <p class="lead">リポジトリのHTMLを見て自動で並べます。足したら出て、消したら落ちます。</p>
+    <p class="lead">公開中のものだけ並べます。</p>
     <div class="list" id="list"><p class="status">読み込み中…</p></div>
     <p class="section" id="iceHead" hidden>隣のアイス</p>
     <div class="list" id="iceList"></div>
@@ -69,11 +69,16 @@
     const list = document.getElementById("list");
     const iceList = document.getElementById("iceList");
     const iceHead = document.getElementById("iceHead");
-    const skip = { "index.html": true };
+    const skip = { "index.html": true, "wip.html": true };
 
     function text(html, re) {
       const m = html.match(re);
       return m ? m[1].replace(/\s+/g, " ").trim() : "";
+    }
+
+    function isWip(item) {
+      const st = (item.status || "").toLowerCase();
+      return st === "wip" || st === "draft" || /^wip-/i.test(item.file);
     }
 
     function card(item, ice) {
@@ -103,7 +108,8 @@
           file: f.name,
           name: text(html, /<title>([^<]+)<\/title>/i) || f.name.replace(/\.html$/i, ""),
           desc: text(html, /<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i),
-          tag: text(html, /<meta\s+name=["']tool-tag["']\s+content=["']([^"']+)["']/i)
+          tag: text(html, /<meta\s+name=["']tool-tag["']\s+content=["']([^"']+)["']/i),
+          status: text(html, /<meta\s+name=["']tool-status["']\s+content=["']([^"']+)["']/i)
         };
       });
     }
@@ -117,22 +123,24 @@
         const htmls = files.filter(function (f) {
           return f.type === "file" && /\.html$/i.test(f.name) && !skip[f.name];
         }).sort(function (a, b) { return a.name.localeCompare(b.name); });
-        const hot = htmls.filter(function (f) { return !/^ice-/i.test(f.name); });
-        const ice = htmls.filter(function (f) { return /^ice-/i.test(f.name); });
-        if (!hot.length && !ice.length) {
+        if (!htmls.length) {
           fail("表示できるHTMLがありません。");
           return Promise.resolve();
         }
-        return Promise.all([
-          Promise.all(hot.map(meta)),
-          Promise.all(ice.map(meta))
-        ]).then(function (parts) {
+        return Promise.all(htmls.map(meta)).then(function (items) {
+          const live = items.filter(function (item) { return !isWip(item); });
+          const hot = live.filter(function (item) { return !/^ice-/i.test(item.file); });
+          const ice = live.filter(function (item) { return /^ice-/i.test(item.file); });
           list.innerHTML = "";
-          parts[0].forEach(function (item) { list.appendChild(card(item, false)); });
-          if (parts[1].length) {
+          if (!hot.length && !ice.length) {
+            fail("公開中のツールはありません。");
+            return;
+          }
+          hot.forEach(function (item) { list.appendChild(card(item, false)); });
+          if (ice.length) {
             iceHead.hidden = false;
             iceList.innerHTML = "";
-            parts[1].forEach(function (item) { iceList.appendChild(card(item, true)); });
+            ice.forEach(function (item) { iceList.appendChild(card(item, true)); });
           }
         });
       })
