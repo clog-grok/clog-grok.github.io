@@ -50,7 +50,7 @@
   .result-line .with-unit input[type="number"] { width: 88px; }
   .steps-btn { display: block; width: 100%; border: 2px solid var(--border); background: var(--bg-color); color: var(--text-main); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; font-size: 0.78rem; cursor: pointer; }
   .steps-btn:hover { border-color: var(--accent); }
-  .steps-panel { display: none; position: static; width: 100%; max-height: 50vh; overflow: auto; background: var(--bg-color); color: var(--text-main); border: 2px solid var(--accent); border-radius: 12px; padding: 12px 14px 14px; margin: 0 0 12px; box-shadow: none; }
+  .steps-panel { display: none; position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: 45vh; overflow: auto; z-index: 1000; background: var(--card-bg); color: var(--text-main); border: 2px solid var(--accent); border-radius: 14px; padding: 12px 14px 14px; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
   .steps-panel.open { display: block; }
   .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
   .float-head strong { font-size: 0.85rem; }
