@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>マンション工事費ざっくり</title>
-<meta name="description" content="土地と建蔽・容積・階数から延べと本体工事費の超超概算。売値の坪単価ではない。">
+<meta name="description" content="土地と建蔽・容積・階数から延べと本体工事費の概算。売値の坪単価ではない。">
 <meta name="tool-tag" content="建築">
 <meta name="tool-status" content="wip">
 <style>
@@ -15,9 +15,7 @@
     --text-sub: #94a3b8;
     --accent: #38bdf8;
     --ok: #34d399;
-    --warning: #fb7185;
     --border: #334155;
-    --panel-bg: #283548;
   }
   * { box-sizing: border-box; }
   body {
@@ -93,75 +91,23 @@
     margin-bottom: 8px;
   }
   .row:last-child { margin-bottom: 0; }
-  .row label {
-    font-size: 0.8rem;
-    color: var(--text-sub);
-  }
+  .row label { font-size: 0.8rem; color: var(--text-sub); }
   .row input[type="number"] {
-    width: 96px;
-    text-align: right;
-    padding: 6px 8px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    color: var(--text-main);
-    font-size: 0.95rem;
+    width: 96px; text-align: right; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--card-bg);
+    color: var(--text-main); font-size: 0.95rem;
   }
-  .conv {
-    font-size: 0.68rem;
-    color: var(--text-sub);
-    text-align: right;
-    margin-top: 4px;
-  }
-  .result-box {
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 10px;
-  }
+  .conv { font-size: 0.68rem; color: var(--text-sub); text-align: right; margin-top: 4px; margin-bottom: 8px; }
+  .result-box { border: 2px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
   .result-box.main { border-color: var(--accent); }
-  .result-title {
-    font-size: 0.78rem;
-    color: var(--text-sub);
-    margin-bottom: 4px;
-  }
-  .result-amount {
-    font-size: 1.45rem;
-    font-weight: bold;
-    text-align: right;
-  }
-  .result-line {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    font-size: 0.8rem;
-    margin-top: 6px;
-    color: var(--text-sub);
-  }
+  .result-title { font-size: 0.78rem; color: var(--text-sub); margin-bottom: 4px; }
+  .result-amount { font-size: 1.45rem; font-weight: bold; text-align: right; }
+  .result-line { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8rem; margin-top: 6px; color: var(--text-sub); }
   .result-line b { color: var(--text-main); font-weight: 600; }
-  .cap {
-    display: inline-block;
-    font-size: 0.68rem;
-    border: 1px solid var(--ok);
-    color: var(--ok);
-    border-radius: 999px;
-    padding: 1px 8px;
-    margin-left: 6px;
-  }
-  .check {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
-    color: var(--text-sub);
-    margin: 0 0 10px;
-  }
-  .foot {
-    font-size: 0.68rem;
-    color: var(--text-sub);
-    line-height: 1.5;
-    margin: 0;
-  }
+  .cap { display: inline-block; font-size: 0.68rem; border: 1px solid var(--ok); color: var(--ok); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-sub); margin: 0 0 10px; }
+  .steps { font-size: 0.72rem; color: var(--text-sub); line-height: 1.65; margin: 8px 0 0; white-space: pre-wrap; word-break: break-all; }
+  .foot { font-size: 0.68rem; color: var(--text-sub); line-height: 1.5; margin: 0; }
   .hidden { display: none; }
 </style>
 </head>
@@ -169,32 +115,18 @@
 <div class="app-container">
   <a class="back" href="./wip.html">← 試作</a>
   <h1>マンション工事費ざっくり</h1>
-  <p class="sub">試作・Step 1　営業の超超概算<br>売値の坪単価ではない。本番一覧には出ません。</p>
-
+  <p class="sub">試作・Step 1　続ける／止める用の概算<br>売値ではない。本番一覧には出ません。</p>
   <div class="input-group">
     <div class="seg" id="unitSeg">
       <button type="button" data-unit="m2" class="on">土地を㎡で</button>
       <button type="button" data-unit="tsubo">土地を坪で</button>
     </div>
-    <div class="row">
-      <label id="landLabel">土地面積 ㎡</label>
-      <input type="number" id="land" inputmode="decimal" value="330">
-    </div>
+    <div class="row"><label id="landLabel">土地面積 ㎡</label><input type="number" id="land" inputmode="decimal" value="330"></div>
     <div class="conv" id="landConv"></div>
-    <div class="row">
-      <label>建蔽率 %</label>
-      <input type="number" id="kenpei" inputmode="decimal" value="80">
-    </div>
-    <div class="row">
-      <label>容積率 %</label>
-      <input type="number" id="yoseki" inputmode="decimal" value="400">
-    </div>
-    <div class="row">
-      <label>階数</label>
-      <input type="number" id="floors" inputmode="numeric" value="7">
-    </div>
+    <div class="row"><label>建蔽率 %</label><input type="number" id="kenpei" inputmode="decimal" value="80"></div>
+    <div class="row"><label>容積率 %</label><input type="number" id="yoseki" inputmode="decimal" value="400"></div>
+    <div class="row"><label>階数</label><input type="number" id="floors" inputmode="numeric" value="7"></div>
   </div>
-
   <div class="input-group">
     <div class="seg" id="typeSeg">
       <button type="button" data-type="oneroom" class="on">ワンルーム</button>
@@ -205,26 +137,18 @@
       <button type="button" data-struct="RC" class="on">RC造</button>
       <button type="button" data-struct="SRC">SRC造</button>
     </div>
-    <div class="row">
-      <label>建築坪単価 万円</label>
-      <input type="number" id="tsuboPrice" inputmode="decimal" value="120">
+    <div class="seg" id="priceSeg">
+      <button type="button" data-price="tsubo" class="on">単価を坪で</button>
+      <button type="button" data-price="m2">単価を㎡で</button>
     </div>
-    <div class="row">
-      <label>1戸の専有 ㎡</label>
-      <input type="number" id="unitM2" inputmode="decimal" value="25">
-    </div>
-    <div class="row">
-      <label>専有効率</label>
-      <input type="number" id="eff" inputmode="decimal" step="0.01" value="0.75">
-    </div>
-    <div class="conv">延べのうち住戸になる割合。残りは廊下・EVなど。</div>
+    <div class="row"><label id="priceLabel">建築坪単価 万円</label><input type="number" id="price" inputmode="decimal" value="120"></div>
+    <div class="conv" id="priceConv"></div>
+    <div class="row"><label>1戸の専有 ㎡</label><input type="number" id="unitM2" inputmode="decimal" value="25"></div>
+    <div class="row"><label>専有効率</label><input type="number" id="eff" inputmode="decimal" step="0.01" value="0.75"></div>
+    <div class="conv">延べのうち部屋になる割合。残りは廊下・EVなど。</div>
   </div>
-
-  <label class="check">
-    <input type="checkbox" id="extra">
-    付帯＋諸費用を +25% で別表示
-  </label>
-
+  <label class="check"><input type="checkbox" id="extra"> 付帯＋諸費用を +25% で別表示</label>
+  <p class="conv" style="text-align:left;margin-top:-4px;">外構・地盤・設計監理などを、本体の25%として仮置き。内訳はまだ出さない。</p>
   <div class="result-box">
     <div class="result-title">使う延べ<span class="cap" id="capLabel">容積</span></div>
     <div class="result-amount" id="gfaText">—</div>
@@ -232,42 +156,48 @@
     <div class="result-line"><span>容積の延べ上限</span><b id="farText">—</b></div>
     <div class="result-line"><span>建蔽×階数の延べ</span><b id="floorText">—</b></div>
   </div>
-
   <div class="result-box main">
     <div class="result-title">本体工事費</div>
     <div class="result-amount" id="bodyText">—</div>
-    <div class="result-line"><span>延べ坪 × 坪単価</span><b id="formulaText">—</b></div>
+    <div class="result-line"><span id="formulaLabel">延べ坪 × 坪単価</span><b id="formulaText">—</b></div>
   </div>
-
   <div class="result-box hidden" id="extraBox">
     <div class="result-title">本体＋付帯諸費用（+25%）</div>
     <div class="result-amount" id="extraText">—</div>
+    <div class="result-line"><span>本体 × 1.25</span><b id="extraFormula">—</b></div>
   </div>
-
   <div class="result-box">
     <div class="result-title">戸の切り方</div>
     <div class="result-line"><span>想定戸数</span><b id="unitsText">—</b></div>
     <div class="result-line"><span>1戸あたり本体</span><b id="perUnitText">—</b></div>
     <div class="result-line"><span>専有の合計</span><b id="exText">—</b></div>
+    <div class="result-line"><span>共用の合計</span><b id="commonText">—</b></div>
   </div>
-
-  <p class="foot">斜線・道路幅員・緩和は入れていません。坪単価は相場の初期値で、根拠のある積算ではありません。数字は仮数です。</p>
+  <div class="result-box">
+    <div class="result-title">電卓用の式</div>
+    <p class="steps" id="steps">—</p>
+  </div>
+  <p class="foot">階数と建蔽・容積は、ここでは入力値をそのまま使う。坪単価は相場の初期値。数字は仮数。</p>
 </div>
 <script>
 const M2_PER_TSUBO = 3.305785;
+const TO_TSUBO = 0.3025;
 const PRESET = { S: 114, RC: 120, SRC: 135 };
 const TYPE = { oneroom: { unitM2: 25, eff: 0.75 }, family: { unitM2: 65, eff: 0.82 } };
 const land = document.getElementById("land");
 const kenpei = document.getElementById("kenpei");
 const yoseki = document.getElementById("yoseki");
 const floors = document.getElementById("floors");
-const tsuboPrice = document.getElementById("tsuboPrice");
+const price = document.getElementById("price");
 const unitM2 = document.getElementById("unitM2");
 const eff = document.getElementById("eff");
 const extra = document.getElementById("extra");
 const landLabel = document.getElementById("landLabel");
 const landConv = document.getElementById("landConv");
+const priceLabel = document.getElementById("priceLabel");
+const priceConv = document.getElementById("priceConv");
 let landUnit = "m2";
+let priceUnit = "tsubo";
 let struct = "RC";
 let housing = "oneroom";
 function yen(n) {
@@ -283,9 +213,9 @@ function yen(n) {
 }
 function area(m2) {
   if (!isFinite(m2) || m2 <= 0) return "—";
-  const tsubo = m2 / M2_PER_TSUBO;
-  return m2.toFixed(1) + "㎡（" + tsubo.toFixed(1) + "坪）";
+  return m2.toFixed(1) + "㎡（" + (m2 * TO_TSUBO).toFixed(1) + "坪）";
 }
+function num(n, d) { return (Math.round(n * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d); }
 function bindSeg(id, attr, onPick) {
   const root = document.getElementById(id);
   root.addEventListener("click", function (e) {
@@ -305,7 +235,18 @@ bindSeg("unitSeg", "data-unit", function (v) {
     land.value = m2Now ? String(Math.round(m2Now * 10) / 10) : "";
   } else {
     landLabel.textContent = "土地面積 坪";
-    land.value = m2Now ? String(Math.round((m2Now / M2_PER_TSUBO) * 10) / 10) : "";
+    land.value = m2Now ? String(Math.round((m2Now * TO_TSUBO) * 10) / 10) : "";
+  }
+});
+bindSeg("priceSeg", "data-price", function (v) {
+  const tsuboNow = priceTsubo();
+  priceUnit = v;
+  if (priceUnit === "tsubo") {
+    priceLabel.textContent = "建築坪単価 万円";
+    price.value = tsuboNow ? String(Math.round(tsuboNow * 10) / 10) : "";
+  } else {
+    priceLabel.textContent = "建築㎡単価 万円";
+    price.value = tsuboNow ? String(Math.round((tsuboNow / M2_PER_TSUBO) * 100) / 100) : "";
   }
 });
 bindSeg("typeSeg", "data-type", function (v) {
@@ -315,34 +256,42 @@ bindSeg("typeSeg", "data-type", function (v) {
 });
 bindSeg("structSeg", "data-struct", function (v) {
   struct = v;
-  tsuboPrice.value = PRESET[v];
+  const tsubo = PRESET[v];
+  price.value = priceUnit === "tsubo" ? String(tsubo) : String(Math.round((tsubo / M2_PER_TSUBO) * 100) / 100);
 });
 function landM2() {
   const n = parseFloat(land.value);
   if (!isFinite(n) || n <= 0) return 0;
   return landUnit === "tsubo" ? n * M2_PER_TSUBO : n;
 }
+function priceTsubo() {
+  const n = parseFloat(price.value);
+  if (!isFinite(n) || n <= 0) return 0;
+  return priceUnit === "m2" ? n * M2_PER_TSUBO : n;
+}
+function priceM2() { return priceTsubo() / M2_PER_TSUBO; }
 function calc() {
   const m2 = landM2();
-  const k = (parseFloat(kenpei.value) || 0) / 100;
-  const y = (parseFloat(yoseki.value) || 0) / 100;
+  const kPct = parseFloat(kenpei.value) || 0;
+  const yPct = parseFloat(yoseki.value) || 0;
   const f = parseFloat(floors.value) || 0;
-  const priceMan = parseFloat(tsuboPrice.value) || 0;
   const u = parseFloat(unitM2.value) || 0;
   const e = parseFloat(eff.value) || 0;
-  if (landUnit === "m2") {
-    landConv.textContent = m2 ? "≈ " + (m2 / M2_PER_TSUBO).toFixed(1) + "坪" : "";
-  } else {
-    landConv.textContent = m2 ? "≈ " + m2.toFixed(1) + "㎡" : "";
-  }
+  const k = kPct / 100;
+  const y = yPct / 100;
+  const pTsubo = priceTsubo();
+  const pM2 = priceM2();
+  landConv.textContent = m2 ? (landUnit === "m2" ? "× 0.3025 ＝ " + num(m2 * TO_TSUBO, 1) + "坪" : "× 3.305785 ＝ " + num(m2, 1) + "㎡") : "";
+  priceConv.textContent = pTsubo ? (priceUnit === "tsubo" ? "÷ 3.305785 ＝ " + num(pM2, 2) + "万円/㎡" : "× 3.305785 ＝ " + num(pTsubo, 1) + "万円/坪") : "";
   const arch = m2 * k;
   const far = m2 * y;
   const byFloor = arch * f;
   const useFar = far <= byFloor;
   const gfa = Math.min(far, byFloor);
-  const gfaTsubo = gfa / M2_PER_TSUBO;
-  const body = gfaTsubo * priceMan * 10000;
+  const gfaTsubo = gfa * TO_TSUBO;
+  const body = gfaTsubo * pTsubo * 10000;
   const exclusive = gfa * e;
+  const common = gfa - exclusive;
   const units = u > 0 ? Math.floor(exclusive / u) : 0;
   const per = units > 0 ? body / units : 0;
   document.getElementById("capLabel").textContent = useFar ? "容積で頭打ち" : "建蔽×階数で頭打ち";
@@ -351,20 +300,40 @@ function calc() {
   document.getElementById("farText").textContent = area(far);
   document.getElementById("floorText").textContent = area(byFloor);
   document.getElementById("bodyText").textContent = yen(body);
-  document.getElementById("formulaText").textContent =
-    (isFinite(gfaTsubo) && gfaTsubo > 0) ? gfaTsubo.toFixed(1) + "坪 × " + priceMan + "万円" : "—";
+  if (priceUnit === "tsubo") {
+    document.getElementById("formulaLabel").textContent = "延べ坪 × 坪単価";
+    document.getElementById("formulaText").textContent = gfaTsubo > 0 ? num(gfaTsubo, 1) + "坪 × " + num(pTsubo, 1) + "万円" : "—";
+  } else {
+    document.getElementById("formulaLabel").textContent = "延べ㎡ × ㎡単価";
+    document.getElementById("formulaText").textContent = gfa > 0 ? num(gfa, 1) + "㎡ × " + num(pM2, 2) + "万円" : "—";
+  }
   document.getElementById("unitsText").textContent = units ? units + "戸" : "—";
   document.getElementById("perUnitText").textContent = yen(per);
   document.getElementById("exText").textContent = area(exclusive);
+  document.getElementById("commonText").textContent = area(common);
   const extraBox = document.getElementById("extraBox");
   if (extra.checked) {
     extraBox.classList.remove("hidden");
     document.getElementById("extraText").textContent = yen(body * 1.25);
+    document.getElementById("extraFormula").textContent = yen(body) + " × 1.25";
   } else {
     extraBox.classList.add("hidden");
   }
+  const landStr = landUnit === "m2" ? num(m2, 1) + "㎡" : num(m2 * TO_TSUBO, 1) + "坪 → " + num(m2, 1) + "㎡";
+  document.getElementById("steps").textContent = [
+    "1坪 ＝ 3.305785㎡",
+    "坪 ＝ ㎡ × 0.3025",
+    landStr + " × 建蔽" + kPct + "% ＝ 建築面積 " + num(arch, 1) + "㎡",
+    landStr.split(" → ").pop() + " × 容積" + yPct + "% ＝ 容積延べ " + num(far, 1) + "㎡",
+    num(arch, 1) + "㎡ × " + f + "階 ＝ " + num(byFloor, 1) + "㎡",
+    "使う延べ ＝ 小さい方 ＝ " + num(gfa, 1) + "㎡",
+    num(gfa, 1) + "㎡ × 0.3025 ＝ " + num(gfaTsubo, 1) + "坪",
+    priceUnit === "tsubo" ? num(gfaTsubo, 1) + "坪 × " + num(pTsubo, 1) + "万円 ＝ 本体" : num(gfa, 1) + "㎡ × " + num(pM2, 2) + "万円 ＝ 本体",
+    num(gfa, 1) + "㎡ × 効率" + e + " ＝ 専有 " + num(exclusive, 1) + "㎡",
+    num(exclusive, 1) + "㎡ ÷ " + u + "㎡ ＝ " + units + "戸（切り捨て）"
+  ].join("\n");
 }
-["land", "kenpei", "yoseki", "floors", "tsuboPrice", "unitM2", "eff"].forEach(function (id) {
+["land", "kenpei", "yoseki", "floors", "price", "unitM2", "eff"].forEach(function (id) {
   document.getElementById(id).addEventListener("input", calc);
 });
 extra.addEventListener("change", calc);
