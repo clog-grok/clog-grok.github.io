@@ -94,6 +94,18 @@ body.fs{padding-top:0}
 body.fs .bar,body.fs .sheet{visibility:hidden;pointer-events:none}
 body.fs .stage{top:0}
 body.fs #exitFs{display:inline-flex}
+.drop-overlay{
+  display:none;position:fixed;inset:10px;z-index:20;
+  background:rgba(15,20,25,.86);color:var(--accent);
+  align-items:center;justify-content:center;flex-direction:column;text-align:center;
+  font-size:1.15rem;font-weight:800;pointer-events:none;
+  border:2.5px dashed var(--accent);border-radius:22px;
+}
+body.dragging .drop-overlay{display:flex}
+.drop-overlay span{display:block;margin-top:8px;font-size:.8rem;font-weight:600;color:var(--muted)}
+body.dragging .empty-hit{
+  border-color:var(--accent);color:#d7eef9;background:rgba(125,211,252,.08);
+}
 </style>
 </head>
 <body>
@@ -119,7 +131,7 @@ body.fs #exitFs{display:inline-flex}
         <path d="M9 7V5.8A1.8 1.8 0 0 1 10.8 4h2.4A1.8 1.8 0 0 1 15 5.8V7"/>
       </svg>
       <span>ここに貼る</span>
-      <small>ファイルは上のボタン</small>
+      <small>ドロップでもOK</small>
     </button>
   </div>
 </div>
@@ -127,6 +139,7 @@ body.fs #exitFs{display:inline-flex}
   <h2>ソース（直すとすぐ反映）</h2>
   <textarea id="src" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="ここに貼っても表示されます"></textarea>
 </section>
+<div class="drop-overlay" id="dropOverlay" aria-hidden="true">ここにドロップ<span>HTML / TXT</span></div>
 <div class="toast" id="toast"></div>
 <script>
 (function(){
@@ -318,9 +331,38 @@ body.fs #exitFs{display:inline-flex}
   document.addEventListener('keydown', function(e){
     if(e.key==='Escape') exitFS();
   });
-  document.addEventListener('dragover', function(e){ e.preventDefault(); });
+  function hasFiles(e){
+    var dt=e.dataTransfer;
+    if(!dt) return false;
+    if(dt.types){
+      for(var i=0;i<dt.types.length;i++){
+        if(dt.types[i]==='Files') return true;
+      }
+    }
+    return !!(dt.files && dt.files.length);
+  }
+  var dragDepth=0;
+  document.addEventListener('dragenter', function(e){
+    if(!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth++;
+    document.body.classList.add('dragging');
+  });
+  document.addEventListener('dragover', function(e){
+    if(!hasFiles(e)) return;
+    e.preventDefault();
+    try{ e.dataTransfer.dropEffect='copy'; }catch(err){}
+  });
+  document.addEventListener('dragleave', function(e){
+    if(!hasFiles(e) && dragDepth===0) return;
+    e.preventDefault();
+    dragDepth=Math.max(0, dragDepth-1);
+    if(dragDepth===0) document.body.classList.remove('dragging');
+  });
   document.addEventListener('drop', function(e){
     e.preventDefault();
+    dragDepth=0;
+    document.body.classList.remove('dragging');
     var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
     if(f) readFile(f);
   });
