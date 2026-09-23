@@ -43,9 +43,15 @@
   .cap { display: inline-block; font-size: 0.68rem; border: 1px solid var(--ok); color: var(--ok); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
   .check { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
   .extra-list { font-size: 0.72rem; color: var(--text-sub); line-height: 1.5; margin: 0 0 8px 24px; }
-  details.steps-box { border: 2px solid var(--border); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
-  details.steps-box summary { font-size: 0.78rem; color: var(--text-main); cursor: pointer; }
-  .steps { font-size: 0.78rem; color: var(--text-main); line-height: 1.7; margin: 8px 0 0; white-space: pre-wrap; word-break: break-all; }
+  .result-line .with-unit input[type="number"] { width: 88px; }
+  .steps-btn { display: block; width: 100%; border: 2px solid var(--border); background: var(--bg-color); color: var(--text-main); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; font-size: 0.78rem; cursor: pointer; }
+  .steps-btn:hover { border-color: var(--accent); }
+  .float-panel { display: none; position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: 45vh; overflow: auto; z-index: 1000; background: var(--card-bg); color: var(--text-main); border: 2px solid var(--accent); border-radius: 14px; padding: 12px 14px 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
+  .float-panel.open { display: block; }
+  .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .float-head strong { font-size: 0.85rem; }
+  .float-head button { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; }
+  .steps { font-size: 0.78rem; color: var(--text-main); line-height: 1.7; margin: 0; white-space: pre-wrap; word-break: break-all; }
   .warn { font-size: 0.72rem; color: var(--warn); margin-top: 8px; line-height: 1.5; }
   .hidden { display: none; }
   .foot-link { display: block; width: max-content; color: var(--text-sub); font-size: 0.75rem; text-decoration: none; margin-top: 8px; }
@@ -105,7 +111,7 @@
   </div>
   <div class="result-box">
     <div class="result-title">戸数と面積</div>
-    <div class="result-line"><span>想定戸数</span><input type="number" id="unitsIn" inputmode="numeric" min="1" step="1"></div>
+    <div class="result-line"><span>想定戸数</span><div class="with-unit"><input type="number" id="unitsIn" inputmode="numeric" min="1" step="1"><span class="unit">戸</span></div></div>
     <div class="result-line"><span>計算の上限</span><b id="unitsCapText">—</b></div>
     <div class="result-line"><span>1戸あたり本体</span><b id="perUnitText">—</b></div>
     <div class="result-line"><span>専有の合計</span><b id="exText">—</b></div>
@@ -115,7 +121,11 @@
     <div class="result-line"><span>共用の合計</span><b id="commonText">—</b></div>
     <p class="warn hidden" id="unitsNote"></p>
   </div>
-  <details class="steps-box"><summary>電卓用の式</summary><p class="steps" id="steps">—</p></details>
+  <button type="button" class="steps-btn" id="stepsToggle">式の確認</button>
+  <div class="float-panel" id="stepsPanel" hidden>
+    <div class="float-head"><strong>式の確認</strong><button type="button" id="stepsClose" aria-label="閉じる">×</button></div>
+    <p class="steps" id="steps">—</p>
+  </div>
   <a class="foot-link" href="./wip.html">← 試作</a>
 </div>
 <script>
@@ -303,6 +313,7 @@ function calc() {
     "専有 " + num(usedExclusive, 1) + "㎡ × 廊下係数" + num(c, 2) + " ＝ 延べ " + num(usedGfa, 1) + "㎡",
     priceUnit === "tsubo" ? num(usedGfa * TO_TSUBO, 1) + "坪 × " + num(pTsubo, 1) + "万円 ＝ 本体" : num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万円 ＝ 本体"
   ].join("\n");
+  saveState();
 }
 ["land", "kenpei", "yoseki", "floors", "price", "unitM2"].forEach(function (id) {
   document.getElementById(id).addEventListener("input", function () {
@@ -316,12 +327,122 @@ coeff.addEventListener("input", function () { onCoeffInput(coeff); });
 coeffOut.addEventListener("input", function () { onCoeffInput(coeffOut); });
 unitsIn.addEventListener("input", function () { unitsManual = true; calc(); });
 extra.addEventListener("change", calc);
+const STORE_KEY = "mansion-kojihi-v1";
+function currentType() {
+  const on = document.querySelector("#typeSeg button.on");
+  return on ? on.getAttribute("data-type") : "oneroom";
+}
+function currentStruct() {
+  const on = document.querySelector("#structSeg button.on");
+  return on ? on.getAttribute("data-struct") : "RC";
+}
+function currentTheme() {
+  return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+}
+function setSegOn(rootId, attr, value) {
+  const root = document.getElementById(rootId);
+  root.querySelectorAll("button").forEach(function (b) {
+    b.classList.toggle("on", b.getAttribute(attr) === value);
+  });
+}
+function applyTheme(theme) {
+  const btn = document.getElementById("themeBtn");
+  if (theme === "light") {
+    document.documentElement.setAttribute("data-theme", "light");
+    btn.textContent = "\u263E";
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    btn.textContent = "\u2600";
+  }
+}
+function applyLandUnitLabels() {
+  const landUnitEl = document.getElementById("landUnit");
+  if (landUnit === "m2") { landLabel.textContent = "土地面積"; landUnitEl.textContent = "㎡"; }
+  else { landLabel.textContent = "土地面積"; landUnitEl.textContent = "坪"; }
+}
+function applyPriceUnitLabels() {
+  const priceUnitEl = document.getElementById("priceUnit");
+  if (priceUnit === "tsubo") { priceLabel.textContent = "延べの坪単価"; priceUnitEl.textContent = "万円/坪"; }
+  else { priceLabel.textContent = "延べの㎡単価"; priceUnitEl.textContent = "万円/㎡"; }
+}
+function saveState() {
+  try {
+    const data = {
+      land: land.value,
+      kenpei: kenpei.value,
+      yoseki: yoseki.value,
+      floors: floors.value,
+      price: price.value,
+      unitM2: unitM2.value,
+      eff: eff.value,
+      coeff: coeff.value,
+      unitsIn: unitsIn.value,
+      extra: !!extra.checked,
+      landUnit: landUnit,
+      priceUnit: priceUnit,
+      unitsManual: !!unitsManual,
+      type: currentType(),
+      struct: currentStruct(),
+      theme: currentTheme()
+    };
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== "object") return false;
+    if (data.land != null) land.value = data.land;
+    if (data.kenpei != null) kenpei.value = data.kenpei;
+    if (data.yoseki != null) yoseki.value = data.yoseki;
+    if (data.floors != null) floors.value = data.floors;
+    if (data.price != null) price.value = data.price;
+    if (data.unitM2 != null) unitM2.value = data.unitM2;
+    if (data.eff != null) eff.value = data.eff;
+    if (data.coeff != null) coeff.value = data.coeff;
+    if (data.unitsIn != null) unitsIn.value = data.unitsIn;
+    if (typeof data.extra === "boolean") extra.checked = data.extra;
+    if (data.landUnit === "m2" || data.landUnit === "tsubo") landUnit = data.landUnit;
+    if (data.priceUnit === "m2" || data.priceUnit === "tsubo") priceUnit = data.priceUnit;
+    unitsManual = !!data.unitsManual;
+    if (data.type === "oneroom" || data.type === "family") setSegOn("typeSeg", "data-type", data.type);
+    if (data.struct === "S" || data.struct === "RC" || data.struct === "SRC") setSegOn("structSeg", "data-struct", data.struct);
+    setSegOn("unitSeg", "data-unit", landUnit);
+    setSegOn("priceSeg", "data-price", priceUnit);
+    applyLandUnitLabels();
+    applyPriceUnitLabels();
+    applyTheme(data.theme === "light" ? "light" : "dark");
+    if (data.coeff != null) coeffOut.value = data.coeff;
+    return true;
+  } catch (e) { return false; }
+}
 document.getElementById("themeBtn").addEventListener("click", function () {
-  const light = document.documentElement.getAttribute("data-theme") === "light";
-  if (light) { document.documentElement.removeAttribute("data-theme"); this.textContent = "\u2600"; }
-  else { document.documentElement.setAttribute("data-theme", "light"); this.textContent = "\u263E"; }
+  applyTheme(currentTheme() === "light" ? "dark" : "light");
+  saveState();
 });
-setEff(0.75);
+(function () {
+  const panel = document.getElementById("stepsPanel");
+  const toggle = document.getElementById("stepsToggle");
+  const closeBtn = document.getElementById("stepsClose");
+  function openPanel() {
+    panel.hidden = false;
+    panel.classList.add("open");
+    toggle.textContent = "式を閉じる";
+  }
+  function closePanel() {
+    panel.classList.remove("open");
+    panel.hidden = true;
+    toggle.textContent = "式の確認";
+  }
+  toggle.addEventListener("click", function () {
+    if (panel.classList.contains("open")) closePanel();
+    else openPanel();
+  });
+  closeBtn.addEventListener("click", closePanel);
+})();
+if (!loadState()) { setEff(0.75); }
 calc();
 </script>
 </body>
