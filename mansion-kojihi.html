@@ -35,6 +35,8 @@
   .with-unit { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .with-unit input[type="number"] { width: 88px; }
   .unit { font-size: 0.82rem; color: var(--text-main); min-width: 2.4em; font-weight: 600; }
+  .unit-slash { font-size: 0.9rem; color: var(--text-sub); font-weight: 600; margin: 0 2px; }
+  .units-cap { font-size: 0.85rem; color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .conv { font-size: 0.72rem; color: var(--text-sub); text-align: right; margin: 0 0 10px; min-height: 1em; word-break: break-all; }
   .result-box { border: 2px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
   .result-box.main { border-color: var(--accent); }
@@ -111,8 +113,7 @@
   <p class="extra-list hidden" id="extraList">含むもの（仮）：外構・地盤改良・設計監理・申請 など</p>
   <div class="result-box">
     <div class="result-title">戸数と面積</div>
-    <div class="result-line"><span>想定戸数</span><div class="with-unit"><input type="number" id="unitsIn" inputmode="numeric" min="1" step="1"><span class="unit">戸</span></div></div>
-    <div class="result-line"><span>計算の上限</span><b id="unitsCapText">—</b></div>
+    <div class="result-line"><span>想定戸数</span><div class="with-unit"><input type="number" id="unitsIn" inputmode="numeric" min="1" step="1"><span class="unit-slash">/</span><b id="unitsCapText" class="units-cap">—</b></div></div>
     <div class="result-line"><span>1戸あたり本体</span><b id="perUnitText">—</b></div>
     <div class="result-line"><span>専有の合計</span><b id="exText">—</b></div>
     <div class="result-line"><span>廊下係数</span><input type="number" id="coeffOut" inputmode="decimal" step="0.01" min="1"></div>
@@ -309,7 +310,7 @@ function calc() {
     bodyBaseLine.textContent = "";
     extraList.classList.add("hidden");
   }
-  document.getElementById("unitsCapText").textContent = capUnits ? capUnits + "戸" : "—";
+  document.getElementById("unitsCapText").textContent = capUnits ? capUnits + "戸（上限）" : "—";
   document.getElementById("perUnitText").textContent = yen(per);
   document.getElementById("exText").textContent = area(usedExclusive);
   if (document.activeElement !== coeffOut) coeffOut.value = num(c, 2);
