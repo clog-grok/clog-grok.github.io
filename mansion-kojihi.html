@@ -12,7 +12,7 @@
   html[data-theme="light"] { --bg-color:#e2e8f0; --card-bg:#ffffff; --text-main:#0f172a; --text-sub:#334155; --accent:#0369a1; --ok:#047857; --border:#cbd5e1; --warn:#b45309; }
   * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; }
-  body.steps-open { padding-bottom: calc(240px + env(safe-area-inset-bottom, 0px)); }
+  body.steps-open { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
   .app-container { background-color: var(--card-bg); width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); position: relative; }
   .theme { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 999px; padding: 0; font-size: 1rem; line-height: 1; }
   h1 { font-size: 1.15rem; text-align: center; margin: 0 0 14px; padding-right: 48px; }
@@ -54,15 +54,15 @@
   .steps-btn { display: block; width: 100%; border: 2px solid var(--border); background: var(--bg-color); color: var(--text-main); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; font-size: 0.78rem; cursor: pointer; }
   .steps-btn:hover { border-color: var(--accent); }
   .steps-slot { min-height: 0; }
-  .steps-panel { display: none; background: var(--card-bg); color: var(--text-main); border: 2px solid var(--accent); border-radius: 14px; padding: 12px 14px 14px; margin: 0 0 10px; }
+  .steps-panel { display: none; background: var(--card-bg); color: var(--text-main); border: 2px solid var(--accent); border-radius: 14px; padding: 10px 12px; margin: 0 0 10px; }
   .steps-panel.open { display: block; }
-  .steps-panel.float { position: fixed; left: 50%; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: min(34vh, 260px); overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
+  .steps-panel.float { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: min(28vh, 180px); overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
   .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
   .foot a, .foot button { background: none; border: 0; color: var(--text-sub); font-size: 0.78rem; text-decoration: none; padding: 10px 4px; cursor: pointer; }
-  .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .float-head strong { font-size: 0.85rem; }
-  .float-head button { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; }
-  .steps { font-size: 0.78rem; color: var(--text-main); line-height: 1.7; margin: 0; white-space: pre-wrap; word-break: break-all; }
+  .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .float-head strong { font-size: 0.8rem; }
+  .float-head button { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 28px; height: 28px; font-size: 1rem; line-height: 1; cursor: pointer; }
+  .steps { font-size: 0.72rem; color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: break-all; }
   .warn { font-size: 0.72rem; color: var(--warn); margin-top: 8px; line-height: 1.5; }
   .hidden { display: none; }
   .foot-link { display: block; width: max-content; color: var(--text-sub); font-size: 0.75rem; text-decoration: none; margin-top: 8px; }
@@ -310,16 +310,12 @@ function calc() {
   document.getElementById("gfaLine").textContent = area(usedGfa);
   document.getElementById("gfaFormula").textContent = usedExclusive > 0 ? "専有 " + num(usedExclusive, 1) + "㎡ × " + num(c, 2) : "";
   document.getElementById("commonText").textContent = area(common);
+  const costLine = priceUnit === "tsubo" ? num(usedGfa * TO_TSUBO, 1) + "坪 × " + num(pTsubo, 1) + "万＝本体" : num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万＝本体";
   document.getElementById("steps").textContent = [
-    "1坪 ＝ 3.305785㎡　／　坪 ＝ ㎡ × 0.3025",
-    "専有効率 ＝ 1 ÷ 廊下係数 ＝ " + num(e, 2),
-    num(m2, 1) + "㎡ × 建蔽" + kPct + "% ＝ 建築面積 " + num(arch, 1) + "㎡",
-    num(m2, 1) + "㎡ × 容積" + yPct + "% ＝ 容積延べ " + num(far, 1) + "㎡",
-    "上限戸数 ＝ " + capUnits + "戸",
-    "専有 " + num(usedExclusive, 1) + "㎡ × 廊下係数" + num(c, 2) + " ＝ 延べ " + num(usedGfa, 1) + "㎡",
-    priceUnit === "tsubo" ? num(usedGfa * TO_TSUBO, 1) + "坪 × " + num(pTsubo, 1) + "万円 ＝ 本体" : num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万円 ＝ 本体",
-    withExtra && body > 0 ? "本体 × 1.25 ＝ 本体＋付帯" : null
-  ].filter(Boolean).join("\n");
+    num(m2, 1) + "㎡×建蔽" + kPct + "%＝" + num(arch, 1) + "㎡ ／ 容積" + yPct + "%＝" + num(far, 1) + "㎡",
+    "専有" + num(usedExclusive, 1) + "㎡×" + num(c, 2) + "＝延べ" + num(usedGfa, 1) + "㎡（" + capUnits + "戸）",
+    withExtra && body > 0 ? costLine + " ×1.25＝付帯込" : costLine
+  ].join("\n");
   saveState();
 }
 ["land", "kenpei", "yoseki", "floors", "price", "unitM2"].forEach(function (id) {
