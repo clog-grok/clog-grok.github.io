@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>マンション工事費ざっくり</title>
 <meta name="description" content="土地と建蔽・容積・階数から延べと本体工事費の概算。">
 <meta name="tool-tag" content="建築">
@@ -11,7 +11,8 @@
   :root { --bg-color:#0f172a; --card-bg:#1e293b; --text-main:#f8fafc; --text-sub:#cbd5e1; --accent:#38bdf8; --ok:#34d399; --border:#334155; --warn:#fbbf24; }
   html[data-theme="light"] { --bg-color:#e2e8f0; --card-bg:#ffffff; --text-main:#0f172a; --text-sub:#334155; --accent:#0369a1; --ok:#047857; --border:#cbd5e1; --warn:#b45309; }
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; display: flex; justify-content: center; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; }
+  body.steps-open { padding-bottom: calc(240px + env(safe-area-inset-bottom, 0px)); }
   .app-container { background-color: var(--card-bg); width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); position: relative; }
   .theme { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 999px; padding: 0; font-size: 1rem; line-height: 1; }
   h1 { font-size: 1.15rem; text-align: center; margin: 0 0 14px; padding-right: 48px; }
@@ -55,7 +56,7 @@
   .steps-slot { min-height: 0; }
   .steps-panel { display: none; background: var(--card-bg); color: var(--text-main); border: 2px solid var(--accent); border-radius: 14px; padding: 12px 14px 14px; margin: 0 0 10px; }
   .steps-panel.open { display: block; }
-  .steps-panel.float { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: 40vh; overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
+  .steps-panel.float { position: fixed; left: 50%; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: min(34vh, 260px); overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
   .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
   .foot a, .foot button { background: none; border: 0; color: var(--text-sub); font-size: 0.78rem; text-decoration: none; padding: 10px 4px; cursor: pointer; }
   .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
@@ -203,48 +204,19 @@ function bindSeg(id, attr, onPick) {
 bindSeg("unitSeg", "data-unit", function (v) {
   const m2Now = landM2(); landUnit = v;
   const landUnitEl = document.getElementById("landUnit");
-  if (landUnit === "m2") {
-    landLabel.textContent = "土地面積";
-    landUnitEl.textContent = "㎡";
-    land.value = m2Now ? String(Math.round(m2Now * 10) / 10) : "";
-  } else {
-    landLabel.textContent = "土地面積";
-    landUnitEl.textContent = "坪";
-    land.value = m2Now ? String(Math.round((m2Now * TO_TSUBO) * 10) / 10) : "";
-  }
+  if (landUnit === "m2") { landLabel.textContent = "土地面積"; landUnitEl.textContent = "㎡"; land.value = m2Now ? String(Math.round(m2Now * 10) / 10) : ""; }
+  else { landLabel.textContent = "土地面積"; landUnitEl.textContent = "坪"; land.value = m2Now ? String(Math.round((m2Now * TO_TSUBO) * 10) / 10) : ""; }
 });
 bindSeg("priceSeg", "data-price", function (v) {
   const tsuboNow = priceTsubo(); priceUnit = v;
   const priceUnitEl = document.getElementById("priceUnit");
-  if (priceUnit === "tsubo") {
-    priceLabel.textContent = "延べの坪単価";
-    priceUnitEl.textContent = "万円/坪";
-    price.value = tsuboNow ? String(Math.round(tsuboNow * 10) / 10) : "";
-  } else {
-    priceLabel.textContent = "延べの㎡単価";
-    priceUnitEl.textContent = "万円/㎡";
-    price.value = tsuboNow ? String(Math.round((tsuboNow / M2_PER_TSUBO) * 100) / 100) : "";
-  }
+  if (priceUnit === "tsubo") { priceLabel.textContent = "延べの坪単価"; priceUnitEl.textContent = "万円/坪"; price.value = tsuboNow ? String(Math.round(tsuboNow * 10) / 10) : ""; }
+  else { priceLabel.textContent = "延べの㎡単価"; priceUnitEl.textContent = "万円/㎡"; price.value = tsuboNow ? String(Math.round((tsuboNow / M2_PER_TSUBO) * 100) / 100) : ""; }
 });
-bindSeg("typeSeg", "data-type", function (v) {
-  unitsManual = false;
-  const t = typeMem[v] || TYPE[v];
-  setEff(t.eff);
-  unitM2.value = t.unitM2;
-});
-bindSeg("structSeg", "data-struct", function (v) {
-  const tsubo = priceMem[v] || PRESET[v];
-  price.value = priceUnit === "tsubo" ? String(tsubo) : String(Math.round((tsubo / M2_PER_TSUBO) * 100) / 100);
-});
-function rememberPrice() {
-  const t = priceTsubo();
-  if (t > 0) priceMem[currentStruct()] = t;
-}
-function rememberType() {
-  const e = parseFloat(eff.value);
-  const u = parseFloat(unitM2.value);
-  if (isFinite(e) && e > 0 && isFinite(u) && u > 0) typeMem[currentType()] = { unitM2: u, eff: e };
-}
+bindSeg("typeSeg", "data-type", function (v) { unitsManual = false; const t = typeMem[v] || TYPE[v]; setEff(t.eff); unitM2.value = t.unitM2; });
+bindSeg("structSeg", "data-struct", function (v) { const tsubo = priceMem[v] || PRESET[v]; price.value = priceUnit === "tsubo" ? String(tsubo) : String(Math.round((tsubo / M2_PER_TSUBO) * 100) / 100); });
+function rememberPrice() { const t = priceTsubo(); if (t > 0) priceMem[currentStruct()] = t; }
+function rememberType() { const e = parseFloat(eff.value); const u = parseFloat(unitM2.value); if (isFinite(e) && e > 0 && isFinite(u) && u > 0) typeMem[currentType()] = { unitM2: u, eff: e }; }
 function landM2() { const n = parseFloat(land.value); if (!isFinite(n) || n <= 0) return 0; return landUnit === "tsubo" ? n * M2_PER_TSUBO : n; }
 function priceTsubo() { const n = parseFloat(price.value); if (!isFinite(n) || n <= 0) return 0; return priceUnit === "m2" ? n * M2_PER_TSUBO : n; }
 function priceM2() { return priceTsubo() / M2_PER_TSUBO; }
@@ -265,23 +237,13 @@ function calc() {
   const pTsubo = priceTsubo();
   const pM2 = priceM2();
   if (m2) {
-    if (landUnit === "m2") {
-      landConv.textContent = num(m2 * TO_TSUBO, 1) + "坪 × 3.305785 ＝ " + num(m2, 1) + "㎡";
-    } else {
-      landConv.textContent = num(m2, 1) + "㎡ × 0.3025 ＝ " + num(m2 * TO_TSUBO, 1) + "坪";
-    }
-  } else {
-    landConv.textContent = "";
-  }
+    if (landUnit === "m2") landConv.textContent = num(m2 * TO_TSUBO, 1) + "坪 × 3.305785 ＝ " + num(m2, 1) + "㎡";
+    else landConv.textContent = num(m2, 1) + "㎡ × 0.3025 ＝ " + num(m2 * TO_TSUBO, 1) + "坪";
+  } else landConv.textContent = "";
   if (pTsubo) {
-    if (priceUnit === "tsubo") {
-      priceConv.textContent = num(pM2, 2) + "万円/㎡ × 3.305785 ＝ " + num(pTsubo, 1) + "万円/坪";
-    } else {
-      priceConv.textContent = num(pTsubo, 1) + "万円/坪 ÷ 3.305785 ＝ " + num(pM2, 2) + "万円/㎡";
-    }
-  } else {
-    priceConv.textContent = "";
-  }
+    if (priceUnit === "tsubo") priceConv.textContent = num(pM2, 2) + "万円/㎡ × 3.305785 ＝ " + num(pTsubo, 1) + "万円/坪";
+    else priceConv.textContent = num(pTsubo, 1) + "万円/坪 ÷ 3.305785 ＝ " + num(pM2, 2) + "万円/㎡";
+  } else priceConv.textContent = "";
   const arch = m2 * k;
   const far = m2 * y;
   const byFloor = arch * f;
@@ -313,10 +275,7 @@ function calc() {
   if (needFloors > 0 && f > 0 && Math.abs(f - needFloors) > 0.01) {
     note.classList.remove("hidden");
     note.textContent = "容積上限 " + commaM2(far) + "㎡（" + trimNum(needFloors, 2) + "階相当）。";
-  } else {
-    note.classList.add("hidden");
-    note.textContent = "";
-  }
+  } else { note.classList.add("hidden"); note.textContent = ""; }
   const bodyTitle = document.getElementById("bodyTitle");
   const bodyBaseLine = document.getElementById("bodyBaseLine");
   const extraList = document.getElementById("extraList");
@@ -331,9 +290,7 @@ function calc() {
       document.getElementById("formulaLabel").textContent = "延べ㎡ × ㎡単価 × 1.25";
       document.getElementById("formulaText").textContent = usedGfa > 0 ? num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万円 × 1.25" : "—";
     }
-    bodyBaseLine.classList.remove("hidden");
-    bodyBaseLine.textContent = body > 0 ? "本体 " + yen(body) : "";
-    extraList.classList.remove("hidden");
+    bodyBaseLine.classList.remove("hidden"); bodyBaseLine.textContent = body > 0 ? "本体 " + yen(body) : ""; extraList.classList.remove("hidden");
   } else {
     bodyTitle.textContent = "本体工事費（延べ × 単価）";
     document.getElementById("bodyText").textContent = yen(body);
@@ -344,9 +301,7 @@ function calc() {
       document.getElementById("formulaLabel").textContent = "延べ㎡ × ㎡単価";
       document.getElementById("formulaText").textContent = usedGfa > 0 ? num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万円" : "—";
     }
-    bodyBaseLine.classList.add("hidden");
-    bodyBaseLine.textContent = "";
-    extraList.classList.add("hidden");
+    bodyBaseLine.classList.add("hidden"); bodyBaseLine.textContent = ""; extraList.classList.add("hidden");
   }
   document.getElementById("unitsCapText").textContent = capUnits ? capUnits + "戸（上限）" : "—";
   document.getElementById("perUnitText").textContent = yen(per);
@@ -382,60 +337,26 @@ coeffOut.addEventListener("input", function () { onCoeffInput(coeffOut); });
 unitsIn.addEventListener("input", function () { unitsManual = true; calc(); });
 extra.addEventListener("change", calc);
 const STORE_KEY = "mansion-kojihi-v1";
-function currentType() {
-  const on = document.querySelector("#typeSeg button.on");
-  return on ? on.getAttribute("data-type") : "oneroom";
-}
-function currentStruct() {
-  const on = document.querySelector("#structSeg button.on");
-  return on ? on.getAttribute("data-struct") : "RC";
-}
-function currentTheme() {
-  return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-}
-function setSegOn(rootId, attr, value) {
-  const root = document.getElementById(rootId);
-  root.querySelectorAll("button").forEach(function (b) {
-    b.classList.toggle("on", b.getAttribute(attr) === value);
-  });
-}
+function currentType() { const on = document.querySelector("#typeSeg button.on"); return on ? on.getAttribute("data-type") : "oneroom"; }
+function currentStruct() { const on = document.querySelector("#structSeg button.on"); return on ? on.getAttribute("data-struct") : "RC"; }
+function currentTheme() { return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"; }
+function setSegOn(rootId, attr, value) { const root = document.getElementById(rootId); root.querySelectorAll("button").forEach(function (b) { b.classList.toggle("on", b.getAttribute(attr) === value); }); }
 function applyTheme(theme) {
   const btn = document.getElementById("themeBtn");
-  if (theme === "light") {
-    document.documentElement.setAttribute("data-theme", "light");
-    btn.textContent = "\u263E";
-  } else {
-    document.documentElement.removeAttribute("data-theme");
-    btn.textContent = "\u2600";
-  }
+  if (theme === "light") { document.documentElement.setAttribute("data-theme", "light"); btn.textContent = "\u263E"; }
+  else { document.documentElement.removeAttribute("data-theme"); btn.textContent = "\u2600"; }
 }
-function applyLandUnitLabels() {
-  const landUnitEl = document.getElementById("landUnit");
-  if (landUnit === "m2") { landLabel.textContent = "土地面積"; landUnitEl.textContent = "㎡"; }
-  else { landLabel.textContent = "土地面積"; landUnitEl.textContent = "坪"; }
-}
-function applyPriceUnitLabels() {
-  const priceUnitEl = document.getElementById("priceUnit");
-  if (priceUnit === "tsubo") { priceLabel.textContent = "延べの坪単価"; priceUnitEl.textContent = "万円/坪"; }
-  else { priceLabel.textContent = "延べの㎡単価"; priceUnitEl.textContent = "万円/㎡"; }
-}
+function applyLandUnitLabels() { const landUnitEl = document.getElementById("landUnit"); if (landUnit === "m2") { landLabel.textContent = "土地面積"; landUnitEl.textContent = "㎡"; } else { landLabel.textContent = "土地面積"; landUnitEl.textContent = "坪"; } }
+function applyPriceUnitLabels() { const priceUnitEl = document.getElementById("priceUnit"); if (priceUnit === "tsubo") { priceLabel.textContent = "延べの坪単価"; priceUnitEl.textContent = "万円/坪"; } else { priceLabel.textContent = "延べの㎡単価"; priceUnitEl.textContent = "万円/㎡"; } }
 function saveState() {
   try {
-    const data = {
-      land: land.value, kenpei: kenpei.value, yoseki: yoseki.value, floors: floors.value,
-      price: price.value, unitM2: unitM2.value, eff: eff.value, coeff: coeff.value, unitsIn: unitsIn.value,
-      extra: !!extra.checked, landUnit: landUnit, priceUnit: priceUnit, unitsManual: !!unitsManual,
-      type: currentType(), struct: currentStruct(), theme: currentTheme(), priceMem: priceMem, typeMem: typeMem
-    };
-    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    localStorage.setItem(STORE_KEY, JSON.stringify({ land: land.value, kenpei: kenpei.value, yoseki: yoseki.value, floors: floors.value, price: price.value, unitM2: unitM2.value, eff: eff.value, coeff: coeff.value, unitsIn: unitsIn.value, extra: !!extra.checked, landUnit: landUnit, priceUnit: priceUnit, unitsManual: !!unitsManual, type: currentType(), struct: currentStruct(), theme: currentTheme(), priceMem: priceMem, typeMem: typeMem }));
   } catch (e) {}
 }
 function loadState() {
   try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    if (!data || typeof data !== "object") return false;
+    const raw = localStorage.getItem(STORE_KEY); if (!raw) return false;
+    const data = JSON.parse(raw); if (!data || typeof data !== "object") return false;
     if (data.land != null) land.value = data.land;
     if (data.kenpei != null) kenpei.value = data.kenpei;
     if (data.yoseki != null) yoseki.value = data.yoseki;
@@ -451,97 +372,51 @@ function loadState() {
     unitsManual = !!data.unitsManual;
     if (data.type === "oneroom" || data.type === "family") setSegOn("typeSeg", "data-type", data.type);
     if (data.struct === "S" || data.struct === "RC" || data.struct === "SRC") setSegOn("structSeg", "data-struct", data.struct);
-    if (data.priceMem && typeof data.priceMem === "object") {
-      ["S", "RC", "SRC"].forEach(function (k) {
-        const n = parseFloat(data.priceMem[k]);
-        if (isFinite(n) && n > 0) priceMem[k] = n;
-      });
-    }
-    if (data.typeMem && typeof data.typeMem === "object") {
-      ["oneroom", "family"].forEach(function (k) {
-        const t = data.typeMem[k];
-        if (!t) return;
-        const u = parseFloat(t.unitM2);
-        const e = parseFloat(t.eff);
-        if (isFinite(u) && u > 0 && isFinite(e) && e > 0) typeMem[k] = { unitM2: u, eff: e };
-      });
-    }
-    setSegOn("unitSeg", "data-unit", landUnit);
-    setSegOn("priceSeg", "data-price", priceUnit);
-    applyLandUnitLabels();
-    applyPriceUnitLabels();
-    applyTheme(data.theme === "light" ? "light" : "dark");
+    if (data.priceMem && typeof data.priceMem === "object") { ["S", "RC", "SRC"].forEach(function (k) { const n = parseFloat(data.priceMem[k]); if (isFinite(n) && n > 0) priceMem[k] = n; }); }
+    if (data.typeMem && typeof data.typeMem === "object") { ["oneroom", "family"].forEach(function (k) { const t = data.typeMem[k]; if (!t) return; const u = parseFloat(t.unitM2); const e = parseFloat(t.eff); if (isFinite(u) && u > 0 && isFinite(e) && e > 0) typeMem[k] = { unitM2: u, eff: e }; }); }
+    setSegOn("unitSeg", "data-unit", landUnit); setSegOn("priceSeg", "data-price", priceUnit); applyLandUnitLabels(); applyPriceUnitLabels(); applyTheme(data.theme === "light" ? "light" : "dark");
     if (data.coeff != null) coeffOut.value = data.coeff;
     return true;
   } catch (e) { return false; }
 }
-document.getElementById("themeBtn").addEventListener("click", function () {
-  applyTheme(currentTheme() === "light" ? "dark" : "light");
-  saveState();
-});
+document.getElementById("themeBtn").addEventListener("click", function () { applyTheme(currentTheme() === "light" ? "dark" : "light"); saveState(); });
 (function () {
   const panel = document.getElementById("stepsPanel");
   const slot = document.getElementById("stepsSlot");
   const toggle = document.getElementById("stepsToggle");
   const closeBtn = document.getElementById("stepsClose");
   function isOpen() { return panel.classList.contains("open"); }
-  function openPanel() {
-    panel.hidden = false;
-    panel.classList.add("open");
-    panel.classList.remove("float");
-    toggle.textContent = "式を閉じる";
-    slot.style.minHeight = "";
-    syncStepsMode();
-  }
-  function closePanel() {
-    panel.classList.remove("open", "float");
-    panel.hidden = true;
-    toggle.textContent = "式の確認";
-    slot.style.minHeight = "";
+  function openPanel() { panel.hidden = false; panel.classList.add("open"); panel.classList.remove("float"); document.body.classList.add("steps-open"); toggle.textContent = "式を閉じる"; slot.style.minHeight = ""; syncStepsMode(); }
+  function closePanel() { panel.classList.remove("open", "float"); panel.hidden = true; document.body.classList.remove("steps-open"); toggle.textContent = "式の確認"; slot.style.minHeight = ""; }
+  function nearPageBottom() {
+    const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 0;
+    const doc = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+    return (window.scrollY || window.pageYOffset || 0) + vh >= doc - 80;
   }
   function syncStepsMode() {
     if (!isOpen()) return;
-    const vh = window.innerHeight || 0;
-    if (!panel.classList.contains("float")) {
-      const rect = slot.getBoundingClientRect();
-      const visible = rect.top < vh - 56 && rect.bottom > 72;
-      if (!visible) {
-        slot.style.minHeight = Math.max(panel.offsetHeight, 1) + "px";
-        panel.classList.add("float");
-      }
-    } else {
-      const rect = slot.getBoundingClientRect();
-      const visible = rect.top >= 48 && rect.bottom <= vh - 12;
-      if (visible) {
-        panel.classList.remove("float");
-        slot.style.minHeight = "";
-      }
-    }
+    const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 0;
+    const rect = slot.getBoundingClientRect();
+    const slotOnScreen = rect.top < vh - 96 && rect.bottom > 88;
+    if (nearPageBottom() || slotOnScreen) { panel.classList.remove("float"); slot.style.minHeight = ""; return; }
+    slot.style.minHeight = Math.max(panel.offsetHeight, 1) + "px";
+    panel.classList.add("float");
   }
-  toggle.addEventListener("click", function () {
-    if (isOpen()) closePanel();
-    else openPanel();
-  });
+  toggle.addEventListener("click", function () { if (isOpen()) closePanel(); else openPanel(); });
   closeBtn.addEventListener("click", closePanel);
   window.addEventListener("scroll", syncStepsMode, { passive: true });
   window.addEventListener("resize", syncStepsMode);
+  if (window.visualViewport) { window.visualViewport.addEventListener("resize", syncStepsMode); window.visualViewport.addEventListener("scroll", syncStepsMode); }
 })();
 function resetAll() {
   try { localStorage.removeItem(STORE_KEY); } catch (e) {}
-  priceMem = { S: 114, RC: 120, SRC: 135 };
-  typeMem = { oneroom: { unitM2: 25, eff: 0.75 }, family: { unitM2: 65, eff: 0.82 } };
+  priceMem = { S: 114, RC: 120, SRC: 135 }; typeMem = { oneroom: { unitM2: 25, eff: 0.75 }, family: { unitM2: 65, eff: 0.82 } };
   landUnit = "m2"; priceUnit = "tsubo"; unitsManual = false;
   land.value = "330"; kenpei.value = "80"; yoseki.value = "400"; floors.value = "7"; price.value = "120"; unitM2.value = "25"; extra.checked = false; unitsIn.value = "";
-  setSegOn("typeSeg", "data-type", "oneroom");
-  setSegOn("structSeg", "data-struct", "RC");
-  setSegOn("unitSeg", "data-unit", "m2");
-  setSegOn("priceSeg", "data-price", "tsubo");
+  setSegOn("typeSeg", "data-type", "oneroom"); setSegOn("structSeg", "data-struct", "RC"); setSegOn("unitSeg", "data-unit", "m2"); setSegOn("priceSeg", "data-price", "tsubo");
   applyLandUnitLabels(); applyPriceUnitLabels(); setEff(0.75);
-  const panel = document.getElementById("stepsPanel");
-  panel.classList.remove("open", "float"); panel.hidden = true;
-  document.getElementById("stepsToggle").textContent = "式の確認";
-  document.getElementById("stepsSlot").style.minHeight = "";
-  calc();
+  const panel = document.getElementById("stepsPanel"); panel.classList.remove("open", "float"); panel.hidden = true; document.body.classList.remove("steps-open");
+  document.getElementById("stepsToggle").textContent = "式の確認"; document.getElementById("stepsSlot").style.minHeight = ""; calc();
 }
 document.getElementById("resetBtn").addEventListener("click", resetAll);
 if (!loadState()) { setEff(0.75); }
