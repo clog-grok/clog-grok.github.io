@@ -59,9 +59,9 @@
   .steps-panel.float { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: min(28vh, 180px); overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
   .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
   .foot a, .foot button { background: none; border: 0; color: var(--text-sub); font-size: 0.78rem; text-decoration: none; padding: 10px 4px; cursor: pointer; }
-  .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
-  .float-head strong { font-size: 0.8rem; }
-  .float-head button { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 28px; height: 28px; font-size: 1rem; line-height: 1; cursor: pointer; }
+  .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .float-head strong { font-size: 0.85rem; }
+  .float-head button { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; }
   .steps { font-size: 0.72rem; color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: break-all; }
   .warn { font-size: 0.72rem; color: var(--warn); margin-top: 8px; line-height: 1.5; }
   .hidden { display: none; }
@@ -255,13 +255,17 @@ function calc() {
   let units = capUnits;
   if (unitsManual) { const typed = parseFloat(unitsIn.value); if (isFinite(typed) && typed > 0) units = Math.floor(typed); }
   else if (document.activeElement !== unitsIn) { unitsIn.value = capUnits ? String(capUnits) : ""; }
-  let usedExclusive = units * uSize;
-  let usedGfa = usedExclusive * c;
+  const usedExclusive = units * uSize;
+  const usedGfa = usedExclusive * c;
+  const overGfa = usedGfa - capGfa;
   const unitsNote = document.getElementById("unitsNote");
-  if (usedGfa > capGfa + 0.001) { usedGfa = capGfa; usedExclusive = capExclusive; unitsNote.classList.remove("hidden"); unitsNote.textContent = "延べの上限を超えるので、工事費は上限の延べで見ています。"; }
-  else { unitsNote.classList.add("hidden"); unitsNote.textContent = ""; }
+  if (overGfa > 0.001) {
+    unitsNote.classList.remove("hidden");
+    unitsNote.textContent = "想定延べ " + commaM2(usedGfa) + "㎡。上限 " + commaM2(capGfa) + "㎡。差 +" + commaM2(overGfa) + "㎡。";
+  } else { unitsNote.classList.add("hidden"); unitsNote.textContent = ""; }
   const common = usedGfa - usedExclusive;
   const body = (usedGfa * TO_TSUBO) * pTsubo * 10000;
+  const bodyCap = (capGfa * TO_TSUBO) * pTsubo * 10000;
   const per = units > 0 ? body / units : 0;
   const liveFloors = needFloors > 0 ? Math.min(f || needFloors, needFloors) : (f || 0);
   const perFloor = liveFloors > 0 ? units / liveFloors : 0;
@@ -303,6 +307,11 @@ function calc() {
     }
     bodyBaseLine.classList.add("hidden"); bodyBaseLine.textContent = ""; extraList.classList.add("hidden");
   }
+  if (overGfa > 0.001 && bodyCap > 0) {
+    bodyBaseLine.classList.remove("hidden");
+    const capYen = withExtra ? yen(bodyCap * 1.25) : yen(bodyCap);
+    bodyBaseLine.textContent = (withExtra && body > 0 ? "本体 " + yen(body) + "　" : "") + "上限延べなら " + capYen;
+  }
   document.getElementById("unitsCapText").textContent = capUnits ? capUnits + "戸（上限）" : "—";
   document.getElementById("perUnitText").textContent = yen(per);
   document.getElementById("exText").textContent = area(usedExclusive);
@@ -313,7 +322,7 @@ function calc() {
   const costLine = priceUnit === "tsubo" ? num(usedGfa * TO_TSUBO, 1) + "坪 × " + num(pTsubo, 1) + "万＝本体" : num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万＝本体";
   document.getElementById("steps").textContent = [
     num(m2, 1) + "㎡×建蔽" + kPct + "%＝" + num(arch, 1) + "㎡ ／ 容積" + yPct + "%＝" + num(far, 1) + "㎡",
-    "専有" + num(usedExclusive, 1) + "㎡×" + num(c, 2) + "＝延べ" + num(usedGfa, 1) + "㎡（" + capUnits + "戸）",
+    "専有" + num(usedExclusive, 1) + "㎡×" + num(c, 2) + "＝延べ" + num(usedGfa, 1) + "㎡（" + units + "戸／上限" + capUnits + "戸）",
     withExtra && body > 0 ? costLine + " ×1.25＝付帯込" : costLine
   ].join("\n");
   saveState();
