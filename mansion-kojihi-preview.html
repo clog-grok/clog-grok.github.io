@@ -1,1 +1,25 @@
-PLACEHOLDER
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>配置プレビュー｜マンション工事費</title>
+<meta name="description" content="公開版を土台に、階数と戸数・面積を住戸の計画へ寄せた配置プレビュー。公開版はそのまま。">
+<meta name="tool-tag" content="建築">
+<meta name="tool-status" content="wip">
+<!-- CONTENT_VIA_B64_PARTS: see follow-up push -->
+</head>
+<body>
+<p>loading preview…</p>
+<script>
+(async function(){
+  var n=4;
+  var parts=await Promise.all(Array.from({length:n},function(_,i){
+    return fetch('./mansion-kojihi-preview.html.p'+i+'.b64?v=22-typefold').then(function(r){return r.text();});
+  }));
+  var html=new TextDecoder('utf-8').decode(Uint8Array.from(atob(parts.join('')),function(c){return c.charCodeAt(0);}));
+  document.open();document.write(html);document.close();
+})();
+</script>
+</body>
+</html>
