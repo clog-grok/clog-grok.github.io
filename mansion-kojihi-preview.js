@@ -197,7 +197,12 @@ function calc() {
   document.getElementById("exText").textContent = area(usedExclusive);
   document.getElementById("gfaFormula").textContent = usedExclusive > 0 ? "専有 " + num(usedExclusive, 1) + "㎡ ×" : "専有 —㎡ ×";
   var gfaLandF = document.getElementById("gfaFormulaLand");
-  if (gfaLandF) gfaLandF.textContent = usedExclusive > 0 ? "専有 " + num(usedExclusive, 1) + " × " + num(c, 2) : "専有 — × —";
+  if (gfaLandF) {
+    if (usedExclusive > 0) {
+      if (priceUnit === "tsubo") gfaLandF.textContent = "専有 " + num(usedExclusive * TO_TSUBO, 1) + " × " + num(c, 2) + " ＝ " + num(usedGfa * TO_TSUBO, 1);
+      else gfaLandF.textContent = "専有 " + num(usedExclusive, 1) + " × " + num(c, 2) + " ＝ " + num(usedGfa, 1);
+    } else gfaLandF.textContent = "専有 — × — ＝ —";
+  }
   document.getElementById("commonText").textContent = area(common);
   const costLine = priceUnit === "tsubo" ? num(usedGfa * TO_TSUBO, 1) + "坪 × " + num(pTsubo, 1) + "万＝本体" : num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万＝本体";
   document.getElementById("steps").textContent = [
