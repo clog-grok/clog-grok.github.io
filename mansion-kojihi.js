@@ -10,6 +10,8 @@
     "#copySteps{width:2.1em;min-width:2.1em;overflow:hidden;}",
     "#copySteps.hidden{display:inline-flex !important;}",
     "#memoTall{display:none !important;}",
+    "body.steps-open{padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px)) !important;}",
+    ".steps-slot{min-height:0 !important;height:auto !important;padding-bottom:0 !important;margin-bottom:0 !important;}",
     ".steps-panel.open{position:fixed !important;left:50% !important;bottom:calc(8px + env(safe-area-inset-bottom, 0px)) !important;transform:translateX(-50%) !important;width:calc(100% - 24px) !important;max-width:400px !important;max-height:min(46vh, 320px) !important;overflow:auto !important;z-index:1000 !important;margin:0 !important;box-shadow:0 12px 32px rgba(0,0,0,0.35) !important;}",
     ".steps-panel.open .memo-box{min-height:9em;max-height:30vh;height:30vh;}",
     ".memo-box{border:1.5px solid #7dd3fc;min-height:9em;}"
@@ -70,7 +72,7 @@
       panel.style.setProperty("max-width", "400px", "important");
       panel.style.setProperty("z-index", "1000", "important");
       panel.style.setProperty("margin", "0", "important");
-      if (slot) slot.style.minHeight = Math.max(panel.offsetHeight || 220, 180) + "px";
+      if (slot) slot.style.minHeight = "0px";
     }
     function setMemo(on) {
       formulaView.classList.toggle("hidden", on);
