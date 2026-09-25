@@ -78,8 +78,8 @@ function rememberType() { const e = parseFloat(eff.value); const u = parseFloat(
 function landM2() { const n = parseFloat(land.value); if (!isFinite(n) || n <= 0) return 0; return landUnit === "tsubo" ? n * M2_PER_TSUBO : n; }
 function priceTsubo() { const n = parseFloat(price.value); if (!isFinite(n) || n <= 0) return 0; return priceUnit === "m2" ? n * M2_PER_TSUBO : n; }
 function priceM2() { return priceTsubo() / M2_PER_TSUBO; }
-function setEff(e) { syncing = true; const v = Math.max(0.01, Math.min(e, 1)); eff.value = num(v, 2); coeff.value = num(1 / v, 2); coeffOut.value = num(1 / v, 2); syncing = false; }
-function setCoeff(c) { syncing = true; const v = Math.max(1, c); coeff.value = num(v, 2); coeffOut.value = num(v, 2); eff.value = num(1 / v, 2); syncing = false; }
+function setEff(e) { syncing = true; const v = Math.max(0.01, Math.min(e, 1)); eff.value = num(v, 2); coeff.value = num(1 / v, 2); if (coeffOut) coeffOut.value = num(1 / v, 2); syncing = false; }
+function setCoeff(c) { syncing = true; const v = Math.max(1, c); coeff.value = num(v, 2); if (coeffOut) coeffOut.value = num(v, 2); eff.value = num(1 / v, 2); syncing = false; }
 function calc() {
   const m2 = landM2();
   const kPct = parseFloat(kenpei.value) || 0;
@@ -127,8 +127,13 @@ function calc() {
   const per = units > 0 ? body / units : 0;
   const liveFloors = needFloors > 0 ? Math.min(f || needFloors, needFloors) : (f || 0);
   const perFloor = liveFloors > 0 ? units / liveFloors : 0;
-  document.getElementById("capLabel").textContent = useFar ? "容積で頭打ち" : "建蔽×階数で頭打ち";
+  var capTxt = useFar ? "容積で頭打ち" : "建蔽×階数で頭打ち";
+  document.getElementById("capLabel").textContent = capTxt;
   document.getElementById("gfaText").textContent = area(usedGfa);
+  var capLand = document.getElementById("capLabelLand");
+  var gfaLand = document.getElementById("gfaTextLand");
+  if (capLand) capLand.textContent = capTxt;
+  if (gfaLand) gfaLand.textContent = area(usedGfa);
   document.getElementById("archText").textContent = area(arch);
   document.getElementById("farText").textContent = area(far);
   document.getElementById("needFloorText").textContent = needFloors > 0 ? trimNum(needFloors, 2) + "階" : "—";
@@ -173,9 +178,8 @@ function calc() {
   document.getElementById("unitsCapText").textContent = capUnits ? capUnits + "戸（上限）" : "—";
   document.getElementById("perUnitText").textContent = yen(per);
   document.getElementById("exText").textContent = area(usedExclusive);
-  if (document.activeElement !== coeffOut) coeffOut.value = num(c, 2);
-  document.getElementById("gfaLine").textContent = area(usedGfa);
-  document.getElementById("gfaFormula").textContent = usedExclusive > 0 ? "専有 " + num(usedExclusive, 1) + "㎡ × " + num(c, 2) : "";
+  document.getElementById("gfaFormula").textContent = usedExclusive > 0 ? "専有 " + num(usedExclusive, 1) + "㎡ ×" : "専有 —㎡ ×";
+  if (coeffOut && document.activeElement !== coeffOut) coeffOut.value = num(c, 2);
   document.getElementById("commonText").textContent = area(common);
   const costLine = priceUnit === "tsubo" ? num(usedGfa * TO_TSUBO, 1) + "坪 × " + num(pTsubo, 1) + "万＝本体" : num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万＝本体";
   document.getElementById("steps").textContent = [
@@ -228,7 +232,7 @@ function loadState() {
     if (keep(data.price)) price.value = data.price;
     if (keep(data.unitM2)) unitM2.value = data.unitM2;
     if (keep(data.eff)) eff.value = data.eff;
-    if (keep(data.coeff)) coeff.value = data.coeff;
+    if (keep(data.coeff)) { coeff.value = data.coeff; if (coeffOut) coeffOut.value = data.coeff; }
     if (keep(data.unitsIn)) unitsIn.value = data.unitsIn;
     if (typeof data.extra === "boolean") extra.checked = data.extra;
     if (data.landUnit === "m2" || data.landUnit === "tsubo") landUnit = data.landUnit;
@@ -239,7 +243,6 @@ function loadState() {
     if (data.priceMem && typeof data.priceMem === "object") { ["S", "RC", "SRC"].forEach(function (k) { const n = parseFloat(data.priceMem[k]); if (isFinite(n) && n > 0) priceMem[k] = n; }); }
     if (data.typeMem && typeof data.typeMem === "object") { ["oneroom", "family"].forEach(function (k) { const t = data.typeMem[k]; if (!t) return; const u = parseFloat(t.unitM2); const e = parseFloat(t.eff); if (isFinite(u) && u > 0 && isFinite(e) && e > 0) typeMem[k] = { unitM2: u, eff: e }; }); }
     setSegOn("unitSeg", "data-unit", landUnit); setSegOn("priceSeg", "data-price", priceUnit); applyLandUnitLabels(); applyPriceUnitLabels(); applyTheme(data.theme === "light" ? "light" : "dark");
-    if (data.coeff != null) coeffOut.value = data.coeff;
     return true;
   } catch (e) { return false; }
 }
