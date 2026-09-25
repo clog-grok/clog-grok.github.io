@@ -1,4 +1,18 @@
 (function () {
+  var css = document.createElement("style");
+  css.textContent = [
+    ".float-head{display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:4px;margin-bottom:6px;}",
+    ".float-head .head-title{display:flex;align-items:center;gap:4px;min-width:0;flex:1 1 auto;}",
+    ".float-head .head-tools{display:flex;align-items:center;gap:4px;flex:0 0 auto;margin-left:2px;}",
+    ".float-head strong{font-size:.8rem;white-space:nowrap;}",
+    ".float-head #stepsClose{width:28px;height:28px;margin-left:0;flex-shrink:0;}",
+    ".float-head .fs-btns{margin-right:0;gap:3px;flex-shrink:0;}",
+    ".float-head .fs-btns button{width:auto;height:28px;min-width:26px;padding:3px 5px;}",
+    ".float-head .icon-btn{min-width:26px;height:28px;padding:0 4px;margin:0;}",
+    ".head-tools .icon-btn + .icon-btn{margin-left:0;}"
+  ].join("");
+  document.head.appendChild(css);
+
   function dummy() {
     return {
       addEventListener: function () {},
@@ -24,7 +38,6 @@
   function copyText(text, btn) {
     function ok() {
       if (!btn) return;
-      var prev = btn.textContent;
       btn.textContent = "コピーした";
       setTimeout(function () { btn.textContent = "写"; }, 1200);
     }
