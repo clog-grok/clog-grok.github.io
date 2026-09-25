@@ -62,8 +62,8 @@ function bindSeg(id, attr, onPick) {
 bindSeg("unitSeg", "data-unit", function (v) {
   const m2Now = landM2(); landUnit = v;
   const landUnitEl = document.getElementById("landUnit");
-  if (landUnit === "m2") { landLabel.textContent = "土地面積"; landUnitEl.textContent = "㎡"; land.value = m2Now ? String(Math.round(m2Now * 10) / 10) : ""; }
-  else { landLabel.textContent = "土地面積"; landUnitEl.textContent = "坪"; land.value = m2Now ? String(Math.round((m2Now * TO_TSUBO) * 10) / 10) : ""; }
+  if (landUnit === "m2") { landLabel.textContent = "敷地面積"; landUnitEl.textContent = "㎡"; land.value = m2Now ? String(Math.round(m2Now * 10) / 10) : ""; }
+  else { landLabel.textContent = "敷地面積"; landUnitEl.textContent = "坪"; land.value = m2Now ? String(Math.round((m2Now * TO_TSUBO) * 10) / 10) : ""; }
 });
 bindSeg("priceSeg", "data-price", function (v) {
   const tsuboNow = priceTsubo(); priceUnit = v;
@@ -209,7 +209,7 @@ function applyTheme(theme) {
   if (theme === "light") { document.documentElement.setAttribute("data-theme", "light"); btn.textContent = "\u263E"; }
   else { document.documentElement.removeAttribute("data-theme"); btn.textContent = "\u2600"; }
 }
-function applyLandUnitLabels() { const landUnitEl = document.getElementById("landUnit"); if (landUnit === "m2") { landLabel.textContent = "土地面積"; landUnitEl.textContent = "㎡"; } else { landLabel.textContent = "土地面積"; landUnitEl.textContent = "坪"; } }
+function applyLandUnitLabels() { const landUnitEl = document.getElementById("landUnit"); if (landUnit === "m2") { landLabel.textContent = "敷地面積"; landUnitEl.textContent = "㎡"; } else { landLabel.textContent = "敷地面積"; landUnitEl.textContent = "坪"; } }
 function applyPriceUnitLabels() { const priceUnitEl = document.getElementById("priceUnit"); if (priceUnit === "tsubo") { priceLabel.textContent = "延べの坪単価"; priceUnitEl.textContent = "万円/坪"; } else { priceLabel.textContent = "延べの㎡単価"; priceUnitEl.textContent = "万円/㎡"; } }
 function saveState() {
   try {
