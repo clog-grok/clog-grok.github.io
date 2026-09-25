@@ -11,7 +11,17 @@
   :root { --bg-color:#0f172a; --card-bg:#1e293b; --text-main:#f8fafc; --text-sub:#cbd5e1; --accent:#38bdf8; --ok:#34d399; --border:#334155; --warn:#fbbf24; --bad:#f87171; --page-scale:1; --steps-fs:12px; }
   html[data-theme="light"] { --bg-color:#e2e8f0; --card-bg:#ffffff; --text-main:#0f172a; --text-sub:#334155; --accent:#0369a1; --ok:#047857; --border:#cbd5e1; --warn:#b45309; --bad:#b91c1c; }
   * { box-sizing: border-box; }
-  html { font-size: calc(16px * var(--page-scale)); }
+  html { font-size: calc(16px * var(--page-scale)); color-scheme: dark; }
+  html[data-theme="light"] { color-scheme: light; }
+  input[type="number"], input[type="text"], textarea {
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--card-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color-scheme: inherit;
+  }
   body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; }
   body.steps-open { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   .app-container { background-color: var(--card-bg); width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); position: relative; }
@@ -76,10 +86,11 @@
   .steps-panel.float { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: min(46vh, 340px); overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
   .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
   .foot a, .foot button { background: none; border: 0; color: var(--text-sub); font-size: 0.78rem; text-decoration: none; padding: 10px 4px; cursor: pointer; }
-  .float-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 6px; }
-  .float-head .head-title { display: flex; align-items: center; gap: 6px; min-width: 0; flex-shrink: 0; }
+  .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .float-head .head-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .float-head strong { font-size: 0.85rem; white-space: nowrap; writing-mode: horizontal-tb; }
-  .float-head #stepsClose { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; }
+  .float-head #stepsClose { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; margin-left: 10px; }
+  .float-head .fs-btns { margin-right: 2px; }
   .float-head .fs-btns button { width: auto; height: auto; }
   .steps { font-size: var(--steps-fs); color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
   .steps.over { color: var(--bad); }
@@ -92,13 +103,14 @@
   .pill.warn { border-color: var(--warn); color: var(--warn); }
   .pill.bad { border-color: var(--bad); color: var(--bad); }
   .copy-btn { display: block; width: 100%; margin-top: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; padding: 6px 8px; font-size: 12px; cursor: pointer; }
-  .head-tools { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .head-tools { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .head-tools .icon-btn + .icon-btn { margin-left: 2px; }
   .icon-btn { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; min-width: 30px; height: 30px; padding: 0 5px; font-size: 0.72rem; cursor: pointer; }
   .head-title .icon-btn { min-width: 28px; height: 28px; }
   .icon-btn.on { border-color: var(--accent); background: rgba(56, 189, 248, 0.14); }
   .panel-foot { display: flex; gap: 6px; margin-top: 8px; }
   .panel-foot button { flex: 1; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; padding: 6px 8px; font-size: 12px; cursor: pointer; }
-  .memo-box { width: 100%; min-height: 8.5em; resize: vertical; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-color); color: var(--text-main); font-size: var(--steps-fs); line-height: 1.45; padding: 8px; font-family: inherit; }
+  .memo-box { width: 100%; min-height: 8.5em; resize: vertical; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-color); color: var(--text-main); font-size: 16px; line-height: 1.45; padding: 8px; font-family: inherit; }
   .price-row { margin-top: 10px; padding: 8px 0 2px; border-top: 1px dashed var(--border); }
   .price-row label { font-weight: 700; }
   .price-row input[type="number"] { width: 96px; font-weight: 700; border-color: var(--accent); }
@@ -111,8 +123,8 @@
   .split .half { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
   .split label { font-size: 0.78rem; white-space: nowrap; writing-mode: horizontal-tb; color: var(--text-main); flex-shrink: 0; line-height: 1.2; }
   .split .half .with-unit { justify-content: flex-end; gap: 3px; }
-  .split .half input[type="number"] { width: 3.4em; padding: 6px 4px; }
-  .split .half .with-unit input[type="number"] { width: 3.2em; padding: 6px 4px; }
+  .split .half input[type="number"] { width: 3.4em; padding: 6px 4px; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); }
+  .split .half .with-unit input[type="number"] { width: 3.2em; padding: 6px 4px; background: var(--card-bg); color: var(--text-main); }
   .split .half.rate .with-unit input[type="number"] { width: 3.4em; }
   .plan-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 0.8rem; color: var(--text-sub); }
   .plan-row .part { display: flex; align-items: center; gap: 6px; }
@@ -268,15 +280,15 @@
     <div class="steps-panel" id="stepsPanel" hidden>
       <div class="float-head">
         <div class="head-title">
-          <button type="button" class="icon-btn hidden" id="memoClear" title="メモを全部消す">消</button>
+          <button type="button" class="icon-btn hidden" id="memoClear" title="メモを消す">消</button>
           <strong id="stepsHead">式</strong>
-        </div>
-        <div class="head-tools">
           <div class="fs-btns" id="stepsFsBtns" title="ポップ内の文字サイズ">
             <button type="button" data-steps-fs="down">小</button>
             <button type="button" data-steps-fs="mid" class="on">中</button>
             <button type="button" data-steps-fs="up">大</button>
           </div>
+        </div>
+        <div class="head-tools">
           <button type="button" class="icon-btn" id="copySteps" title="式をコピー">写</button>
           <button type="button" class="icon-btn" id="memoBtn" title="メモ">書</button>
           <button type="button" id="stepsClose" aria-label="閉じる">×</button>
