@@ -78,8 +78,8 @@ function rememberType() { const e = parseFloat(eff.value); const u = parseFloat(
 function landM2() { const n = parseFloat(land.value); if (!isFinite(n) || n <= 0) return 0; return landUnit === "tsubo" ? n * M2_PER_TSUBO : n; }
 function priceTsubo() { const n = parseFloat(price.value); if (!isFinite(n) || n <= 0) return 0; return priceUnit === "m2" ? n * M2_PER_TSUBO : n; }
 function priceM2() { return priceTsubo() / M2_PER_TSUBO; }
-function setEff(e) { syncing = true; const v = Math.max(0.01, Math.min(e, 1)); eff.value = num(v, 2); syncing = false; }
-function setCoeff(c) { syncing = true; const v = Math.max(1, c); coeff.value = num(v, 2); if (coeffOut) coeffOut.value = num(v, 2); syncing = false; }
+function setEff(e) { syncing = true; var v = Math.max(0.01, Math.min(e, 1)); if (document.activeElement !== eff) eff.value = String(v); if (document.activeElement !== coeff) coeff.value = String(1 / v); if (coeffOut && document.activeElement !== coeffOut) coeffOut.value = String(1 / v); syncing = false; }
+function setCoeff(c) { syncing = true; var v = Math.max(1, c); if (document.activeElement !== coeff) coeff.value = String(v); if (coeffOut && document.activeElement !== coeffOut) coeffOut.value = String(v); if (document.activeElement !== eff) eff.value = String(1 / v); syncing = false; }
 function calc() {
   const m2 = landM2();
   const kPct = parseFloat(kenpei.value) || 0;
@@ -89,9 +89,7 @@ function calc() {
   let e = parseFloat(eff.value);
   if (!isFinite(e) || e <= 0) e = 0.75;
   e = Math.max(0.01, Math.min(e, 1));
-  let c = parseFloat(coeff.value);
-  if ((!isFinite(c) || c < 1) && coeffOut) c = parseFloat(coeffOut.value);
-  if (!isFinite(c) || c < 1) c = 1.33;
+  const c = 1 / e;
   const k = kPct / 100;
   const y = yPct / 100;
   const pTsubo = priceTsubo();
@@ -191,20 +189,23 @@ function calc() {
   saveState();
 }
 ["land", "kenpei", "yoseki", "floors", "price", "unitM2"].forEach(function (id) {
-  document.getElementById(id).addEventListener("input", function () {
+  function onField() {
     if (id === "unitM2" || id === "floors") unitsManual = false;
     if (id === "price") rememberPrice();
     if (id === "unitM2") rememberType();
     calc();
-  });
+  }
+  var el = document.getElementById(id);
+  el.addEventListener("input", onField);
+  el.addEventListener("change", onField);
 });
-eff.addEventListener("input", function () { if (syncing) return; unitsManual = false; const e = parseFloat(eff.value); if (isFinite(e) && e > 0) setEff(e); rememberType(); calc(); });
-function onCoeffInput(el) { if (syncing) return; unitsManual = false; const c = parseFloat(el.value); if (isFinite(c) && c >= 1) setCoeff(c); rememberType(); calc(); }
+eff.addEventListener("input", function () { if (syncing) return; unitsManual = false; rememberType(); calc(); });
+function onCoeffInput(el) { if (syncing) return; unitsManual = false; rememberType(); calc(); }
 coeff.addEventListener("input", function () { onCoeffInput(coeff); });
 coeffOut.addEventListener("input", function () { onCoeffInput(coeffOut); });
 unitsIn.addEventListener("input", function () { unitsManual = true; calc(); });
 extra.addEventListener("change", calc);
-const STORE_KEY = "mansion-kojihi-preview-v2";
+const STORE_KEY = "mansion-kojihi-preview-v9";
 function currentType() { const on = document.querySelector("#typeSeg button.on"); return on ? on.getAttribute("data-type") : "oneroom"; }
 function currentStruct() { const on = document.querySelector("#structSeg button.on"); return on ? on.getAttribute("data-struct") : "RC"; }
 function currentTheme() { return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"; }
@@ -282,10 +283,10 @@ function resetAll() {
   landUnit = "m2"; priceUnit = "tsubo"; unitsManual = false;
   land.value = "330"; kenpei.value = "80"; yoseki.value = "400"; floors.value = "7"; price.value = "120"; unitM2.value = "25"; extra.checked = false; unitsIn.value = "";
   setSegOn("typeSeg", "data-type", "oneroom"); setSegOn("structSeg", "data-struct", "RC"); setSegOn("unitSeg", "data-unit", "m2"); setSegOn("priceSeg", "data-price", "tsubo");
-  applyLandUnitLabels(); applyPriceUnitLabels(); setEff(0.75); setCoeff(1.33);
+  applyLandUnitLabels(); applyPriceUnitLabels(); eff.value = "0.75"; coeff.value = "1.33"; if (coeffOut) coeffOut.value = "1.33";
   const panel = document.getElementById("stepsPanel"); panel.classList.remove("open", "float"); panel.hidden = true; document.body.classList.remove("steps-open");
   document.getElementById("stepsToggle").textContent = "式の確認"; document.getElementById("stepsSlot").style.minHeight = ""; calc();
 }
 document.getElementById("resetBtn").addEventListener("click", resetAll);
-if (!loadState()) { setEff(0.75); setCoeff(1.33); } else { setCoeff(parseFloat(coeff.value) || 1.33); }
+if (!loadState()) { if (eff && !eff.value) eff.value = "0.75"; if (coeff && !coeff.value) coeff.value = "1.33"; if (coeffOut && !coeffOut.value) coeffOut.value = "1.33"; }
 calc();
