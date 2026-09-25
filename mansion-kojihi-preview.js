@@ -152,16 +152,23 @@ function calc() {
     if (el) el.textContent = area(usedGfa);
   });
   (function () {
-    var gfaLandF = document.getElementById("gfaFormulaLand");
-    if (!gfaLandF) return;
-    if (!(usedExclusive > 0) || !(usedGfa > 0)) {
-      gfaLandF.textContent = priceUnit === "tsubo" ? "専有 —坪 × — ＝ —坪" : "専有 —平米 × — ＝ —平米";
-      return;
-    }
-    if (priceUnit === "tsubo") {
-      gfaLandF.textContent = "専有 " + num(usedExclusive * TO_TSUBO, 1) + "坪 × " + num(c, 2) + " ＝ " + num(usedGfa * TO_TSUBO, 1) + "坪";
+    var exN = document.getElementById("gfaLandExNum");
+    var exU = document.getElementById("gfaLandExUnit");
+    var co = document.getElementById("gfaLandCoeff");
+    var gfN = document.getElementById("gfaLandGfaNum");
+    var gfU = document.getElementById("gfaLandGfaUnit");
+    if (!exN || !co || !gfN) return;
+    var useTsubo = priceUnit === "tsubo";
+    if (exU) exU.textContent = useTsubo ? "坪" : "平米";
+    if (gfU) gfU.textContent = useTsubo ? "坪" : "平米";
+    if (usedExclusive > 0 && usedGfa > 0) {
+      exN.textContent = useTsubo ? num(usedExclusive * TO_TSUBO, 1) : num(usedExclusive, 1);
+      co.textContent = num(c, 2);
+      gfN.textContent = useTsubo ? num(usedGfa * TO_TSUBO, 1) : num(usedGfa, 1);
     } else {
-      gfaLandF.textContent = "専有 " + num(usedExclusive, 1) + "平米 × " + num(c, 2) + " ＝ " + num(usedGfa, 1) + "平米";
+      exN.textContent = "—";
+      co.textContent = "—";
+      gfN.textContent = "—";
     }
   })();
   document.getElementById("archText").textContent = area(arch);

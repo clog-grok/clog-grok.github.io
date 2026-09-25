@@ -148,7 +148,16 @@
       <div class="cap-line"><span class="cap" id="capLabelLand">容積</span></div>
       <div class="result-line"><span>専有の合計</span><b id="exText">—</b></div>
       <div class="result-line"><span>共用の合計</span><b id="commonText">—</b></div>
-      <div class="result-line" style="margin-top:4px;justify-content:flex-end;"><span id="gfaFormulaLand">専有 —平米 × — ＝ —平米</span></div>
+      <div class="result-line" style="margin-top:4px;justify-content:flex-end;gap:4px;flex-wrap:wrap;">
+        <span>専有</span>
+        <b id="gfaLandExNum">—</b>
+        <span id="gfaLandExUnit">平米</span>
+        <span>×</span>
+        <b id="gfaLandCoeff">—</b>
+        <span>＝</span>
+        <b id="gfaLandGfaNum">—</b>
+        <span id="gfaLandGfaUnit">平米</span>
+      </div>
       <b id="gfaTextLand" class="hidden" aria-hidden="true">—</b>
     </div>
   </details>
@@ -174,6 +183,6 @@
     <button type="button" id="resetBtn" aria-label="リセット">↺</button>
   </div>
 </div>
-<script src="./mansion-kojihi-preview.js?v=12"></script>
+<script src="./mansion-kojihi-preview.js?v=13"></script>
 </body>
 </html>
