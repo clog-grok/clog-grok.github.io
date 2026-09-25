@@ -78,8 +78,8 @@ function rememberType() { const e = parseFloat(eff.value); const u = parseFloat(
 function landM2() { const n = parseFloat(land.value); if (!isFinite(n) || n <= 0) return 0; return landUnit === "tsubo" ? n * M2_PER_TSUBO : n; }
 function priceTsubo() { const n = parseFloat(price.value); if (!isFinite(n) || n <= 0) return 0; return priceUnit === "m2" ? n * M2_PER_TSUBO : n; }
 function priceM2() { return priceTsubo() / M2_PER_TSUBO; }
-function setEff(e) { syncing = true; const v = Math.max(0.01, Math.min(e, 1)); eff.value = num(v, 2); coeff.value = num(1 / v, 2); if (coeffOut) coeffOut.value = num(1 / v, 2); syncing = false; }
-function setCoeff(c) { syncing = true; const v = Math.max(1, c); coeff.value = num(v, 2); if (coeffOut) coeffOut.value = num(v, 2); eff.value = num(1 / v, 2); syncing = false; }
+function setEff(e) { syncing = true; const v = Math.max(0.01, Math.min(e, 1)); eff.value = num(v, 2); syncing = false; }
+function setCoeff(c) { syncing = true; const v = Math.max(1, c); coeff.value = num(v, 2); if (coeffOut) coeffOut.value = num(v, 2); syncing = false; }
 function calc() {
   const m2 = landM2();
   const kPct = parseFloat(kenpei.value) || 0;
@@ -89,7 +89,9 @@ function calc() {
   let e = parseFloat(eff.value);
   if (!isFinite(e) || e <= 0) e = 0.75;
   e = Math.max(0.01, Math.min(e, 1));
-  const c = 1 / e;
+  let c = parseFloat(coeff.value);
+  if ((!isFinite(c) || c < 1) && coeffOut) c = parseFloat(coeffOut.value);
+  if (!isFinite(c) || c < 1) c = 1.33;
   const k = kPct / 100;
   const y = yPct / 100;
   const pTsubo = priceTsubo();
@@ -179,7 +181,6 @@ function calc() {
   document.getElementById("perUnitText").textContent = yen(per);
   document.getElementById("exText").textContent = area(usedExclusive);
   document.getElementById("gfaFormula").textContent = usedExclusive > 0 ? "専有 " + num(usedExclusive, 1) + "㎡ ×" : "専有 —㎡ ×";
-  if (coeffOut && document.activeElement !== coeffOut) coeffOut.value = num(c, 2);
   document.getElementById("commonText").textContent = area(common);
   const costLine = priceUnit === "tsubo" ? num(usedGfa * TO_TSUBO, 1) + "坪 × " + num(pTsubo, 1) + "万＝本体" : num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万＝本体";
   document.getElementById("steps").textContent = [
@@ -281,10 +282,10 @@ function resetAll() {
   landUnit = "m2"; priceUnit = "tsubo"; unitsManual = false;
   land.value = "330"; kenpei.value = "80"; yoseki.value = "400"; floors.value = "7"; price.value = "120"; unitM2.value = "25"; extra.checked = false; unitsIn.value = "";
   setSegOn("typeSeg", "data-type", "oneroom"); setSegOn("structSeg", "data-struct", "RC"); setSegOn("unitSeg", "data-unit", "m2"); setSegOn("priceSeg", "data-price", "tsubo");
-  applyLandUnitLabels(); applyPriceUnitLabels(); setEff(0.75);
+  applyLandUnitLabels(); applyPriceUnitLabels(); setEff(0.75); setCoeff(1.33);
   const panel = document.getElementById("stepsPanel"); panel.classList.remove("open", "float"); panel.hidden = true; document.body.classList.remove("steps-open");
   document.getElementById("stepsToggle").textContent = "式の確認"; document.getElementById("stepsSlot").style.minHeight = ""; calc();
 }
 document.getElementById("resetBtn").addEventListener("click", resetAll);
-if (!loadState()) { setEff(0.75); }
+if (!loadState()) { setEff(0.75); setCoeff(1.33); } else { setCoeff(parseFloat(coeff.value) || 1.33); }
 calc();
