@@ -123,6 +123,8 @@
     <div class="result-line"><span>1階あたり戸数</span><b id="perFloorText">—</b></div>
     <div class="result-line"><span>想定戸数</span><div class="with-unit"><input type="text" inputmode="decimal" id="unitsIn"><span class="unit-slash">/</span><b id="unitsCapText" class="units-cap">—</b></div></div>
     <div class="result-line"><span>1戸あたり本体</span><b id="perUnitText">—</b></div>
+    <div class="result-line"><span>専有合計</span><b id="exText">—</b></div>
+    <div class="result-line"><span>共用合計</span><b id="commonText">—</b></div>
     <p class="warn hidden" id="unitsNote"></p>
     <div class="gfa-land-block">
       <div class="cap-line"><span class="cap" id="capLabelLand">容積</span></div>
@@ -130,11 +132,7 @@
         <span class="gfa-land-label">想定延べ面積</span>
         <b id="gfaTextLand" class="gfa-land-val">—</b>
       </div>
-      <div class="result-line" id="gfaLandOneLine" style="margin-top:4px;justify-content:flex-end;gap:4px;flex-wrap:wrap;">
-        <span>専有合計</span>
-        <b id="exText">—</b>
-        <span>共用合計</span>
-        <b id="commonText">—</b>
+      <div class="result-line" id="gfaLandOneLine" style="justify-content:flex-end;gap:4px;flex-wrap:wrap;">
         <span>専有</span>
         <b id="gfaLandExNum">—</b>
         <span id="gfaLandExUnit">m²</span>
@@ -188,6 +186,6 @@
     <button type="button" id="resetBtn" aria-label="リセット">↺</button>
   </div>
 </div>
-<script src="./mansion-kojihi-preview.js?v=20-formula"></script>
+<script src="./mansion-kojihi-preview.js?v=20-perunit"></script>
 </body>
 </html>
