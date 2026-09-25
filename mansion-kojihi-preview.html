@@ -1,97 +1,132 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>マンション工事費試算（プレビュー）</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>配置プレビュー｜マンション工事費</title>
 <style>
-:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:#1f2937;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.55}main{max-width:980px;margin:0 auto;padding:24px 16px 56px}.hero{background:#0f3d5e;color:#fff;border-radius:16px;padding:24px 24px 20px;box-shadow:0 8px 24px rgba(15,61,94,.18)}h1{font-size:clamp(1.45rem,3vw,2rem);margin:0 0 6px}.hero p{margin:0;color:#dbeafe}.card{background:#fff;border:1px solid #dbe4ee;border-radius:14px;margin-top:16px;padding:20px;box-shadow:0 4px 14px rgba(15,61,94,.06)}h2{font-size:1.2rem;margin:0 0 14px;color:#123f5d}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}label{font-size:.9rem;font-weight:700;color:#334155}input,select{width:100%;border:1px solid #b9c7d6;border-radius:9px;padding:10px 11px;font-size:1rem;background:#fff;color:#1f2937}input:focus,select:focus{outline:3px solid rgba(37,99,235,.16);border-color:#2563eb}.note{font-size:.84rem;color:#64748b;margin:5px 0 0}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}button{border:0;border-radius:9px;padding:11px 16px;font-size:1rem;font-weight:700;cursor:pointer;background:#146b94;color:#fff}button.secondary{background:#e2e8f0;color:#1e293b}button:hover{filter:brightness(.96)}.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.metric{background:#f7fafc;border:1px solid #d9e3ec;border-radius:10px;padding:11px}.metric .k{font-size:.8rem;color:#64748b}.metric .v{font-size:1.13rem;font-weight:800;margin-top:3px;color:#0f3d5e}.rows{display:grid;gap:8px}.row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid #edf1f5;padding:7px 0}.row:last-child{border-bottom:0}.row strong{font-variant-numeric:tabular-nums;text-align:right}.formula{background:#f8fafc;border-left:4px solid #5b8def;border-radius:8px;padding:11px 13px;margin-top:14px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9rem;white-space:pre-wrap}.warning{border-left-color:#d97706;background:#fff7ed}.small{font-size:.82rem;color:#64748b}.hidden{display:none!important}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{border-bottom:1px solid #e5e7eb;padding:8px 7px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{background:#f8fafc;color:#475569}.status{margin-top:10px;font-weight:700;color:#0f766e}.error{color:#b91c1c}.muted{color:#64748b}@media (max-width:700px){main{padding:14px 10px 36px}.grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:15px}}
+:root{--ink:#18212b;--muted:#687381;--line:#dbe2e8;--bg:#f6f8fa;--panel:#fff;--accent:#1864ab;--accent-bg:#eaf3ff;--warn:#fff8e1;--danger:#b42318}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+.container{max-width:1120px;margin:0 auto;padding:24px 20px 48px}
+header{margin-bottom:20px}
+h1{font-size:clamp(24px,4vw,36px);margin:0 0 6px;letter-spacing:.02em}
+.lead{color:var(--muted);margin:0}
+.notice{background:var(--warn);border:1px solid #f2d675;border-radius:10px;padding:12px 14px;margin:18px 0;font-size:14px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:0 2px 8px rgb(20 40 60 / 4%)}
+.card h2{font-size:18px;margin:0 0 14px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+label{font-size:13px;font-weight:700}
+input,select{width:100%;font:inherit;padding:9px 10px;border:1px solid #c8d2dc;border-radius:7px;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:3px solid #d8eaff;border-color:var(--accent)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+button{font:inherit;border:0;border-radius:7px;padding:9px 14px;cursor:pointer;background:var(--accent);color:#fff;font-weight:700}
+button.secondary{background:#edf1f5;color:var(--ink)}
+button.danger{background:#fff;color:var(--danger);border:1px solid #e3b9b5}
+summary{cursor:pointer;font-weight:700;color:var(--accent);margin-top:8px}
+.small{font-size:12px;color:var(--muted)}
+.results{display:grid;gap:10px}
+.result-row{display:flex;justify-content:space-between;gap:15px;align-items:baseline;border-bottom:1px dashed var(--line);padding:8px 0}
+.result-row:last-child{border-bottom:0}
+.result-row .name{color:var(--muted);font-size:13px}
+.result-row .value{font-variant-numeric:tabular-nums;font-weight:800;text-align:right}
+.total{margin-top:4px;background:var(--accent-bg);border:1px solid #b8d6f5;border-radius:10px;padding:12px 14px}
+.total .result-row{border-bottom:0;padding:0}
+.total .value{font-size:22px;color:var(--accent)}
+.breakdown{margin-top:15px}
+.breakdown h3{font-size:15px;margin:0 0 7px}
+.table-wrap{overflow:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border:1px solid var(--line);padding:7px 8px;text-align:right;white-space:nowrap}
+th{background:#f1f5f8;font-weight:700}
+th:first-child,td:first-child{text-align:left}
+footer{margin-top:18px;color:var(--muted);font-size:12px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
 </style>
 </head>
 <body>
-<main>
-<section class="hero">
-<h1>マンション工事費試算</h1>
-<p>専有面積・共用部・土地条件から、住戸ごとの概算工事費を確認するプレビュー</p>
-</section>
-
-<section class="card">
-<h2>前提条件</h2>
-<div class="grid">
-<div class="field"><label for="units">住戸数</label><input id="units" type="number" min="1" step="1" value="50"></div>
-<div class="field"><label for="avgArea">平均専有面積（㎡）</label><input id="avgArea" type="number" min="1" step="0.01" value="70"></div>
-<div class="field"><label for="gfaPerUnit">住戸あたり延床（㎡）</label><input id="gfaPerUnit" type="number" min="1" step="0.01" value="95"></div>
-<div class="field"><label for="commonRatio">共用部率（%）</label><input id="commonRatio" type="number" min="0" max="100" step="0.1" value="22"></div>
-<div class="field"><label for="unitCost">専有部工事単価（円/㎡）</label><input id="unitCost" type="number" min="0" step="1000" value="280000"></div>
-<div class="field"><label for="commonCost">共用部工事単価（円/㎡）</label><input id="commonCost" type="number" min="0" step="1000" value="190000"></div>
-<div class="field"><label for="landCost">土地・外構等（円）</label><input id="landCost" type="number" min="0" step="1000000" value="250000000"></div>
-<div class="field"><label for="contingency">予備費率（%）</label><input id="contingency" type="number" min="0" max="100" step="0.1" value="8"></div>
+<main class="container">
+<header>
+<h1>配置プレビュー｜マンション工事費</h1>
+<p class="lead">入力値の配置と、1戸あたり本体・共通費の計算結果を確認するプレビューです。</p>
+</header>
+<div class="notice">このページは配置確認用です。実際の見積書に記載する金額とは異なる場合があります。</div>
+<section class="grid" aria-label="工事費設定と結果">
+<div class="card">
+<h2>工事費の設定</h2>
+<div class="form-grid">
+<div class="field"><label for="units">戸数</label><input id="units" type="number" min="1" value="48"></div>
+<div class="field"><label for="gfa">延床面積（㎡）</label><input id="gfa" type="number" min="0" value="4200"></div>
+<div class="field"><label for="land">敷地面積（㎡）</label><input id="land" type="number" min="0" value="1200"></div>
+<div class="field"><label for="baseCost">本体工事費（円／㎡）</label><input id="baseCost" type="number" min="0" value="280000"></div>
+<div class="field"><label for="commonCost">共通費率（%）</label><input id="commonCost" type="number" min="0" value="12"></div>
+<div class="field"><label for="landCost">土地単価（円／㎡）</label><input id="landCost" type="number" min="0" value="450000"></div>
+<div class="field full"><label for="otherCost">その他費用（円）</label><input id="otherCost" type="number" min="0" value="0"></div>
 </div>
-<div class="actions"><button id="calcBtn" type="button">再計算</button><button id="resetBtn" type="button" class="secondary">初期値に戻す</button></div>
-<div id="status" class="status" role="status"></div>
-</section>
-
-<section class="card">
-<h2>全体サマリー</h2>
-<div class="summary">
-<div class="metric"><div class="k">総延床面積</div><div class="v" id="totalGfa">—</div></div>
-<div class="metric"><div class="k">専有面積合計</div><div class="v" id="totalEx">—</div></div>
-<div class="metric"><div class="k">共用面積合計</div><div class="v" id="totalCommon">—</div></div>
-<div class="metric"><div class="k">概算総額</div><div class="v" id="grandTotal">—</div></div>
+<div class="actions"><button id="calcBtn" type="button">計算する</button><button id="resetBtn" class="secondary" type="button">初期値に戻す</button></div>
+<details>
+<summary>計算式</summary>
+<p class="small">本体工事費 = 延床面積 × 本体工事費単価、共通費 = 本体工事費 × 共通費率、土地費 = 敷地面積 × 土地単価。合計を戸数で割り、1戸あたり金額を表示します。</p>
+</details>
 </div>
-<div class="formula" id="summaryFormula"></div>
-</section>
-
-<section class="card">
-<h2>住戸の計画</h2>
-<div class="rows">
-<div class="row"><span>住戸あたり延床面積</span><strong id="perUnitText">—</strong></div>
-<div class="row" id="exCommonLine"><span>住戸あたり専有・共用面積</span><strong><span id="exText">—</span> + <span id="commonText">—</span></strong></div>
-<div class="row"><span>土地・外構等（住戸あたり）</span><strong id="gfaLandOneLine">—</strong></div>
-<div class="row"><span class="muted">計算注記</span><span id="unitsNote" class="small">—</span></div>
+<div class="card">
+<h2>計算結果</h2>
+<div class="results">
+<div class="result-row"><span class="name">本体工事費</span><span class="value" id="baseLine">—</span></div>
+<div class="result-row"><span class="name">共通費</span><span class="value" id="commonLine">—</span></div>
+<div class="result-row"><span class="name">土地費</span><span class="value" id="landLine">—</span></div>
+<div class="result-row"><span class="name">その他費用</span><span class="value" id="otherLine">—</span></div>
+<div class="result-row"><span class="name">工事費小計</span><span class="value" id="constructionLine">—</span></div>
+<div class="total"><div class="result-row"><span class="name">合計</span><span class="value" id="totalLine">—</span></div></div>
 </div>
-<div class="formula" id="unitFormula"></div>
+<div class="breakdown">
+<h3>1戸あたり</h3>
+<div class="result-row"><span class="name">本体</span><span class="value" id="perUnitText">—</span></div>
+<div class="result-row"><span class="name">共通費・その他・土地</span><span class="value" id="exCommonLine">—</span></div>
+<div class="result-row"><span class="name">延床面積（1戸あたり）</span><span class="value" id="gfaLandOneLine">—</span></div>
+</div>
+</div>
 </section>
-
-<section class="card">
-<h2>費用内訳</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>面積/率</th><th>単価</th><th>金額</th></tr></thead><tbody>
-<tr><td>専有部工事</td><td id="exAreaCell">—</td><td id="unitCostCell">—</td><td id="exCostCell">—</td></tr>
-<tr><td>共用部工事</td><td id="commonAreaCell">—</td><td id="commonCostCell">—</td><td id="commonCostTotalCell">—</td></tr>
-<tr><td>土地・外構等</td><td>—</td><td>—</td><td id="landCostCell">—</td></tr>
-<tr><td>予備費</td><td id="contingencyCell">—</td><td>—</td><td id="contingencyCostCell">—</td></tr>
-<tr><th colspan="3">合計</th><th id="breakdownTotalCell">—</th></tr>
-</tbody></table></div>
-</section>
-
-<section class="card">
-<h2>注意事項</h2>
-<p class="small">本ページは概算プレビューです。実際の事業費は、設計条件、地域、仕様、契約条件、物価変動などにより変動します。正式な判断には専門家による精査が必要です。</p>
-</section>
+<footer>配置プレビュー（restore build）</footer>
 </main>
 <script>
-(function(){
-'use strict';
-var defaults={units:50,avgArea:70,gfaPerUnit:95,commonRatio:22,unitCost:280000,commonCost:190000,landCost:250000000,contingency:8};
-var ids=['units','avgArea','gfaPerUnit','commonRatio','unitCost','commonCost','landCost','contingency'];
-function n(id){var v=Number(document.getElementById(id).value);return Number.isFinite(v)?v:0;}
-function yen(v){return Math.round(v).toLocaleString('ja-JP')+' 円';}
-function area(v){return v.toLocaleString('ja-JP',{maximumFractionDigits:2})+' ㎡';}
-function pct(v){return v.toLocaleString('ja-JP',{maximumFractionDigits:2})+' %';}
-function set(id,text){document.getElementById(id).textContent=text;}
-function calc(){
-var units=Math.max(1,Math.round(n('units'))),avg=n('avgArea'),gfaPer=n('gfaPerUnit'),ratio=Math.min(100,Math.max(0,n('commonRatio'))),unitCost=Math.max(0,n('unitCost')),commonCost=Math.max(0,n('commonCost')),land=Math.max(0,n('landCost')),cont=Math.max(0,n('contingency'));
-var totalGfa=units*gfaPer,totalEx=units*avg,totalCommon=Math.max(0,totalGfa-totalEx),perCommon=gfaPer-avg,exCost=totalEx*unitCost,commonTotal=totalCommon*commonCost,base=exCost+commonTotal+land,contCost=base*cont/100,total=base+contCost,landPer=land/units;
-set('totalGfa',area(totalGfa));set('totalEx',area(totalEx));set('totalCommon',area(totalCommon));set('grandTotal',yen(total));
-set('perUnitText',area(gfaPer));set('exText',area(avg));set('commonText',area(perCommon));set('gfaLandOneLine',yen(landPer));set('unitsNote',units.toLocaleString('ja-JP')+'戸で按分（共用部率 '+pct(ratio)+' 相当）');
-set('summaryFormula','総額 = 専有部工事 '+yen(exCost)+' + 共用部工事 '+yen(commonTotal)+' + 土地・外構 '+yen(land)+' + 予備費 '+yen(contCost));
-set('unitFormula','住戸あたり = 延床 '+area(gfaPer)+'（専有 '+area(avg)+' + 共用 '+area(perCommon)+'） / 土地・外構 '+yen(landPer));
-set('exAreaCell',area(totalEx));set('unitCostCell',yen(unitCost)+'/㎡');set('exCostCell',yen(exCost));set('commonAreaCell',area(totalCommon));set('commonCostCell',yen(commonCost)+'/㎡');set('commonCostTotalCell',yen(commonTotal));set('landCostCell',yen(land));set('contingencyCell',pct(cont));set('contingencyCostCell',yen(contCost));set('breakdownTotalCell',yen(total));
-set('status','計算結果を更新しました。');
-}
-function reset(){ids.forEach(function(id){document.getElementById(id).value=defaults[id];});calc();}
-document.getElementById('calcBtn').addEventListener('click',calc);document.getElementById('resetBtn').addEventListener('click',reset);ids.forEach(function(id){document.getElementById(id).addEventListener('input',calc);});calc();
+(() => {
+  const defaults = {units:48,gfa:4200,land:1200,baseCost:280000,commonCost:12,landCost:450000,otherCost:0};
+  const yen = n => `${Math.round(n).toLocaleString('ja-JP')} 円`;
+  const number = id => Number(document.getElementById(id).value) || 0;
+  function calculate(){
+    const units = Math.max(1, number('units'));
+    const gfa = number('gfa');
+    const land = number('land');
+    const baseCost = number('baseCost');
+    const commonRate = number('commonCost') / 100;
+    const landCost = number('landCost');
+    const other = number('otherCost');
+    const base = gfa * baseCost;
+    const common = base * commonRate;
+    const landTotal = land * landCost;
+    const construction = base + common;
+    const total = construction + landTotal + other;
+    document.getElementById('baseLine').textContent = yen(base);
+    document.getElementById('commonLine').textContent = yen(common);
+    document.getElementById('landLine').textContent = yen(landTotal);
+    document.getElementById('otherLine').textContent = yen(other);
+    document.getElementById('constructionLine').textContent = yen(construction);
+    document.getElementById('totalLine').textContent = yen(total);
+    document.getElementById('perUnitText').textContent = yen(base / units);
+    document.getElementById('exCommonLine').textContent = yen((common + landTotal + other) / units);
+    document.getElementById('gfaLandOneLine').textContent = `${(gfa / units).toLocaleString('ja-JP')} ㎡ / ${(land / units).toLocaleString('ja-JP')} ㎡`;
+  }
+  function reset(){ for(const [id,value] of Object.entries(defaults)) document.getElementById(id).value = value; calculate(); }
+  document.getElementById('calcBtn').addEventListener('click', calculate);
+  document.getElementById('resetBtn').addEventListener('click', reset);
+  for(const id of Object.keys(defaults)) document.getElementById(id).addEventListener('input', calculate);
+  calculate();
 })();
 </script>
+<script src="mansion-kojihi-preview.js?v=20-restore"></script>
 </body>
 </html>
