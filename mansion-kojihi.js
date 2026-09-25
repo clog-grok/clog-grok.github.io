@@ -30,6 +30,7 @@ let pageFsIndex = FS_MID;
 let stepsFsIndex = FS_MID;
 let lastTotal = null;
 let lastBody = null;
+let extraMode = "pct";
 function yen(n) {
   if (!isFinite(n)) return "—";
   const sign = n < 0 ? "−" : "";
@@ -263,8 +264,8 @@ function calc() {
     unitsNote.textContent = "想定延べ " + commaM2(usedGfa) + "㎡。上限 " + commaM2(capGfa) + "㎡。差 +" + commaM2(overGfa) + "㎡。";
   } else { unitsNote.classList.add("hidden"); unitsNote.textContent = ""; }
   const common = usedGfa - usedExclusive;
-  const body = (usedGfa * TO_TSUBO) * pTsubo * 10000;
-  const bodyCap = (capGfa * TO_TSUBO) * pTsubo * 10000;
+  const body = usedGfa * pM2 * 10000;
+  const bodyCap = capGfa * pM2 * 10000;
   const per = units > 0 ? body / units : 0;
   const perFloor = f > 0 ? units / f : 0;
   const capText = useFar ? "容積で頭打ち" : "建蔽×階数で頭打ち";
@@ -288,22 +289,29 @@ function calc() {
   } else { note.classList.add("hidden"); note.textContent = ""; }
   const bodyTitle = document.getElementById("bodyTitle");
   const bodyBaseLine = document.getElementById("bodyBaseLine");
-  const pct = extraRate();
-  const extraAmt = body * pct;
   const extraMan = document.getElementById("extraMan");
-  if (extraMan && document.activeElement !== extraMan) extraMan.value = body > 0 ? fmtComma(extraAmt / 10000) : "";
+  let pct = extraRate();
+  let extraAmt = body * pct;
+  if (extraMode === "yen") {
+    const man = parseCommaNum(extraMan ? extraMan.value : "");
+    extraAmt = isFinite(man) && man >= 0 ? man * 10000 : 0;
+    pct = body > 0 ? extraAmt / body : 0;
+    if (extraPct && document.activeElement !== extraPct) extraPct.value = body > 0 ? trimNum(pct * 100, 2) : "0";
+  } else if (extraMan && document.activeElement !== extraMan) {
+    extraMan.value = body > 0 ? fmtComma(extraAmt / 10000) : "";
+  }
   const withExtra = extra.checked;
-  const total = withExtra ? body * (1 + pct) : body;
-  const pctLabel = signedPct(pct * 100);
+  const total = withExtra ? body + extraAmt : body;
+  const extraTag = extraMode === "yen" ? fmtComma(extraAmt / 10000) + "万円" : signedPct(pct * 100);
   if (withExtra) {
-    bodyTitle.textContent = "本体＋付帯諸費用（" + pctLabel + "）";
+    bodyTitle.textContent = "本体＋付帯諸費用（" + extraTag + "）";
     document.getElementById("bodyText").textContent = yen(total);
     if (dispUnit === "tsubo") {
       document.getElementById("formulaLabel").textContent = "延べ坪 × 坪単価";
-      document.getElementById("formulaText").textContent = usedGfa > 0 ? num(usedGfa * TO_TSUBO, 1) + "坪 × " + num(pTsubo, 1) + "万 × " + trimNum(1 + pct, 2) : "—";
+      document.getElementById("formulaText").textContent = usedGfa > 0 ? num(usedGfa * TO_TSUBO, 1) + "坪 × " + num(pTsubo, 1) + "万 ＋ " + fmtComma(extraAmt / 10000) + "万" : "—";
     } else {
       document.getElementById("formulaLabel").textContent = "延べ㎡ × ㎡単価";
-      document.getElementById("formulaText").textContent = usedGfa > 0 ? num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万 × " + trimNum(1 + pct, 2) : "—";
+      document.getElementById("formulaText").textContent = usedGfa > 0 ? num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万 ＋ " + fmtComma(extraAmt / 10000) + "万" : "—";
     }
     bodyBaseLine.classList.remove("hidden");
     bodyBaseLine.textContent = body > 0 ? "本体 " + yen(body) : "";
@@ -322,7 +330,7 @@ function calc() {
   }
   if (overGfa > 0.001 && bodyCap > 0) {
     bodyBaseLine.classList.remove("hidden");
-    const capYen = withExtra ? yen(bodyCap * (1 + pct)) : yen(bodyCap);
+    const capYen = withExtra ? yen(bodyCap + extraAmt) : yen(bodyCap);
     bodyBaseLine.textContent = (withExtra && body > 0 ? "本体 " + yen(body) + "　" : "") + "上限延べなら " + capYen;
   }
   document.getElementById("unitsCapText").textContent = capUnits ? capUnits + "戸（上限）" : "—";
@@ -335,7 +343,7 @@ function calc() {
     ? fmt(usedGfa * TO_TSUBO, 1) + "坪 × " + fmt(pTsubo, 1) + "万＝本体"
     : fmt(usedGfa, 1) + "㎡ × " + fmt(pM2, 2) + "万＝本体";
   const costLine = withExtra && body > 0
-    ? costCore + " ×" + trimNum(1 + pct, 2) + "＝付帯込　" + yen(total)
+    ? costCore + " ＋" + fmtComma(extraAmt / 10000) + "万＝付帯込　" + yen(total)
     : costCore + (body > 0 ? "　" + yen(body) : "");
   const stepsEl = document.getElementById("steps");
   stepsEl.textContent = [
@@ -391,11 +399,10 @@ eff.addEventListener("input", function () { if (syncing) return; unitsManual = f
 coeff.addEventListener("input", function () { if (syncing) return; unitsManual = false; const c = parseFloat(coeff.value); if (isFinite(c) && c >= 1) setCoeff(c); rememberType(); calc(); });
 unitsIn.addEventListener("input", function () { unitsManual = true; calc(); });
 extra.addEventListener("change", calc);
-extraPct.addEventListener("input", calc);
+extraPct.addEventListener("input", function () { extraMode = "pct"; calc(); });
 document.getElementById("extraMan").addEventListener("input", function () {
-  const man = parseCommaNum(document.getElementById("extraMan").value);
-  const base = lastBody > 0 ? lastBody : 0;
-  if (base > 0 && isFinite(man) && man >= 0) extraPct.value = String(Math.round((man * 10000 / base) * 1000) / 10);
+  extraMode = "yen";
+  extra.checked = true;
   calc();
 });
 document.getElementById("extraMan").addEventListener("blur", function () {
@@ -475,8 +482,6 @@ document.getElementById("copySteps").addEventListener("click", function () {
 document.getElementById("memoBtn").addEventListener("click", function () { setMemoMode(true); });
 document.getElementById("memoClear").addEventListener("click", function () {
   const box = document.getElementById("memoBox");
-  if (!box.value) return;
-  if (!window.confirm("メモを全部消しますか？")) return;
   box.value = "";
   saveState();
 });
@@ -501,6 +506,8 @@ function saveState() {
       land: land.value, kenpei: kenpei.value, yoseki: yoseki.value, floors: floors.value,
       price: price.value, unitM2: unitM2.value, eff: eff.value, coeff: coeff.value,
       unitsIn: unitsIn.value, extra: !!extra.checked, extraPct: extraPct.value,
+      extraMan: document.getElementById("extraMan") ? document.getElementById("extraMan").value : "",
+      extraMode: extraMode,
       dispUnit: dispUnit, unitsManual: !!unitsManual, type: currentType(), struct: currentStruct(),
       theme: currentTheme(), priceMem: priceMem, typeMem: typeMem, pageFsIndex: pageFsIndex, stepsFsIndex: stepsFsIndex,
       memo: document.getElementById("memoBox") ? document.getElementById("memoBox").value : ""
@@ -523,6 +530,8 @@ function loadState() {
     if (data.unitsIn != null) unitsIn.value = data.unitsIn;
     if (typeof data.extra === "boolean") extra.checked = data.extra;
     if (data.extraPct != null) extraPct.value = data.extraPct;
+    if (data.extraMan != null && document.getElementById("extraMan")) document.getElementById("extraMan").value = data.extraMan;
+    if (data.extraMode === "yen" || data.extraMode === "pct") extraMode = data.extraMode;
     if (data.type === "oneroom" || data.type === "family") setSegOn("typeSeg", "data-type", data.type);
     if (data.struct === "S" || data.struct === "RC" || data.struct === "SRC") setSegOn("structSeg", "data-struct", data.struct);
     if (data.priceMem && typeof data.priceMem === "object") { ["S", "RC", "SRC"].forEach(function (k) { const n = parseFloat(data.priceMem[k]); if (isFinite(n) && n > 0) priceMem[k] = n; }); }
@@ -587,7 +596,7 @@ function resetAll() {
   priceMem = { S: 114, RC: 120, SRC: 135 };
   typeMem = { oneroom: { unitM2: 25, eff: 0.75 }, family: { unitM2: 65, eff: 0.82 } };
   dispUnit = "m2"; unitsManual = false; pageFsIndex = FS_MID; stepsFsIndex = FS_MID;
-  lastTotal = null; lastBody = null;
+  lastTotal = null; lastBody = null; extraMode = "pct";
   land.value = "330"; kenpei.value = "80"; yoseki.value = "400"; floors.value = "5";
   price.value = "120"; unitM2.value = "25"; extra.checked = false; extraPct.value = "25"; unitsIn.value = "";
   setSegOn("typeSeg", "data-type", "oneroom"); setSegOn("structSeg", "data-struct", "RC");
