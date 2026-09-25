@@ -143,10 +143,14 @@ function calc() {
   var capTxt = useFar ? "容積で頭打ち" : "建蔽×階数で頭打ち";
   document.getElementById("capLabel").textContent = capTxt;
   document.getElementById("gfaText").textContent = area(usedGfa);
-  var capLand = document.getElementById("capLabelLand");
-  var gfaLand = document.getElementById("gfaTextLand");
-  if (capLand) capLand.textContent = capTxt;
-  if (gfaLand) gfaLand.textContent = area(usedGfa);
+  ["capLabelLand", "capLabelLand2"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = capTxt;
+  });
+  ["gfaTextLand", "gfaTextLand2"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = area(usedGfa);
+  });
   document.getElementById("archText").textContent = area(arch);
   document.getElementById("farText").textContent = area(far);
   document.getElementById("needFloorText").textContent = needFloors > 0 ? trimNum(needFloors, 2) + "階" : "—";
