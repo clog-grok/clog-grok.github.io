@@ -13,15 +13,7 @@
   * { box-sizing: border-box; }
   html { font-size: calc(16px * var(--page-scale)); color-scheme: dark; }
   html[data-theme="light"] { color-scheme: light; }
-  input[type="number"], input[type="text"], textarea {
-    -webkit-appearance: none;
-    appearance: none;
-    background: var(--card-bg);
-    color: var(--text-main);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color-scheme: inherit;
-  }
+  input[type="number"], input[type="text"], textarea { -webkit-appearance: none; appearance: none; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px; color-scheme: inherit; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; }
   body.steps-open { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   .app-container { background-color: var(--card-bg); width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); position: relative; }
@@ -85,12 +77,12 @@
   .steps-panel.float { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: min(46vh, 340px); overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
   .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
   .foot a, .foot button { background: none; border: 0; color: var(--text-sub); font-size: 0.78rem; text-decoration: none; padding: 10px 4px; cursor: pointer; }
-  .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .float-head .head-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .float-head { display: flex; justify-content: flex-start; align-items: center; flex-wrap: nowrap; gap: 6px; margin-bottom: 6px; }
+  .float-head .head-title { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1 1 auto; }
   .float-head strong { font-size: 0.85rem; white-space: nowrap; writing-mode: horizontal-tb; }
-  .float-head #stepsClose { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; margin-left: 10px; }
-  .float-head .fs-btns { margin-right: 2px; }
-  .float-head .fs-btns button { width: auto; height: auto; }
+  .float-head #stepsClose { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; margin-left: 0.8em; flex-shrink: 0; }
+  .float-head .fs-btns { margin-right: 0; flex-shrink: 0; }
+  .float-head .fs-btns button { width: auto; height: 28px; }
   .steps { font-size: var(--steps-fs); color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
   .steps.over { color: var(--bad); }
   .steps-meta { font-size: var(--steps-fs); line-height: 1.4; margin: 0 0 8px; color: var(--text-sub); }
@@ -102,12 +94,12 @@
   .pill.warn { border-color: var(--warn); color: var(--warn); }
   .pill.bad { border-color: var(--bad); color: var(--bad); }
   .copy-btn { display: block; width: 100%; margin-top: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; padding: 6px 8px; font-size: 12px; cursor: pointer; }
-  .head-tools { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .head-tools .icon-btn + .icon-btn { margin-left: 2px; }
+  .head-tools { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: auto; }
+  .head-tools .icon-btn + .icon-btn { margin-left: 0; }
   .icon-btn { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; min-width: 30px; height: 30px; padding: 0 5px; font-size: 0.72rem; cursor: pointer; }
   .head-title .icon-btn { min-width: 28px; height: 28px; }
   .icon-btn.on { border-color: var(--accent); background: rgba(56, 189, 248, 0.14); }
-  .memo-box { width: 100%; min-height: 8.5em; resize: vertical; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-color); color: var(--text-main); font-size: 16px; line-height: 1.45; padding: 8px; font-family: inherit; }
+  .memo-box { width: 100%; min-height: 10em; resize: vertical; border: 1.5px solid #7dd3fc; border-radius: 8px; background: var(--bg-color); color: var(--text-main); font-size: 16px; line-height: 1.45; padding: 8px; font-family: inherit; }
   .price-row { margin-top: 10px; padding: 8px 0 2px; border-top: 1px dashed var(--border); }
   .price-row label { font-weight: 700; }
   .price-row input[type="number"] { width: 96px; font-weight: 700; border-color: var(--accent); }
@@ -300,6 +292,16 @@
     <button type="button" id="resetBtn" aria-label="リセット">↺</button>
   </div>
 </div>
-<script src="./mansion-kojihi.js"></script>
+<script src="./mansion-kojihi.js?v=20260926b"></script>
+<style>
+.float-head{display:flex !important;flex-wrap:nowrap !important;align-items:center !important;justify-content:flex-start !important;gap:6px !important;}
+.float-head .head-title,.float-head .head-tools{display:flex !important;align-items:center !important;flex-wrap:nowrap !important;gap:6px !important;}
+.float-head .head-tools{margin-left:auto !important;flex:0 0 auto !important;}
+.float-head .fs-btns button,.float-head .icon-btn,#stepsClose{position:static !important;flex-shrink:0 !important;}
+#stepsClose{margin-left:0.8em !important;}
+#memoTall{display:none !important;}
+#copySteps{width:2.2em !important;min-width:2.2em !important;max-width:2.2em !important;overflow:hidden !important;}
+.memo-box{border:1.5px solid #7dd3fc !important;min-height:10em !important;}
+</style>
 </body>
 </html>
