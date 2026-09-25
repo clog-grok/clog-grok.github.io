@@ -24,15 +24,7 @@
   .mini { display: flex; gap: 4px; flex-shrink: 0; }
   .mini button { border: 1px solid var(--border); background: transparent; color: var(--text-sub); border-radius: 6px; padding: 3px 7px; font-size: 0.68rem; }
   .mini button.on { border-color: var(--accent); color: var(--text-main); background: rgba(56, 189, 248, 0.14); }
-  .input-group, .fold, .land-card { background-color: var(--bg-color); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-  .fold, .land-card { padding: 8px 14px 14px; }
-  .land-card details { margin: 0; padding: 0; background: none; }
-  .land-card summary { list-style: none; cursor: pointer; padding: 8px 0; margin-bottom: 4px; color: var(--text-main); font-size: 1.02rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-  .land-card details:not([open]) summary { margin-bottom: 8px; }
-  .land-card summary::-webkit-details-marker { display: none; }
-  .land-card summary .tri { display: inline-block; width: 1.1em; font-size: 0.85em; line-height: 1; color: var(--accent); flex-shrink: 0; }
-  .land-card summary .tri::before { content: "▶"; }
-  .land-card details[open] summary .tri::before { content: "▼"; }
+  .fold { background-color: var(--bg-color); border-radius: 12px; padding: 8px 14px 14px; margin-bottom: 12px; }
   .fold summary { list-style: none; cursor: pointer; padding: 8px 0; margin-bottom: 8px; color: var(--text-main); font-size: 1.02rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .fold:not([open]) summary { margin-bottom: 0; }
   .fold summary::-webkit-details-marker { display: none; }
@@ -59,9 +51,7 @@
   .cap { display: inline-block; font-size: 0.68rem; border: 1px solid var(--ok); color: var(--ok); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
   .check { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
   .extra-list { font-size: 0.72rem; color: var(--text-sub); line-height: 1.5; margin: 0 0 8px 24px; }
-  .result-line .with-unit input[type="number"] { width: 88px; }
   .steps-btn { display: block; width: 100%; border: 2px solid var(--border); background: var(--bg-color); color: var(--text-main); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; font-size: 0.78rem; cursor: pointer; }
-  .steps-btn:hover { border-color: var(--accent); }
   .steps-slot { min-height: 0; }
   .steps-panel { display: none; background: var(--card-bg); color: var(--text-main); border: 2px solid var(--border); border-radius: 14px; padding: 10px 12px; margin: 0 0 10px; }
   .steps-panel.open { display: block; }
@@ -74,7 +64,7 @@
   .steps { font-size: 0.72rem; color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: break-all; }
   .warn { font-size: 0.72rem; color: var(--warn); margin-top: 8px; line-height: 1.5; }
   .hidden { display: none; }
-  .foot-link { display: block; width: max-content; color: var(--text-sub); font-size: 0.75rem; text-decoration: none; margin-top: 8px; }
+  .foot-link { color: var(--text-sub); font-size: 0.75rem; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -91,17 +81,15 @@
     <div class="result-line"><span>1階あたり戸数</span><b id="perFloorText">—</b></div>
     <p class="warn hidden" id="floorNote"></p>
   </div>
-  <div class="land-card">
-    <details id="landFold">
-      <summary><span class="tri" aria-hidden="true"></span>敷地・建蔽・容積・階数</summary>
-      <div class="row"><label id="landLabel">敷地面積</label><div class="mini" id="unitSeg"><button type="button" data-unit="m2" class="on">㎡</button><button type="button" data-unit="tsubo">坪</button></div></div>
-      <div class="conv" id="landConv"></div>
-    </details>
-    <div class="row"><label>敷地面積</label><div class="with-unit"><input type="number" id="land" inputmode="decimal" value="330"><span class="unit" id="landUnit">㎡</span></div></div>
+  <details class="fold" id="landFold">
+    <summary><span class="tri" aria-hidden="true"></span>土地・建蔽・容積・階数</summary>
+    <div class="row"><label id="landLabel">土地面積</label><div class="mini" id="unitSeg"><button type="button" data-unit="m2" class="on">㎡</button><button type="button" data-unit="tsubo">坪</button></div></div>
+    <div class="row"><span></span><div class="with-unit"><input type="number" id="land" inputmode="decimal" value="330"><span class="unit" id="landUnit">㎡</span></div></div>
+    <div class="conv" id="landConv"></div>
     <div class="row"><label>建蔽率</label><div class="with-unit"><input type="number" id="kenpei" inputmode="decimal" value="80"><span class="unit">%</span></div></div>
     <div class="row"><label>容積率</label><div class="with-unit"><input type="number" id="yoseki" inputmode="decimal" value="400"><span class="unit">%</span></div></div>
     <div class="row"><label>階数</label><div class="with-unit"><input type="number" id="floors" inputmode="numeric" value="7"><span class="unit">階</span></div></div>
-  </div>
+  </details>
   <div class="result-box">
     <div class="result-title">戸数と面積</div>
     <div class="result-line"><span>想定戸数</span><div class="with-unit"><input type="number" id="unitsIn" inputmode="numeric" min="1" step="1"><span class="unit-slash">/</span><b id="unitsCapText" class="units-cap">—</b></div></div>
