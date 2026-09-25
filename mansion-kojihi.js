@@ -11,6 +11,7 @@
     "#copySteps.hidden{display:inline-flex !important;}",
     "#memoTall{display:none !important;}",
     ".memo-box{border:1.5px solid #7dd3fc;min-height:9em;}",
+    ".steps-panel.float:not(.memo-dock){position:fixed !important;left:50% !important;bottom:calc(10px + env(safe-area-inset-bottom, 0px)) !important;transform:translateX(-50%) !important;width:calc(100% - 24px) !important;max-width:400px !important;max-height:min(42vh, 300px) !important;overflow:auto !important;z-index:1000 !important;margin:0 !important;box-shadow:0 12px 32px rgba(0,0,0,0.35) !important;}",
     ".steps-panel.memo-dock{position:static !important;left:auto !important;bottom:auto !important;transform:none !important;width:auto !important;max-width:none !important;max-height:none !important;overflow:visible !important;box-shadow:none !important;}",
     ".steps-panel.memo-dock .memo-box{min-height:16em;max-height:none;height:auto;}"
   ].join("");
@@ -36,14 +37,14 @@
     var delta = (orig("stepsDelta") || {}).textContent || "";
     var advice = (orig("stepsAdvice") || {}).textContent || "";
     var body = (orig("steps") || {}).textContent || "";
-    return ["\u30de\u30f3\u30b7\u30e7\u30f3\u5de5\u4e8b\u8cbb\u3056\u3063\u304f\u308a", pills, delta, advice, body].filter(Boolean).join("\n");
+    return ["マンション工事費ざっくり", pills, delta, advice, body].filter(Boolean).join("\n");
   }
   function copyText(text, btn) {
     function ok() {
       if (!btn) return;
       btn.classList.add("on");
-      btn.title = "\u30b3\u30d4\u30fc\u3057\u305f";
-      setTimeout(function () { btn.classList.remove("on"); btn.title = "\u5f0f\u3092\u30b3\u30d4\u30fc"; }, 900);
+      btn.title = "コピーした";
+      setTimeout(function () { btn.classList.remove("on"); btn.title = "式をコピー"; }, 900);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok).catch(function () {});
   }
@@ -57,6 +58,8 @@
     var head = orig("stepsHead");
     var clearBtn = orig("memoClear");
     var panel = orig("stepsPanel");
+    var slot = orig("stepsSlot");
+    var toggle = orig("stepsToggle");
     var oldTall = document.getElementById("memoTall");
     if (oldTall && oldTall.parentNode) oldTall.parentNode.removeChild(oldTall);
     function memoOpen() { return memoView && !memoView.classList.contains("hidden"); }
@@ -68,21 +71,56 @@
     function setMemo(on) {
       formulaView.classList.toggle("hidden", on);
       memoView.classList.toggle("hidden", !on);
-      if (head) head.textContent = on ? "\u30e1\u30e2" : "\u5f0f";
-      memoBtn.textContent = on ? "\u5f0f" : "\u66f8";
-      memoBtn.title = on ? "\u5f0f\u306b\u623b\u308b" : "\u30e1\u30e2";
+      if (head) head.textContent = on ? "メモ" : "式";
+      memoBtn.textContent = on ? "式" : "書";
+      memoBtn.title = on ? "式に戻る" : "メモ";
       memoBtn.classList.toggle("on", on);
       if (clearBtn) clearBtn.classList.toggle("hidden", !on);
       if (copyBtn) {
         copyBtn.classList.remove("hidden");
         copyBtn.style.display = "";
-        copyBtn.textContent = "\u5199";
+        copyBtn.textContent = "写";
       }
       dockMemo(on);
       if (on) {
         var box = orig("memoBox");
         if (box && !String(box.value || "").trim()) box.value = dumpFormula();
+      } else {
+        followFormula();
       }
+    }
+    function panelOpen() {
+      return panel && !panel.hidden && panel.classList.contains("open");
+    }
+    function followFormula() {
+      if (!panel || !panelOpen() || memoOpen()) return;
+      var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 0;
+      var rect = slot ? slot.getBoundingClientRect() : { top: 9999, bottom: 9999 };
+      var slotOnScreen = rect.top < vh - 80 && rect.bottom > 72;
+      var y = window.scrollY || window.pageYOffset || 0;
+      var doc = Math.max(document.documentElement.scrollHeight || 0, document.body.scrollHeight || 0);
+      var nearBottom = y + vh >= doc - 72;
+      if (slotOnScreen || nearBottom) {
+        panel.classList.remove("float");
+        if (slot) slot.style.minHeight = "";
+      } else {
+        if (slot) slot.style.minHeight = Math.max(panel.offsetHeight || 160, 1) + "px";
+        panel.classList.add("float");
+      }
+    }
+    function showFormulaFloat(anchor) {
+      setMemo(false);
+      panel.hidden = false;
+      panel.classList.add("open");
+      document.body.classList.add("steps-open");
+      if (toggle) toggle.textContent = "式を閉じる";
+      panel.classList.add("float");
+      if (anchor && anchor.scrollIntoView) {
+        try { anchor.scrollIntoView({ block: "start", inline: "nearest" }); } catch (e) {}
+      }
+      followFormula();
+      setTimeout(followFormula, 60);
+      setTimeout(followFormula, 240);
     }
     memoBtn.addEventListener("click", function (e) {
       e.preventDefault();
@@ -99,7 +137,34 @@
         copyText(text, copyBtn);
       }, true);
     }
-    window.addEventListener("scroll", function () { if (memoOpen()) dockMemo(true); }, { passive: true });
+    document.querySelectorAll("[data-open-steps]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var fold = btn.closest("details") || btn.closest(".result-box") || btn.closest(".fold");
+        setTimeout(function () { showFormulaFloat(fold); }, 0);
+      }, true);
+    });
+    if (toggle) {
+      toggle.addEventListener("click", function () {
+        setTimeout(followFormula, 0);
+        setTimeout(followFormula, 200);
+      });
+    }
+    window.addEventListener("scroll", function () {
+      if (memoOpen()) dockMemo(true);
+      else followFormula();
+    }, { passive: true });
+    document.addEventListener("scroll", followFormula, true);
+    window.addEventListener("resize", followFormula);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("scroll", followFormula);
+      window.visualViewport.addEventListener("resize", followFormula);
+    }
+    if (window.IntersectionObserver && slot) {
+      new IntersectionObserver(function () { followFormula(); }, { root: null, threshold: [0, 0.15, 1] }).observe(slot);
+    }
+    setInterval(function () { if (panelOpen() && !memoOpen()) followFormula(); }, 400);
     setMemo(false);
   };
   document.head.appendChild(s);
