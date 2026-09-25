@@ -38,7 +38,7 @@
   .row input[type="number"] { width: 104px; text-align: right; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 0.95rem; }
   .with-unit { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .with-unit input[type="number"] { width: 88px; }
-  .unit { font-size: 0.82rem; color: var(--text-main); min-width: 2.4em; font-weight: 600; }
+  .unit { font-size: 0.72rem; color: var(--text-main); min-width: 0; font-weight: 600; }
   .unit-slash { font-size: 0.9rem; color: var(--text-sub); font-weight: 600; margin: 0 2px; }
   .units-cap { font-size: 0.85rem; color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .conv { font-size: 0.72rem; color: var(--text-sub); text-align: right; margin: 0 0 10px; min-height: 1em; word-break: break-all; }
@@ -48,15 +48,18 @@
   .result-title .title-left { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 0; }
   .result-amount { font-size: 1.45rem; font-weight: bold; text-align: right; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
   .result-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.8rem; margin-top: 6px; color: var(--text-sub); }
+  .result-line > span { white-space: nowrap; }
   .result-line b { color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; }
   .result-line input[type="number"] { width: 88px; text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 0.85rem; outline: none; }
   .cap-edit { width: 108px; }
   .hint { font-size: 0.68rem; color: var(--text-sub); text-align: right; margin: 0 0 2px; }
   .result-sub { font-size: 0.72rem; color: var(--text-sub); text-align: right; margin: 4px 0 0; min-height: 1em; }
   .cap { display: inline-block; font-size: 0.68rem; border: 1px solid var(--ok); color: var(--ok); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
-  .check { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
-  .check input[type="number"] { width: 64px; text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main); font-size: 0.85rem; }
-  .check #extraMan { width: 88px; }
+  .check { display: flex; flex-direction: column; align-items: stretch; gap: 6px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
+  .check-top, .check-yen { display: flex; align-items: center; gap: 6px; }
+  .check input[type="number"], .check input[type="text"] { text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main); font-size: 0.85rem; }
+  .check #extraPct { width: 48px; }
+  .check #extraMan { width: 112px; flex: 1; font-variant-numeric: tabular-nums; }
   .extra-list { font-size: 0.72rem; color: var(--text-sub); line-height: 1.5; margin: 0 0 8px 24px; }
   .steps-btn-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
   .steps-btn { flex: 1; border: 2px solid var(--border); background: var(--bg-color); color: var(--text-main); border-radius: 12px; padding: 10px 14px; font-size: 0.78rem; cursor: pointer; }
@@ -69,10 +72,10 @@
   .steps-panel.float { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: min(46vh, 340px); overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
   .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
   .foot a, .foot button { background: none; border: 0; color: var(--text-sub); font-size: 0.78rem; text-decoration: none; padding: 10px 4px; cursor: pointer; }
-  .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .float-head strong { font-size: 0.85rem; }
+  .float-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .float-head strong { font-size: 0.85rem; white-space: nowrap; }
   .float-head #stepsClose { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; }
-  .steps { font-size: var(--steps-fs); color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: break-all; }
+  .steps { font-size: var(--steps-fs); color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: break-word; }
   .steps.over { color: var(--bad); }
   .steps-meta { font-size: var(--steps-fs); line-height: 1.4; margin: 0 0 8px; color: var(--text-sub); }
   .steps-delta { color: var(--accent); margin: 0 0 6px; font-size: var(--steps-fs); }
@@ -96,9 +99,12 @@
   .hidden { display: none; }
   .foot-link { color: var(--text-sub); font-size: 0.75rem; text-decoration: none; }
   .block-title { font-size: 1.02rem; font-weight: 700; color: var(--text-main); margin: 0; }
-  .split { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  .split .half { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex: 1; min-width: 0; }
-  .split label { font-size: 0.86rem; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+  .split .half { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; }
+  .split label { font-size: 0.72rem; white-space: nowrap; color: var(--text-sub); }
+  .split .half .with-unit { justify-content: flex-end; }
+  .split .half input[type="number"] { width: 64px; }
+  .split .half .with-unit input[type="number"] { width: 56px; }
   .plan-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 0.8rem; color: var(--text-sub); }
   .plan-row .part { display: flex; align-items: center; gap: 6px; }
   .badge-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; }
@@ -153,12 +159,15 @@
     <div class="result-line"><span id="formulaLabel">延べ坪 × 坪単価</span><b id="formulaText">—</b></div>
     <p class="result-sub hidden" id="bodyBaseLine"></p>
   </div>
-  <label class="check"><input type="checkbox" id="extra"><span>付帯＋諸費用</span><input type="number" id="extraPct" inputmode="decimal" step="1" value="25" aria-label="付帯諸費用パーセント"><span>%</span><input type="number" id="extraMan" inputmode="decimal" step="any" aria-label="付帯諸費用の金額"><span>万円</span></label>
+  <div class="check">
+    <div class="check-top"><input type="checkbox" id="extra"><span>付帯＋諸費用</span><input type="number" id="extraPct" inputmode="decimal" step="1" value="25" aria-label="付帯諸費用パーセント"><span>%</span></div>
+    <div class="check-yen"><input type="text" id="extraMan" inputmode="decimal" aria-label="付帯諸費用の金額"><span>万円</span></div>
+  </div>
   <p class="extra-list" id="extraList">含むもの（仮）：外構・地盤改良・設計監理・申請 など</p>
   <div class="steps-btn-row"><button type="button" class="steps-btn" id="stepsToggle">式の確認</button><div class="fs-btns" id="pageFsBtns" title="ページ全体の文字サイズ"><button type="button" data-page-fs="down">小</button><button type="button" data-page-fs="mid" class="on">中</button><button type="button" data-page-fs="up">大</button></div></div>
   <div class="steps-slot" id="stepsSlot">
     <div class="steps-panel" id="stepsPanel" hidden>
-      <div class="float-head"><strong id="stepsHead">式の確認</strong><div class="head-tools"><div class="fs-btns" id="stepsFsBtns" title="ポップ内の文字サイズ"><button type="button" data-steps-fs="down">小</button><button type="button" data-steps-fs="mid" class="on">中</button><button type="button" data-steps-fs="up">大</button></div><button type="button" class="icon-btn" id="copySteps" title="式をコピー">コピー</button><button type="button" class="icon-btn" id="memoBtn" title="メモ">✎</button><button type="button" id="stepsClose" aria-label="閉じる">×</button></div></div>
+      <div class="float-head"><strong id="stepsHead">式</strong><button type="button" class="icon-btn hidden" id="memoClear" title="メモを消す">消</button><div class="head-tools"><div class="fs-btns" id="stepsFsBtns" title="ポップ内の文字サイズ"><button type="button" data-steps-fs="down">小</button><button type="button" data-steps-fs="mid" class="on">中</button><button type="button" data-steps-fs="up">大</button></div><button type="button" class="icon-btn" id="copySteps" title="式をコピー">写</button><button type="button" class="icon-btn" id="memoBtn" title="メモ">書</button><button type="button" id="stepsClose" aria-label="閉じる">×</button></div></div>
       <div id="formulaView"><div id="stepsPills"></div><p class="steps-delta hidden" id="stepsDelta"></p><p class="steps-meta" id="stepsAdvice"></p><p class="steps" id="steps">—</p></div>
       <div id="memoView" class="hidden"><textarea id="memoBox" class="memo-box" placeholder="ここに自由にメモ"></textarea><div class="panel-foot"><button type="button" id="copyMemo">全体をコピー</button><button type="button" id="backFormula">式に戻る</button></div></div>
     </div>
