@@ -13,9 +13,23 @@
     };
   }
   var orig = document.getElementById.bind(document);
-  document.getElementById = function (id) {
-    return orig(id) || dummy();
-  };
+  document.getElementById = function (id) { return orig(id) || dummy(); };
+  function dumpFormula() {
+    var pills = Array.prototype.map.call(document.querySelectorAll("#stepsPills .pill"), function (el) { return el.textContent; }).join(" / ");
+    var delta = (orig("stepsDelta") || {}).textContent || "";
+    var advice = (orig("stepsAdvice") || {}).textContent || "";
+    var body = (orig("steps") || {}).textContent || "";
+    return ["マンション工事費ざっくり", pills, delta, advice, body].filter(Boolean).join("\n");
+  }
+  function copyText(text, btn) {
+    function ok() {
+      if (!btn) return;
+      var prev = btn.textContent;
+      btn.textContent = "コピーした";
+      setTimeout(function () { btn.textContent = "写"; }, 1200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok).catch(function () {});
+  }
   var s = document.createElement("script");
   s.src = "https://cdn.jsdelivr.net/gh/clog-grok/clog-grok.github.io@add2bad358013f7fdf17a2ba5a794b47185483d6/mansion-kojihi.js";
   s.onload = function () {
@@ -26,7 +40,7 @@
     var head = orig("stepsHead");
     var clearBtn = orig("memoClear");
     if (!memoBtn || !formulaView || !memoView) return;
-    function memoOpen() { return memoView && !memoView.classList.contains("hidden"); }
+    function memoOpen() { return !memoView.classList.contains("hidden"); }
     function setMemo(on) {
       formulaView.classList.toggle("hidden", on);
       memoView.classList.toggle("hidden", !on);
@@ -35,10 +49,14 @@
       memoBtn.title = on ? "式に戻る" : "メモ";
       memoBtn.classList.toggle("on", on);
       if (clearBtn) clearBtn.classList.toggle("hidden", !on);
-      if (copyBtn) copyBtn.classList.remove("hidden");
+      if (copyBtn) {
+        copyBtn.classList.remove("hidden");
+        copyBtn.style.display = "";
+        copyBtn.textContent = "写";
+      }
       if (on) {
         var box = orig("memoBox");
-        if (box && !String(box.value || "").trim() && window.__formulaDump) box.value = window.__formulaDump();
+        if (box && !String(box.value || "").trim()) box.value = dumpFormula();
         if (box && box.focus) box.focus();
       }
     }
@@ -49,14 +67,16 @@
     }, true);
     if (copyBtn) {
       copyBtn.classList.remove("hidden");
+      copyBtn.style.display = "";
       copyBtn.addEventListener("click", function (e) {
+        e.preventDefault();
         e.stopImmediatePropagation();
         var box = orig("memoBox");
-        var text = memoOpen() ? ((box && box.value) || "") : (window.__formulaDump ? window.__formulaDump() : "");
-        if (navigator.clipboard && text) navigator.clipboard.writeText(text);
+        var text = memoOpen() ? ((box && box.value) || dumpFormula()) : dumpFormula();
+        copyText(text, copyBtn);
       }, true);
     }
-    setMemo(memoOpen());
+    setMemo(false);
   };
   document.head.appendChild(s);
 })();
