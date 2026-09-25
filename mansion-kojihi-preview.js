@@ -151,6 +151,19 @@ function calc() {
     var el = document.getElementById(id);
     if (el) el.textContent = area(usedGfa);
   });
+  (function () {
+    var gfaLandF = document.getElementById("gfaFormulaLand");
+    if (!gfaLandF) return;
+    if (!(usedExclusive > 0) || !(usedGfa > 0)) {
+      gfaLandF.textContent = priceUnit === "tsubo" ? "専有 —坪 × — ＝ —坪" : "専有 —平米 × — ＝ —平米";
+      return;
+    }
+    if (priceUnit === "tsubo") {
+      gfaLandF.textContent = "専有 " + num(usedExclusive * TO_TSUBO, 1) + "坪 × " + num(c, 2) + " ＝ " + num(usedGfa * TO_TSUBO, 1) + "坪";
+    } else {
+      gfaLandF.textContent = "専有 " + num(usedExclusive, 1) + "平米 × " + num(c, 2) + " ＝ " + num(usedGfa, 1) + "平米";
+    }
+  })();
   document.getElementById("archText").textContent = area(arch);
   document.getElementById("farText").textContent = area(far);
   document.getElementById("needFloorText").textContent = needFloors > 0 ? trimNum(needFloors, 2) + "階" : "—";
@@ -196,13 +209,6 @@ function calc() {
   document.getElementById("perUnitText").textContent = yen(per);
   document.getElementById("exText").textContent = area(usedExclusive);
   document.getElementById("gfaFormula").textContent = usedExclusive > 0 ? "専有 " + num(usedExclusive, 1) + "㎡ ×" : "専有 —㎡ ×";
-  var gfaLandF = document.getElementById("gfaFormulaLand");
-  if (gfaLandF) {
-    if (usedExclusive > 0) {
-      if (priceUnit === "tsubo") gfaLandF.textContent = "専有 " + num(usedExclusive * TO_TSUBO, 1) + " × " + num(c, 2) + " ＝ " + num(usedGfa * TO_TSUBO, 1);
-      else gfaLandF.textContent = "専有 " + num(usedExclusive, 1) + " × " + num(c, 2) + " ＝ " + num(usedGfa, 1);
-    } else gfaLandF.textContent = "専有 — × — ＝ —";
-  }
   document.getElementById("commonText").textContent = area(common);
   const costLine = priceUnit === "tsubo" ? num(usedGfa * TO_TSUBO, 1) + "坪 × " + num(pTsubo, 1) + "万＝本体" : num(usedGfa, 1) + "㎡ × " + num(pM2, 2) + "万＝本体";
   document.getElementById("steps").textContent = [
