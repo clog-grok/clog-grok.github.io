@@ -10,8 +10,8 @@
     "#copySteps{width:2.1em;min-width:2.1em;overflow:hidden;}",
     "#copySteps.hidden{display:inline-flex !important;}",
     "#memoTall{display:none !important;}",
-    ".steps-panel.float{position:fixed !important;left:50% !important;bottom:calc(8px + env(safe-area-inset-bottom, 0px)) !important;transform:translateX(-50%) !important;width:calc(100% - 24px) !important;max-width:400px !important;max-height:min(46vh, 320px) !important;overflow:auto !important;z-index:1000 !important;margin:0 !important;box-shadow:0 12px 32px rgba(0,0,0,0.35) !important;}",
-    ".steps-panel.float .memo-box{min-height:9em;max-height:30vh;height:30vh;}",
+    ".steps-panel.open{position:fixed !important;left:50% !important;bottom:calc(8px + env(safe-area-inset-bottom, 0px)) !important;transform:translateX(-50%) !important;width:calc(100% - 24px) !important;max-width:400px !important;max-height:min(46vh, 320px) !important;overflow:auto !important;z-index:1000 !important;margin:0 !important;box-shadow:0 12px 32px rgba(0,0,0,0.35) !important;}",
+    ".steps-panel.open .memo-box{min-height:9em;max-height:30vh;height:30vh;}",
     ".memo-box{border:1.5px solid #7dd3fc;min-height:9em;}"
   ].join("");
   document.head.appendChild(css);
@@ -20,12 +20,7 @@
     return {
       addEventListener: function () {},
       classList: { toggle: function () {}, contains: function () { return false; }, add: function () {}, remove: function () {} },
-      value: "",
-      textContent: "",
-      innerHTML: "",
-      style: {},
-      focus: function () {},
-      hidden: false,
+      value: "", textContent: "", innerHTML: "", style: {}, focus: function () {}, hidden: false,
       querySelectorAll: function () { return []; }
     };
   }
@@ -63,11 +58,19 @@
     if (oldTall && oldTall.parentNode) oldTall.parentNode.removeChild(oldTall);
     function memoOpen() { return memoView && !memoView.classList.contains("hidden"); }
     function pin() {
-      if (!panel || panel.hidden) return;
-      panel.classList.add("open");
+      if (!panel || panel.hidden || !panel.classList.contains("open")) return;
       panel.classList.add("float");
       panel.classList.remove("memo-dock");
-      if (slot) slot.style.minHeight = Math.max(panel.offsetHeight || 180, 1) + "px";
+      panel.style.setProperty("position", "fixed", "important");
+      panel.style.setProperty("left", "50%", "important");
+      panel.style.setProperty("right", "auto", "important");
+      panel.style.setProperty("bottom", "calc(8px + env(safe-area-inset-bottom, 0px))", "important");
+      panel.style.setProperty("transform", "translateX(-50%)", "important");
+      panel.style.setProperty("width", "calc(100% - 24px)", "important");
+      panel.style.setProperty("max-width", "400px", "important");
+      panel.style.setProperty("z-index", "1000", "important");
+      panel.style.setProperty("margin", "0", "important");
+      if (slot) slot.style.minHeight = Math.max(panel.offsetHeight || 220, 180) + "px";
     }
     function setMemo(on) {
       formulaView.classList.toggle("hidden", on);
@@ -77,11 +80,7 @@
       memoBtn.title = on ? "式に戻る" : "メモ";
       memoBtn.classList.toggle("on", on);
       if (clearBtn) clearBtn.classList.toggle("hidden", !on);
-      if (copyBtn) {
-        copyBtn.classList.remove("hidden");
-        copyBtn.style.display = "";
-        copyBtn.textContent = "写";
-      }
+      if (copyBtn) { copyBtn.classList.remove("hidden"); copyBtn.style.display = ""; copyBtn.textContent = "写"; }
       if (on) {
         var box = orig("memoBox");
         if (box && !String(box.value || "").trim()) box.value = dumpFormula();
@@ -100,8 +99,7 @@
         e.preventDefault();
         e.stopImmediatePropagation();
         var box = orig("memoBox");
-        var text = memoOpen() ? ((box && box.value) || dumpFormula()) : dumpFormula();
-        copyText(text, copyBtn);
+        copyText(memoOpen() ? ((box && box.value) || dumpFormula()) : dumpFormula(), copyBtn);
       }, true);
     }
     document.querySelectorAll("[data-open-steps]").forEach(function (btn) {
@@ -111,6 +109,7 @@
         setTimeout(function () {
           setMemo(false);
           panel.hidden = false;
+          panel.classList.add("open");
           document.body.classList.add("steps-open");
           if (toggle) toggle.textContent = "式を閉じる";
           pin();
@@ -120,7 +119,6 @@
     if (toggle) toggle.addEventListener("click", function () { setTimeout(pin, 0); });
     window.addEventListener("scroll", pin, true);
     document.addEventListener("scroll", pin, true);
-    window.addEventListener("resize", pin);
     if (window.visualViewport) {
       window.visualViewport.addEventListener("scroll", pin);
       window.visualViewport.addEventListener("resize", pin);
