@@ -26,6 +26,8 @@
   .mini button.on { border-color: var(--accent); color: var(--text-main); background: rgba(56, 189, 248, 0.14); }
   .fold { background-color: var(--bg-color); border-radius: 12px; padding: 8px 14px 14px; margin-bottom: 12px; }
   .fold summary { list-style: none; cursor: pointer; padding: 8px 0; margin-bottom: 8px; color: var(--text-main); font-size: 1.02rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .fold summary .sum-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .fold-eq { margin-left: auto; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); border-radius: 8px; padding: 4px 8px; font-size: 0.68rem; font-weight: 600; cursor: pointer; }
   .fold:not([open]) summary { margin-bottom: 0; }
   .fold summary::-webkit-details-marker { display: none; }
   .fold summary .tri { display: inline-block; width: 1.1em; font-size: 0.85em; line-height: 1; color: var(--accent); flex-shrink: 0; }
@@ -54,6 +56,7 @@
   .cap { display: inline-block; font-size: 0.68rem; border: 1px solid var(--ok); color: var(--ok); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
   .check { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
   .check input[type="number"] { width: 64px; text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main); font-size: 0.85rem; }
+  .check #extraMan { width: 88px; }
   .extra-list { font-size: 0.72rem; color: var(--text-sub); line-height: 1.5; margin: 0 0 8px 24px; }
   .steps-btn-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
   .steps-btn { flex: 1; border: 2px solid var(--border); background: var(--bg-color); color: var(--text-main); border-radius: 12px; padding: 10px 14px; font-size: 0.78rem; cursor: pointer; }
@@ -69,7 +72,6 @@
   .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
   .float-head strong { font-size: 0.85rem; }
   .float-head #stepsClose { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; }
-  .float-head .fs-btns button { width: auto; height: auto; }
   .steps { font-size: var(--steps-fs); color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: break-all; }
   .steps.over { color: var(--bad); }
   .steps-meta { font-size: var(--steps-fs); line-height: 1.4; margin: 0 0 8px; color: var(--text-sub); }
@@ -80,7 +82,16 @@
   .pill.ok { border-color: var(--ok); color: var(--ok); }
   .pill.warn { border-color: var(--warn); color: var(--warn); }
   .pill.bad { border-color: var(--bad); color: var(--bad); }
-  .copy-btn { display: block; width: 100%; margin-top: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; padding: 6px 8px; font-size: 12px; cursor: pointer; }
+  .head-tools { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .icon-btn { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; min-width: 32px; height: 32px; padding: 0 6px; font-size: 0.72rem; cursor: pointer; }
+  .icon-btn.on { border-color: var(--accent); background: rgba(56, 189, 248, 0.14); }
+  .panel-foot { display: flex; gap: 6px; margin-top: 8px; }
+  .panel-foot button { flex: 1; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; padding: 6px 8px; font-size: 12px; cursor: pointer; }
+  .memo-box { width: 100%; min-height: 8.5em; resize: vertical; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-color); color: var(--text-main); font-size: var(--steps-fs); line-height: 1.45; padding: 8px; font-family: inherit; }
+  .price-row { margin-top: 10px; padding: 8px 0 2px; border-top: 1px dashed var(--border); }
+  .price-row label { font-weight: 700; }
+  .price-row input[type="number"] { width: 96px; font-weight: 700; border-color: var(--accent); }
+  .need-edit { width: 64px; }
   .warn { font-size: 0.72rem; color: var(--warn); margin-top: 8px; line-height: 1.5; }
   .hidden { display: none; }
   .foot-link { color: var(--text-sub); font-size: 0.75rem; text-decoration: none; }
@@ -90,7 +101,6 @@
   .split label { font-size: 0.86rem; }
   .plan-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 0.8rem; color: var(--text-sub); }
   .plan-row .part { display: flex; align-items: center; gap: 6px; }
-  .floor-cap { font-size: 0.8rem; color: var(--text-main); font-weight: 600; white-space: nowrap; }
   .badge-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; }
   .badge-row .label { font-size: 0.78rem; color: var(--text-sub); display: flex; align-items: center; }
 </style>
@@ -100,23 +110,17 @@
   <button type="button" class="theme" id="themeBtn" aria-label="テーマ">☀</button>
   <h1>マンション工事費ざっくり</h1>
   <div class="result-box">
-    <div class="result-title">
-      <span class="title-left">想定延べ面積<span class="cap" id="capLabel">容積で頭打ち</span></span>
-      <div class="mini unit-seg" data-unit-seg>
-        <button type="button" data-disp="m2" class="on">㎡</button>
-        <button type="button" data-disp="tsubo">坪</button>
-      </div>
-    </div>
+    <div class="result-title"><span class="title-left">想定延べ面積<span class="cap" id="capLabel">容積で頭打ち</span></span><div class="mini unit-seg" data-unit-seg><button type="button" data-disp="m2" class="on">㎡</button><button type="button" data-disp="tsubo">坪</button></div></div>
     <div class="result-amount" id="gfaText">—</div>
     <div class="result-line"><span>建築面積上限（1階）</span><div class="with-unit"><input type="number" id="archIn" class="cap-edit" inputmode="decimal" step="any" aria-label="建築面積上限"><span class="unit" id="archUnit">㎡</span></div></div>
     <p class="hint" id="archPair">—</p>
     <div class="result-line"><span>容積の上限</span><div class="with-unit"><input type="number" id="farIn" class="cap-edit" inputmode="decimal" step="any" aria-label="容積の上限"><span class="unit" id="farUnit">㎡</span></div></div>
     <p class="hint" id="farPair">—</p>
-    <div class="result-line"><span>計画階数</span><div class="with-unit"><input type="number" id="floors" inputmode="numeric" value="5"><span class="unit-slash">/</span><b id="needFloorText" class="floor-cap">—</b></div></div>
+    <div class="result-line"><span>計画階数</span><div class="with-unit"><input type="number" id="floors" inputmode="numeric" value="5"><span class="unit-slash">/</span><input type="number" id="needFloorIn" class="need-edit" inputmode="decimal" step="any" aria-label="階数の上限"><span class="unit">階</span></div></div>
     <p class="warn hidden" id="floorNote"></p>
   </div>
   <details class="fold" id="landFold">
-    <summary><span class="tri" aria-hidden="true"></span>敷地・建蔽・容積</summary>
+    <summary><span class="sum-left"><span class="tri" aria-hidden="true"></span>敷地・建蔽・容積</span><button type="button" class="fold-eq" data-open-steps>式</button></summary>
     <div class="badge-row"><span class="label">想定延べ面積<span class="cap" id="capLabelLand">容積で頭打ち</span></span><div class="mini unit-seg" data-unit-seg><button type="button" data-disp="m2" class="on">㎡</button><button type="button" data-disp="tsubo">坪</button></div></div>
     <div class="row"><label id="landLabel">敷地面積</label><div class="with-unit"><input type="number" id="land" inputmode="decimal" value="330"><span class="unit" id="landUnit">㎡</span></div></div>
     <div class="conv" id="landConv"></div>
@@ -134,15 +138,14 @@
     <p class="warn hidden" id="unitsNote"></p>
   </div>
   <details class="fold" id="typeFold">
-    <summary><span class="tri" aria-hidden="true"></span>住戸・構造・単価</summary>
+    <summary><span class="sum-left"><span class="tri" aria-hidden="true"></span>住戸・構造・単価</span><button type="button" class="fold-eq" data-open-steps>式</button></summary>
     <div class="badge-row"><span class="label">想定延べ面積<span class="cap" id="capLabelType">容積で頭打ち</span></span><div class="mini unit-seg" data-unit-seg><button type="button" data-disp="m2" class="on">㎡</button><button type="button" data-disp="tsubo">坪</button></div></div>
     <div class="seg" id="typeSeg"><button type="button" data-type="oneroom" class="on">ワンルーム</button><button type="button" data-type="family">ファミリー</button></div>
     <div class="seg three" id="structSeg"><button type="button" data-struct="S">S造</button><button type="button" data-struct="RC" class="on">RC造</button><button type="button" data-struct="SRC">SRC造</button></div>
-    <div class="row"><label id="priceLabel">延べ坪単価</label><div class="with-unit"><input type="number" id="price" inputmode="decimal" value="120"><span class="unit" id="priceUnit">万円/坪</span></div></div>
-    <div class="row"><label>廊下係数</label><input type="number" id="coeff" inputmode="decimal" step="0.01" value="1.33"></div>
-    <div class="row"><label>専有効率</label><input type="number" id="eff" inputmode="decimal" step="0.01" value="0.75"></div>
-    <div class="conv">専有効率 ＝ 1 ÷ 廊下係数</div>
+    <div class="row split"><div class="half"><label>廊下係数</label><input type="number" id="coeff" inputmode="decimal" step="0.01" value="1.33"></div><div class="half"><label>専有効率</label><input type="number" id="eff" inputmode="decimal" step="0.01" value="0.75"></div></div>
+    <div class="conv">廊下係数 × 専有効率 ＝ 1</div>
     <div class="row"><label>1戸の専有</label><div class="with-unit"><input type="number" id="unitM2" inputmode="decimal" value="25"><span class="unit">㎡</span></div></div>
+    <div class="row price-row"><label id="priceLabel">延べ坪単価</label><div class="with-unit"><input type="number" id="price" inputmode="decimal" value="120"><span class="unit" id="priceUnit">万円/坪</span></div></div>
   </details>
   <div class="result-box main">
     <div class="result-title" id="bodyTitle">本体工事費（延べ × 単価）</div>
@@ -150,20 +153,14 @@
     <div class="result-line"><span id="formulaLabel">延べ坪 × 坪単価</span><b id="formulaText">—</b></div>
     <p class="result-sub hidden" id="bodyBaseLine"></p>
   </div>
-  <label class="check"><input type="checkbox" id="extra"><span>付帯＋諸費用</span><input type="number" id="extraPct" inputmode="decimal" step="1" value="25" aria-label="付帯諸費用パーセント"><span>%</span><span id="extraYen">（—）</span></label>
+  <label class="check"><input type="checkbox" id="extra"><span>付帯＋諸費用</span><input type="number" id="extraPct" inputmode="decimal" step="1" value="25" aria-label="付帯諸費用パーセント"><span>%</span><input type="number" id="extraMan" inputmode="decimal" step="any" aria-label="付帯諸費用の金額"><span>万円</span></label>
   <p class="extra-list" id="extraList">含むもの（仮）：外構・地盤改良・設計監理・申請 など</p>
-  <div class="steps-btn-row">
-    <button type="button" class="steps-btn" id="stepsToggle">式の確認</button>
-    <div class="fs-btns" id="pageFsBtns" title="ページ全体の文字サイズ"><button type="button" data-page-fs="down">小</button><button type="button" data-page-fs="mid" class="on">中</button><button type="button" data-page-fs="up">大</button></div>
-  </div>
+  <div class="steps-btn-row"><button type="button" class="steps-btn" id="stepsToggle">式の確認</button><div class="fs-btns" id="pageFsBtns" title="ページ全体の文字サイズ"><button type="button" data-page-fs="down">小</button><button type="button" data-page-fs="mid" class="on">中</button><button type="button" data-page-fs="up">大</button></div></div>
   <div class="steps-slot" id="stepsSlot">
     <div class="steps-panel" id="stepsPanel" hidden>
-      <div class="float-head"><strong>式の確認</strong><div class="fs-btns" id="stepsFsBtns" title="ポップ内の文字サイズ"><button type="button" data-steps-fs="down">小</button><button type="button" data-steps-fs="mid" class="on">中</button><button type="button" data-steps-fs="up">大</button></div><button type="button" id="stepsClose" aria-label="閉じる">×</button></div>
-      <div id="stepsPills"></div>
-      <p class="steps-delta hidden" id="stepsDelta"></p>
-      <p class="steps-meta" id="stepsAdvice"></p>
-      <p class="steps" id="steps">—</p>
-      <button type="button" class="copy-btn" id="copySteps">式をコピー</button>
+      <div class="float-head"><strong id="stepsHead">式の確認</strong><div class="head-tools"><div class="fs-btns" id="stepsFsBtns" title="ポップ内の文字サイズ"><button type="button" data-steps-fs="down">小</button><button type="button" data-steps-fs="mid" class="on">中</button><button type="button" data-steps-fs="up">大</button></div><button type="button" class="icon-btn" id="copySteps" title="式をコピー">コピー</button><button type="button" class="icon-btn" id="memoBtn" title="メモ">✎</button><button type="button" id="stepsClose" aria-label="閉じる">×</button></div></div>
+      <div id="formulaView"><div id="stepsPills"></div><p class="steps-delta hidden" id="stepsDelta"></p><p class="steps-meta" id="stepsAdvice"></p><p class="steps" id="steps">—</p></div>
+      <div id="memoView" class="hidden"><textarea id="memoBox" class="memo-box" placeholder="ここに自由にメモ"></textarea><div class="panel-foot"><button type="button" id="copyMemo">全体をコピー</button><button type="button" id="backFormula">式に戻る</button></div></div>
     </div>
   </div>
   <div class="foot"><a class="foot-link" href="./wip.html">← 試作</a><button type="button" id="resetBtn" aria-label="リセット">↺</button></div>
