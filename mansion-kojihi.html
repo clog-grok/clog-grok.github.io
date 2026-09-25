@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>マンション工事費ざっくり</title>
-<meta name="description" content="敷地と建蔽・容積・階数から延べと本体工事費の概算。">
+<meta name="description" content="敷地と建蔽・容積・階数から延べ面積と本体工事費の概算。">
 <meta name="tool-tag" content="建築">
 <meta name="tool-status" content="wip">
 <style>
@@ -71,10 +71,10 @@
   <button type="button" class="theme" id="themeBtn" aria-label="テーマ">☀</button>
   <h1>マンション工事費ざっくり</h1>
   <div class="result-box">
-    <div class="result-title">使う延べ<span class="cap" id="capLabel">容積</span></div>
+    <div class="result-title">想定延べ面積<span class="cap" id="capLabel">容積</span></div>
     <div class="result-amount" id="gfaText">—</div>
     <div class="result-line"><span>建築面積上限（1階）</span><b id="archText">—</b></div>
-    <div class="result-line"><span>容積の延べ上限</span><b id="farText">—</b></div>
+    <div class="result-line"><span>容積の上限</span><b id="farText">—</b></div>
     <div class="result-line"><span>容積を使い切る階数</span><b id="needFloorText">—</b></div>
     <div class="result-line"><span>1階あたり戸数</span><b id="perFloorText">—</b></div>
     <p class="warn hidden" id="floorNote"></p>
@@ -119,7 +119,7 @@
     <div class="conv">専有効率 ＝ 1 ÷ 廊下係数</div>
   </details>
   <div class="result-box main">
-    <div class="result-title" id="bodyTitle">本体工事費（延べ × 単価）</div>
+    <div class="result-title" id="bodyTitle">本体工事費（延べ面積 × 単価）</div>
     <div class="result-amount" id="bodyText">—</div>
     <div class="result-line"><span id="formulaLabel">延べ坪 × 坪単価</span><b id="formulaText">—</b></div>
     <p class="result-sub hidden" id="bodyBaseLine"></p>
