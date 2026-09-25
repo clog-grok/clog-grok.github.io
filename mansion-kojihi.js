@@ -1,1 +1,1 @@
-document.body.insertAdjacentHTML('afterbegin','<p>restoring</p>');
+/* restored via html redirect to add2bad */
