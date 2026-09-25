@@ -48,6 +48,9 @@
   .result-line input[type="text"] { width: 88px; text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 0.85rem; outline: none; }
   .result-line.coeff-line { justify-content: flex-end; gap: 4px; }
   .result-line.coeff-line #gfaFormula { flex: 0 1 auto; text-align: right; white-space: nowrap; }
+  .gfa-land-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 12px; font-size: 0.8rem; color: var(--text-sub); white-space: nowrap; }
+  .gfa-land-label { flex: 1 1 auto; min-width: 6em; }
+  .gfa-land-val { flex: 0 0 auto; margin-left: auto; color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; text-align: right; }
   .result-sub { font-size: 0.72rem; color: var(--text-sub); text-align: right; margin: 4px 0 0; min-height: 1em; }
   .cap { display: inline-block; font-size: 0.68rem; border: 1px solid var(--ok); color: var(--ok); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
   .check { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
@@ -132,9 +135,9 @@
     <div class="row"><label>専有効率</label><input type="text" inputmode="decimal" id="eff" value="0.75"></div>
     <div class="row"><label>廊下係数</label><input type="text" inputmode="decimal" id="coeff" value="1.33"></div>
     <div class="conv">専有効率 ＝ 1 ÷ 廊下係数</div>
-    <div class="result-line" style="margin-top:12px;">
-      <span>想定延べ面積<span class="cap" id="capLabelLand">容積</span></span>
-      <b id="gfaTextLand">—</b>
+    <div class="gfa-land-line">
+      <span class="gfa-land-label">想定延べ面積<span class="cap" id="capLabelLand">容積</span></span>
+      <b id="gfaTextLand" class="gfa-land-val">—</b>
     </div>
   </details>
 
