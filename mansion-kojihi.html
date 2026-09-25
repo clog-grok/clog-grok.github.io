@@ -136,64 +136,23 @@
       </div>
     </div>
     <div class="result-amount" id="gfaText">—</div>
-    <div class="result-line">
-      <span>建築面積上限（1階）</span>
-      <div class="with-unit">
-        <input type="number" id="archIn" class="cap-edit" inputmode="decimal" step="any" aria-label="建築面積上限">
-        <span class="unit" id="archUnit">㎡</span>
-      </div>
-    </div>
+    <div class="result-line"><span>建築面積上限（1階）</span><div class="with-unit"><input type="number" id="archIn" class="cap-edit" inputmode="decimal" step="any" aria-label="建築面積上限"><span class="unit" id="archUnit">㎡</span></div></div>
     <p class="hint" id="archPair">—</p>
-    <div class="result-line">
-      <span>容積の上限</span>
-      <div class="with-unit">
-        <input type="number" id="farIn" class="cap-edit" inputmode="decimal" step="any" aria-label="容積の上限">
-        <span class="unit" id="farUnit">㎡</span>
-      </div>
-    </div>
+    <div class="result-line"><span>容積の上限</span><div class="with-unit"><input type="number" id="farIn" class="cap-edit" inputmode="decimal" step="any" aria-label="容積の上限"><span class="unit" id="farUnit">㎡</span></div></div>
     <p class="hint" id="farPair">—</p>
-    <div class="result-line">
-      <span>計画階数</span>
-      <div class="with-unit">
-        <input type="number" id="floors" inputmode="numeric" value="5">
-        <span class="unit-slash">/</span>
-        <input type="number" id="needFloorIn" class="need-edit" inputmode="decimal" step="any" aria-label="階数の上限">
-        <span class="unit">階</span>
-      </div>
-    </div>
+    <div class="result-line"><span>計画階数</span><div class="with-unit"><input type="number" id="floors" inputmode="numeric" value="5"><span class="unit-slash">/</span><input type="number" id="needFloorIn" class="need-edit" inputmode="decimal" step="any" aria-label="階数の上限"><span class="unit">階</span></div></div>
     <p class="warn hidden" id="floorNote"></p>
   </div>
   <details class="fold" id="landFold">
     <summary><span class="sum-left"><span class="tri" aria-hidden="true"></span>敷地・建蔽・容積</span><button type="button" class="fold-eq" data-open-steps>式</button></summary>
-    <div class="badge-row">
-      <span class="label">想定延べ面積<span class="cap" id="capLabelLand">容積で頭打ち</span></span>
-      <div class="mini unit-seg" data-unit-seg>
-        <button type="button" data-disp="m2" class="on">㎡</button>
-        <button type="button" data-disp="tsubo">坪</button>
-      </div>
-    </div>
-    <div class="row">
-      <label id="landLabel">敷地面積</label>
-      <div class="with-unit"><input type="number" id="land" inputmode="decimal" value="330"><span class="unit" id="landUnit">㎡</span></div>
-    </div>
+    <div class="badge-row"><span class="label">想定延べ面積<span class="cap" id="capLabelLand">容積で頭打ち</span></span><div class="mini unit-seg" data-unit-seg><button type="button" data-disp="m2" class="on">㎡</button><button type="button" data-disp="tsubo">坪</button></div></div>
+    <div class="row"><label id="landLabel">敷地面積</label><div class="with-unit"><input type="number" id="land" inputmode="decimal" value="330"><span class="unit" id="landUnit">㎡</span></div></div>
     <div class="conv" id="landConv"></div>
-    <div class="split">
-      <div class="half rate"><label>建蔽率</label><div class="with-unit"><input type="number" id="kenpei" inputmode="decimal" value="80"><span class="unit pct">%</span></div></div>
-      <div class="half rate"><label>容積率</label><div class="with-unit"><input type="number" id="yoseki" inputmode="decimal" value="400"><span class="unit pct">%</span></div></div>
-    </div>
+    <div class="split"><div class="half rate"><label>建蔽率</label><div class="with-unit"><input type="number" id="kenpei" inputmode="decimal" value="80"><span class="unit pct">%</span></div></div><div class="half rate"><label>容積率</label><div class="with-unit"><input type="number" id="yoseki" inputmode="decimal" value="400"><span class="unit pct">%</span></div></div></div>
   </details>
   <div class="result-box" id="planBox">
-    <div class="result-title">
-      <span class="title-left"><span class="block-title">住戸の計画</span><span class="cap" id="capLabelPlan">容積で頭打ち</span></span>
-      <div class="mini unit-seg" data-unit-seg>
-        <button type="button" data-disp="m2" class="on">㎡</button>
-        <button type="button" data-disp="tsubo">坪</button>
-      </div>
-    </div>
-    <div class="plan-row">
-      <div class="part"><span>階数</span><b id="planFloorText">5</b><span>階</span></div>
-      <div class="part"><span>1階あたり</span><b id="perFloorText">—</b></div>
-    </div>
+    <div class="result-title"><span class="title-left"><span class="block-title">住戸の計画</span><span class="cap" id="capLabelPlan">容積で頭打ち</span></span><div class="mini unit-seg" data-unit-seg><button type="button" data-disp="m2" class="on">㎡</button><button type="button" data-disp="tsubo">坪</button></div></div>
+    <div class="plan-row"><div class="part"><span>階数</span><b id="planFloorText">5</b><span>階</span></div><div class="part"><span>1階あたり</span><b id="perFloorText">—</b></div></div>
     <div class="result-line"><span>想定戸数</span><div class="with-unit"><input type="number" id="unitsIn" inputmode="numeric" min="1" step="1"><span class="unit-slash">/</span><b id="unitsCapText" class="units-cap">—</b></div></div>
     <div class="result-line"><span>1戸あたり本体</span><b id="perUnitText">—</b></div>
     <div class="result-line"><span>専有の合計</span><b id="exText">—</b></div>
@@ -204,32 +163,13 @@
   </div>
   <details class="fold" id="typeFold">
     <summary><span class="sum-left"><span class="tri" aria-hidden="true"></span>住戸・構造・単価</span><button type="button" class="fold-eq" data-open-steps>式</button></summary>
-    <div class="badge-row">
-      <span class="label">想定延べ面積<span class="cap" id="capLabelType">容積で頭打ち</span></span>
-      <div class="mini unit-seg" data-unit-seg>
-        <button type="button" data-disp="m2" class="on">㎡</button>
-        <button type="button" data-disp="tsubo">坪</button>
-      </div>
-    </div>
-    <div class="seg" id="typeSeg">
-      <button type="button" data-type="oneroom" class="on">ワンルーム</button>
-      <button type="button" data-type="family">ファミリー</button>
-    </div>
-    <div class="seg three" id="structSeg">
-      <button type="button" data-struct="S">S造</button>
-      <button type="button" data-struct="RC" class="on">RC造</button>
-      <button type="button" data-struct="SRC">SRC造</button>
-    </div>
-    <div class="split">
-      <div class="half"><label>廊下係数</label><input type="number" id="coeff" inputmode="decimal" step="0.01" value="1.33"></div>
-      <div class="half"><label>専有効率</label><input type="number" id="eff" inputmode="decimal" step="0.01" value="0.75"></div>
-    </div>
+    <div class="badge-row"><span class="label">想定延べ面積<span class="cap" id="capLabelType">容積で頭打ち</span></span><div class="mini unit-seg" data-unit-seg><button type="button" data-disp="m2" class="on">㎡</button><button type="button" data-disp="tsubo">坪</button></div></div>
+    <div class="seg" id="typeSeg"><button type="button" data-type="oneroom" class="on">ワンルーム</button><button type="button" data-type="family">ファミリー</button></div>
+    <div class="seg three" id="structSeg"><button type="button" data-struct="S">S造</button><button type="button" data-struct="RC" class="on">RC造</button><button type="button" data-struct="SRC">SRC造</button></div>
+    <div class="split"><div class="half"><label>廊下係数</label><input type="number" id="coeff" inputmode="decimal" step="0.01" value="1.33"></div><div class="half"><label>専有効率</label><input type="number" id="eff" inputmode="decimal" step="0.01" value="0.75"></div></div>
     <div class="conv">廊下係数 × 専有効率 ＝ 1</div>
     <div class="row"><label>1戸の専有</label><div class="with-unit"><input type="number" id="unitM2" inputmode="decimal" value="25"><span class="unit">㎡</span></div></div>
-    <div class="row price-row">
-      <label id="priceLabel">延べ坪単価</label>
-      <div class="with-unit"><input type="number" id="price" inputmode="decimal" value="120"><span class="unit" id="priceUnit">万円/坪</span></div>
-    </div>
+    <div class="row price-row"><label id="priceLabel">延べ坪単価</label><div class="with-unit"><input type="number" id="price" inputmode="decimal" value="120"><span class="unit" id="priceUnit">万円/坪</span></div></div>
   </details>
   <div class="result-box main">
     <div class="result-title" id="bodyTitle">本体工事費（延べ × 単価）</div>
@@ -237,38 +177,16 @@
     <div class="result-line"><span id="formulaLabel">延べ坪 × 坪単価</span><b id="formulaText">—</b></div>
     <p class="result-sub hidden" id="bodyBaseLine"></p>
   </div>
-  <div class="check">
-    <div class="check-top">
-      <input type="checkbox" id="extra">
-      <span>付帯＋諸費用</span>
-    </div>
-    <div class="check-yen">
-      <input type="text" id="extraPct" inputmode="decimal" value="25" aria-label="付帯諸費用パーセント">
-      <span>%</span>
-      <input type="text" id="extraMan" inputmode="decimal" aria-label="付帯諸費用の金額">
-      <span class="yen-unit">万円</span>
-    </div>
-  </div>
+  <div class="check"><div class="check-top"><input type="checkbox" id="extra"><span>付帯＋諸費用</span></div><div class="check-yen"><input type="text" id="extraPct" inputmode="decimal" value="25" aria-label="付帯諸費用パーセント"><span>%</span><input type="text" id="extraMan" inputmode="decimal" aria-label="付帯諸費用の金額"><span class="yen-unit">万円</span></div></div>
   <p class="extra-list" id="extraList">含むもの（仮）：外構・地盤改良・設計監理・申請 など</p>
-  <div class="steps-btn-row">
-    <button type="button" class="steps-btn" id="stepsToggle">式の確認</button>
-    <div class="fs-btns" id="pageFsBtns" title="ページ全体の文字サイズ">
-      <button type="button" data-page-fs="down">小</button>
-      <button type="button" data-page-fs="mid" class="on">中</button>
-      <button type="button" data-page-fs="up">大</button>
-    </div>
-  </div>
+  <div class="steps-btn-row"><button type="button" class="steps-btn" id="stepsToggle">式の確認</button><div class="fs-btns" id="pageFsBtns" title="ページ全体の文字サイズ"><button type="button" data-page-fs="down">小</button><button type="button" data-page-fs="mid" class="on">中</button><button type="button" data-page-fs="up">大</button></div></div>
   <div class="steps-slot" id="stepsSlot">
     <div class="steps-panel" id="stepsPanel" hidden>
       <div class="float-head">
         <div class="head-title">
           <button type="button" class="icon-btn hidden" id="memoClear" title="メモを消す">消</button>
           <strong id="stepsHead">式</strong>
-          <div class="fs-btns" id="stepsFsBtns" title="ポップ内の文字サイズ">
-            <button type="button" data-steps-fs="down">小</button>
-            <button type="button" data-steps-fs="mid" class="on">中</button>
-            <button type="button" data-steps-fs="up">大</button>
-          </div>
+          <div class="fs-btns" id="stepsFsBtns" title="ポップ内の文字サイズ"><button type="button" data-steps-fs="down">小</button><button type="button" data-steps-fs="mid" class="on">中</button><button type="button" data-steps-fs="up">大</button></div>
         </div>
         <div class="head-tools">
           <button type="button" class="icon-btn" id="copySteps" title="式をコピー">写</button>
@@ -276,23 +194,13 @@
           <button type="button" id="stepsClose" aria-label="閉じる">×</button>
         </div>
       </div>
-      <div id="formulaView">
-        <div id="stepsPills"></div>
-        <p class="steps-delta hidden" id="stepsDelta"></p>
-        <p class="steps-meta" id="stepsAdvice"></p>
-        <p class="steps" id="steps">—</p>
-      </div>
-      <div id="memoView" class="hidden">
-        <textarea id="memoBox" class="memo-box" placeholder="ここに自由にメモ"></textarea>
-      </div>
+      <div id="formulaView"><div id="stepsPills"></div><p class="steps-delta hidden" id="stepsDelta"></p><p class="steps-meta" id="stepsAdvice"></p><p class="steps" id="steps">—</p></div>
+      <div id="memoView" class="hidden"><textarea id="memoBox" class="memo-box" placeholder="ここに自由にメモ"></textarea></div>
     </div>
   </div>
-  <div class="foot">
-    <a class="foot-link" href="./index.html">← 一覧</a>
-    <button type="button" id="resetBtn" aria-label="リセット">↺</button>
-  </div>
+  <div class="foot"><a class="foot-link" href="./index.html">← 一覧</a><button type="button" id="resetBtn" aria-label="リセット">↺</button></div>
 </div>
-<script src="./mansion-kojihi.js?v=20260926b"></script>
+<script src="./mansion-kojihi.js?v=20260926c"></script>
 <style>
 .float-head{display:flex !important;flex-wrap:nowrap !important;align-items:center !important;justify-content:flex-start !important;gap:6px !important;}
 .float-head .head-title,.float-head .head-tools{display:flex !important;align-items:center !important;flex-wrap:nowrap !important;gap:6px !important;}
@@ -302,6 +210,8 @@
 #memoTall{display:none !important;}
 #copySteps{width:2.2em !important;min-width:2.2em !important;max-width:2.2em !important;overflow:hidden !important;}
 .memo-box{border:1.5px solid #7dd3fc !important;min-height:10em !important;}
+.steps-panel.memo-dock{position:static !important;left:auto !important;bottom:auto !important;transform:none !important;width:auto !important;max-height:none !important;overflow:visible !important;}
+.steps-panel.memo-dock .memo-box{min-height:16em !important;max-height:none !important;}
 </style>
 </body>
 </html>
