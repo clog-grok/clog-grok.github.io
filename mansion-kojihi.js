@@ -11,8 +11,8 @@
     "#copySteps.hidden{display:inline-flex !important;}",
     "#memoTall{display:none !important;}",
     ".memo-box{border:1.5px solid #7dd3fc;min-height:9em;}",
-    ".steps-panel.float .memo-box{min-height:7em;max-height:26vh;}",
-    ".steps-panel:not(.float) .memo-box{max-height:none;}"
+    ".steps-panel.memo-dock{position:static !important;left:auto !important;bottom:auto !important;transform:none !important;width:auto !important;max-width:none !important;max-height:none !important;overflow:visible !important;box-shadow:none !important;}",
+    ".steps-panel.memo-dock .memo-box{min-height:16em;max-height:none;height:auto;}"
   ].join("");
   document.head.appendChild(css);
 
@@ -60,21 +60,10 @@
     var oldTall = document.getElementById("memoTall");
     if (oldTall && oldTall.parentNode) oldTall.parentNode.removeChild(oldTall);
     function memoOpen() { return memoView && !memoView.classList.contains("hidden"); }
-    function fitMemo() {
-      var box = orig("memoBox");
-      if (!box || !panel || !memoOpen()) return;
-      if (panel.classList.contains("float")) {
-        box.style.height = "";
-        return;
-      }
-      box.style.height = "auto";
-      var h = box.scrollHeight + 72;
-      var foot = document.querySelector(".foot");
-      if (foot) {
-        var room = foot.getBoundingClientRect().top - box.getBoundingClientRect().top - 16;
-        if (room > 160) h = Math.min(h, room);
-      }
-      box.style.height = Math.max(180, Math.round(h)) + "px";
+    function dockMemo(on) {
+      if (!panel) return;
+      panel.classList.toggle("memo-dock", on);
+      if (on) panel.classList.remove("float");
     }
     function setMemo(on) {
       formulaView.classList.toggle("hidden", on);
@@ -89,11 +78,10 @@
         copyBtn.style.display = "";
         copyBtn.textContent = "\u5199";
       }
+      dockMemo(on);
       if (on) {
         var box = orig("memoBox");
         if (box && !String(box.value || "").trim()) box.value = dumpFormula();
-        if (box && box.focus) box.focus();
-        setTimeout(fitMemo, 60);
       }
     }
     memoBtn.addEventListener("click", function (e) {
@@ -111,10 +99,7 @@
         copyText(text, copyBtn);
       }, true);
     }
-    var box = orig("memoBox");
-    if (box) box.addEventListener("input", fitMemo);
-    window.addEventListener("scroll", function () { if (memoOpen()) fitMemo(); }, { passive: true });
-    window.addEventListener("resize", function () { if (memoOpen()) fitMemo(); });
+    window.addEventListener("scroll", function () { if (memoOpen()) dockMemo(true); }, { passive: true });
     setMemo(false);
   };
   document.head.appendChild(s);
