@@ -21,6 +21,7 @@ const priceLabel = document.getElementById("priceLabel");
 const priceConv = document.getElementById("priceConv");
 let landUnit = "m2";
 let priceUnit = "tsubo";
+let unitSizeUnit = "m2";
 let unitsManual = false;
 let syncing = false;
 function yen(n) {
@@ -66,18 +67,30 @@ bindSeg("unitSeg", "data-unit", function (v) {
   else { landLabel.textContent = "敷地面積"; landUnitEl.textContent = "坪"; land.value = m2Now ? String(Math.round((m2Now * TO_TSUBO) * 10) / 10) : ""; }
 });
 bindSeg("priceSeg", "data-price", function (v) {
-  const tsuboNow = priceTsubo(); priceUnit = v;
+  const tsuboNow = priceTsubo();
+  const sizeM2 = unitSizeM2();
+  priceUnit = v;
+  unitSizeUnit = v;
   const priceUnitEl = document.getElementById("priceUnit");
   if (priceUnit === "tsubo") { priceLabel.textContent = "延べの坪単価"; priceUnitEl.textContent = "万円/坪"; price.value = tsuboNow ? String(Math.round(tsuboNow * 10) / 10) : ""; }
   else { priceLabel.textContent = "延べの㎡単価"; priceUnitEl.textContent = "万円/㎡"; price.value = tsuboNow ? String(Math.round((tsuboNow / M2_PER_TSUBO) * 100) / 100) : ""; }
+  setUnitSizeDisplay(sizeM2);
 });
-bindSeg("typeSeg", "data-type", function (v) { unitsManual = false; const t = typeMem[v] || TYPE[v]; setEff(t.eff); unitM2.value = t.unitM2; });
+bindSeg("typeSeg", "data-type", function (v) { unitsManual = false; const t = typeMem[v] || TYPE[v]; setEff(t.eff); setUnitSizeDisplay(t.unitM2); });
 bindSeg("structSeg", "data-struct", function (v) { const tsubo = priceMem[v] || PRESET[v]; price.value = priceUnit === "tsubo" ? String(tsubo) : String(Math.round((tsubo / M2_PER_TSUBO) * 100) / 100); });
 function rememberPrice() { const t = priceTsubo(); if (t > 0) priceMem[currentStruct()] = t; }
-function rememberType() { const e = parseFloat(eff.value); const u = parseFloat(unitM2.value); if (isFinite(e) && e > 0 && isFinite(u) && u > 0) typeMem[currentType()] = { unitM2: u, eff: e }; }
+function rememberType() { const e = parseFloat(eff.value); const u = unitSizeM2(); if (isFinite(e) && e > 0 && u > 0) typeMem[currentType()] = { unitM2: u, eff: e }; }
 function landM2() { const n = parseFloat(land.value); if (!isFinite(n) || n <= 0) return 0; return landUnit === "tsubo" ? n * M2_PER_TSUBO : n; }
 function priceTsubo() { const n = parseFloat(price.value); if (!isFinite(n) || n <= 0) return 0; return priceUnit === "m2" ? n * M2_PER_TSUBO : n; }
 function priceM2() { return priceTsubo() / M2_PER_TSUBO; }
+function unitSizeM2() { const n = parseFloat(unitM2.value); if (!isFinite(n) || n <= 0) return 0; return unitSizeUnit === "tsubo" ? n * M2_PER_TSUBO : n; }
+function applyUnitSizeLabel() { const el = document.getElementById("unitSizeUnit"); if (el) el.textContent = unitSizeUnit === "tsubo" ? "坪" : "㎡"; }
+function setUnitSizeDisplay(m2) {
+  applyUnitSizeLabel();
+  if (!m2) { unitM2.value = ""; return; }
+  if (unitSizeUnit === "tsubo") unitM2.value = String(Math.round((m2 * TO_TSUBO) * 100) / 100);
+  else unitM2.value = String(Math.round(m2 * 10) / 10);
+}
 function setEff(e) { syncing = true; var v = Math.max(0.01, Math.min(e, 1)); if (document.activeElement !== eff) eff.value = String(v); if (document.activeElement !== coeff) coeff.value = String(1 / v); if (coeffOut && document.activeElement !== coeffOut) coeffOut.value = String(1 / v); syncing = false; }
 function setCoeff(c) { syncing = true; var v = Math.max(1, c); if (document.activeElement !== coeff) coeff.value = String(v); if (coeffOut && document.activeElement !== coeffOut) coeffOut.value = String(v); if (document.activeElement !== eff) eff.value = String(1 / v); syncing = false; }
 function calc() {
@@ -85,7 +98,7 @@ function calc() {
   const kPct = parseFloat(kenpei.value) || 0;
   const yPct = parseFloat(yoseki.value) || 0;
   const f = parseFloat(floors.value) || 0;
-  const uSize = parseFloat(unitM2.value) || 0;
+  const uSize = unitSizeM2();
   let e = parseFloat(eff.value);
   if (!isFinite(e) || e <= 0) e = 0.75;
   e = Math.max(0.01, Math.min(e, 1));
@@ -205,7 +218,7 @@ coeff.addEventListener("input", function () { onCoeffInput(coeff); });
 coeffOut.addEventListener("input", function () { onCoeffInput(coeffOut); });
 unitsIn.addEventListener("input", function () { unitsManual = true; calc(); });
 extra.addEventListener("change", calc);
-const STORE_KEY = "mansion-kojihi-preview-v10";
+const STORE_KEY = "mansion-kojihi-preview-v11";
 function currentType() { const on = document.querySelector("#typeSeg button.on"); return on ? on.getAttribute("data-type") : "oneroom"; }
 function currentStruct() { const on = document.querySelector("#structSeg button.on"); return on ? on.getAttribute("data-struct") : "RC"; }
 function currentTheme() { return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"; }
@@ -216,10 +229,10 @@ function applyTheme(theme) {
   else { document.documentElement.removeAttribute("data-theme"); btn.textContent = "\u2600"; }
 }
 function applyLandUnitLabels() { const landUnitEl = document.getElementById("landUnit"); if (landUnit === "m2") { landLabel.textContent = "敷地面積"; landUnitEl.textContent = "㎡"; } else { landLabel.textContent = "敷地面積"; landUnitEl.textContent = "坪"; } }
-function applyPriceUnitLabels() { const priceUnitEl = document.getElementById("priceUnit"); if (priceUnit === "tsubo") { priceLabel.textContent = "延べの坪単価"; priceUnitEl.textContent = "万円/坪"; } else { priceLabel.textContent = "延べの㎡単価"; priceUnitEl.textContent = "万円/㎡"; } }
+function applyPriceUnitLabels() { const priceUnitEl = document.getElementById("priceUnit"); if (priceUnit === "tsubo") { priceLabel.textContent = "延べの坪単価"; priceUnitEl.textContent = "万円/坪"; } else { priceLabel.textContent = "延べの㎡単価"; priceUnitEl.textContent = "万円/㎡"; } applyUnitSizeLabel(); }
 function saveState() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ land: land.value, kenpei: kenpei.value, yoseki: yoseki.value, floors: floors.value, price: price.value, unitM2: unitM2.value, eff: eff.value, coeff: coeff.value, unitsIn: unitsIn.value, extra: !!extra.checked, landUnit: landUnit, priceUnit: priceUnit, unitsManual: !!unitsManual, type: currentType(), struct: currentStruct(), theme: currentTheme(), priceMem: priceMem, typeMem: typeMem }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({ land: land.value, kenpei: kenpei.value, yoseki: yoseki.value, floors: floors.value, price: price.value, unitM2: unitM2.value, eff: eff.value, coeff: coeff.value, unitsIn: unitsIn.value, extra: !!extra.checked, landUnit: landUnit, priceUnit: priceUnit, unitSizeUnit: unitSizeUnit, unitsManual: !!unitsManual, type: currentType(), struct: currentStruct(), theme: currentTheme(), priceMem: priceMem, typeMem: typeMem }));
   } catch (e) {}
 }
 function loadState() {
@@ -239,6 +252,7 @@ function loadState() {
     if (typeof data.extra === "boolean") extra.checked = data.extra;
     if (data.landUnit === "m2" || data.landUnit === "tsubo") landUnit = data.landUnit;
     if (data.priceUnit === "m2" || data.priceUnit === "tsubo") priceUnit = data.priceUnit;
+    if (data.unitSizeUnit === "m2" || data.unitSizeUnit === "tsubo") unitSizeUnit = data.unitSizeUnit;
     unitsManual = !!data.unitsManual;
     if (data.type === "oneroom" || data.type === "family") setSegOn("typeSeg", "data-type", data.type);
     if (data.struct === "S" || data.struct === "RC" || data.struct === "SRC") setSegOn("structSeg", "data-struct", data.struct);
@@ -280,10 +294,10 @@ document.getElementById("themeBtn").addEventListener("click", function () { appl
 function resetAll() {
   try { localStorage.removeItem(STORE_KEY); } catch (e) {}
   priceMem = { S: 114, RC: 120, SRC: 135 }; typeMem = { oneroom: { unitM2: 25, eff: 0.75 }, family: { unitM2: 65, eff: 0.82 } };
-  landUnit = "m2"; priceUnit = "tsubo"; unitsManual = false;
+  landUnit = "m2"; priceUnit = "tsubo"; unitSizeUnit = "m2"; unitsManual = false;
   land.value = "330"; kenpei.value = "80"; yoseki.value = "400"; floors.value = "7"; price.value = "120"; unitM2.value = "25"; extra.checked = false; unitsIn.value = "";
   setSegOn("typeSeg", "data-type", "oneroom"); setSegOn("structSeg", "data-struct", "RC"); setSegOn("unitSeg", "data-unit", "m2"); setSegOn("priceSeg", "data-price", "tsubo");
-  applyLandUnitLabels(); applyPriceUnitLabels(); eff.value = "0.75"; coeff.value = "1.33"; if (coeffOut) coeffOut.value = "1.33";
+  applyLandUnitLabels(); applyPriceUnitLabels(); applyUnitSizeLabel(); eff.value = "0.75"; coeff.value = "1.33"; if (coeffOut) coeffOut.value = "1.33";
   const panel = document.getElementById("stepsPanel"); panel.classList.remove("open", "float"); panel.hidden = true; document.body.classList.remove("steps-open");
   document.getElementById("stepsToggle").textContent = "式の確認"; document.getElementById("stepsSlot").style.minHeight = ""; calc();
 }

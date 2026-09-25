@@ -46,6 +46,8 @@
   .result-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.8rem; margin-top: 6px; color: var(--text-sub); }
   .result-line b { color: var(--text-main); font-weight: 600; }
   .result-line input[type="text"] { width: 88px; text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 0.85rem; outline: none; }
+  .result-line.coeff-line { justify-content: flex-start; gap: 4px; }
+  .result-line.coeff-line #gfaFormula { flex: 0 1 auto; text-align: left; white-space: nowrap; }
   .result-sub { font-size: 0.72rem; color: var(--text-sub); text-align: right; margin: 4px 0 0; min-height: 1em; }
   .cap { display: inline-block; font-size: 0.68rem; border: 1px solid var(--ok); color: var(--ok); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
   .check { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
@@ -101,7 +103,7 @@
     <div class="result-title">住戸の計画</div>
     <div class="result-title">想定延べ面積<span class="cap" id="capLabel">容積</span></div>
     <div class="result-amount" id="gfaText">—</div>
-    <div class="result-line" style="margin:2px 0 6px;">
+    <div class="result-line coeff-line" style="margin:2px 0 6px;">
       <span id="gfaFormula">専有 —㎡ ×</span>
       <input type="text" inputmode="decimal" id="coeffOut" value="1.33" aria-label="廊下係数">
     </div>
@@ -128,7 +130,7 @@
     <div class="row"><label id="priceLabel">延べの坪単価</label><div class="mini" id="priceSeg"><button type="button" data-price="tsubo" class="on">坪</button><button type="button" data-price="m2">㎡</button></div></div>
     <div class="row"><span></span><div class="with-unit"><input type="text" inputmode="decimal" id="price" value="120"><span class="unit" id="priceUnit">万円/坪</span></div></div>
     <div class="conv" id="priceConv"></div>
-    <div class="row"><label>1戸の専有</label><div class="with-unit"><input type="text" inputmode="decimal" id="unitM2" value="25"><span class="unit">㎡</span></div></div>
+    <div class="row"><label>1戸の専有</label><div class="with-unit"><input type="text" inputmode="decimal" id="unitM2" value="25"><span class="unit" id="unitSizeUnit">㎡</span></div></div>
     <div class="row"><label>専有効率</label><input type="text" inputmode="decimal" id="eff" value="0.75"></div>
     <div class="row"><label>廊下係数</label><input type="text" inputmode="decimal" id="coeff" value="1.33"></div>
     <div class="conv">専有効率 ＝ 1 ÷ 廊下係数</div>
