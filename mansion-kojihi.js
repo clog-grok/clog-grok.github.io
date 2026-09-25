@@ -1,15 +1,13 @@
 (function () {
   var css = document.createElement("style");
   css.textContent = [
-    ".float-head{display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:4px;margin-bottom:6px;}",
-    ".float-head .head-title{display:flex;align-items:center;gap:4px;min-width:0;flex:1 1 auto;}",
-    ".float-head .head-tools{display:flex;align-items:center;gap:4px;flex:0 0 auto;margin-left:2px;}",
-    ".float-head strong{font-size:.8rem;white-space:nowrap;}",
-    ".float-head #stepsClose{width:28px;height:28px;margin-left:0;flex-shrink:0;}",
-    ".float-head .fs-btns{margin-right:0;gap:3px;flex-shrink:0;}",
-    ".float-head .fs-btns button{width:auto;height:28px;min-width:26px;padding:3px 5px;}",
-    ".float-head .icon-btn{min-width:26px;height:28px;padding:0 4px;margin:0;}",
-    ".head-tools .icon-btn + .icon-btn{margin-left:0;}"
+    ".float-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:6px;overflow:visible;}",
+    ".float-head .head-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-width:0;flex:1 1 auto;}",
+    ".float-head .head-tools{display:flex;align-items:center;flex-wrap:nowrap;gap:6px;flex:0 0 auto;}",
+    ".float-head #stepsClose{margin-left:0;}",
+    ".float-head .fs-btns{margin-right:0;}",
+    ".float-head .icon-btn,.float-head .fs-btns button,#copySteps{display:inline-flex !important;visibility:visible !important;opacity:1 !important;position:static !important;margin:0;}",
+    "#copySteps.hidden{display:inline-flex !important;}"
   ].join("");
   document.head.appendChild(css);
 
@@ -64,7 +62,8 @@
       if (clearBtn) clearBtn.classList.toggle("hidden", !on);
       if (copyBtn) {
         copyBtn.classList.remove("hidden");
-        copyBtn.style.display = "";
+        copyBtn.style.display = "inline-flex";
+        copyBtn.style.visibility = "visible";
         copyBtn.textContent = "写";
       }
       if (on) {
@@ -80,7 +79,7 @@
     }, true);
     if (copyBtn) {
       copyBtn.classList.remove("hidden");
-      copyBtn.style.display = "";
+      copyBtn.style.display = "inline-flex";
       copyBtn.addEventListener("click", function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
