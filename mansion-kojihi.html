@@ -15,7 +15,7 @@
   html[data-theme="light"] { color-scheme: light; }
   input[type="number"], input[type="text"], textarea { -webkit-appearance: none; appearance: none; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px; color-scheme: inherit; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; }
-  body.steps-open { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  body.steps-open { padding-bottom: 0; }
   .app-container { background-color: var(--card-bg); width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); position: relative; }
   .theme { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 999px; padding: 0; font-size: 1rem; line-height: 1; }
   h1 { font-size: 1.15rem; text-align: center; margin: 0 0 14px; padding-right: 48px; }
@@ -200,7 +200,7 @@
   </div>
   <div class="foot"><a class="foot-link" href="./index.html">← 一覧</a><button type="button" id="resetBtn" aria-label="リセット">↺</button></div>
 </div>
-<script src="./mansion-kojihi.js?v=20260926h"></script>
+<script src="./mansion-kojihi.js?v=20260926j"></script>
 <style>
 .float-head{display:flex !important;flex-wrap:nowrap !important;align-items:center !important;justify-content:flex-start !important;gap:6px !important;}
 .float-head .head-title,.float-head .head-tools{display:flex !important;align-items:center !important;flex-wrap:nowrap !important;gap:6px !important;}
@@ -210,9 +210,8 @@
 #memoTall{display:none !important;}
 #copySteps{width:2.2em !important;min-width:2.2em !important;max-width:2.2em !important;overflow:hidden !important;}
 .memo-box{border:1.5px solid #7dd3fc !important;min-height:10em !important;}
-body.steps-open{padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px)) !important;}
-.steps-slot{min-height:0 !important;height:auto !important;padding:0 !important;margin:0 !important;}
-.steps-panel.memo-dock{position:fixed !important;}
+body.steps-open{padding-bottom:0 !important;}
+ .steps-panel.open.float{position:fixed !important;}
 </style>
 </body>
 </html>
