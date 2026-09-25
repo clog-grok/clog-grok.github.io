@@ -1,1 +1,1 @@
-PLACEHOLDER_JS
+document.body.insertAdjacentHTML('afterbegin','<p>restoring</p>');
