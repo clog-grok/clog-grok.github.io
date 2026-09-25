@@ -10,7 +10,7 @@
     "#copySteps{width:2.1em;min-width:2.1em;overflow:hidden;}",
     "#copySteps.hidden{display:inline-flex !important;}",
     "#memoTall{display:none !important;}",
-    ".steps-panel.float{position:fixed !important;left:50% !important;bottom:calc(10px + env(safe-area-inset-bottom, 0px)) !important;transform:translateX(-50%) !important;width:calc(100% - 24px) !important;max-width:400px !important;max-height:min(46vh, 320px) !important;overflow:auto !important;z-index:1000 !important;margin:0 !important;box-shadow:0 12px 32px rgba(0,0,0,0.35) !important;}",
+    ".steps-panel.float{position:fixed !important;left:50% !important;bottom:calc(8px + env(safe-area-inset-bottom, 0px)) !important;transform:translateX(-50%) !important;width:calc(100% - 24px) !important;max-width:400px !important;max-height:min(46vh, 320px) !important;overflow:auto !important;z-index:1000 !important;margin:0 !important;box-shadow:0 12px 32px rgba(0,0,0,0.35) !important;}",
     ".steps-panel.float .memo-box{min-height:9em;max-height:30vh;height:30vh;}",
     ".memo-box{border:1.5px solid #7dd3fc;min-height:9em;}"
   ].join("");
@@ -62,6 +62,13 @@
     var oldTall = orig("memoTall");
     if (oldTall && oldTall.parentNode) oldTall.parentNode.removeChild(oldTall);
     function memoOpen() { return memoView && !memoView.classList.contains("hidden"); }
+    function pin() {
+      if (!panel || panel.hidden) return;
+      panel.classList.add("open");
+      panel.classList.add("float");
+      panel.classList.remove("memo-dock");
+      if (slot) slot.style.minHeight = Math.max(panel.offsetHeight || 180, 1) + "px";
+    }
     function setMemo(on) {
       formulaView.classList.toggle("hidden", on);
       memoView.classList.toggle("hidden", !on);
@@ -75,48 +82,17 @@
         copyBtn.style.display = "";
         copyBtn.textContent = "写";
       }
-      panel.classList.remove("memo-dock");
       if (on) {
         var box = orig("memoBox");
         if (box && !String(box.value || "").trim()) box.value = dumpFormula();
       }
-      placePanel();
-    }
-    function panelOpen() {
-      return panel && !panel.hidden && (panel.classList.contains("open") || panel.style.display === "block");
-    }
-    function slotHere() {
-      if (!slot) return false;
-      var vh = window.innerHeight || 0;
-      var top = slot.getBoundingClientRect().top;
-      return top > 8 && top < vh - 28;
-    }
-    function placePanel() {
-      if (!panel || panel.hidden) return;
-      if (!panel.classList.contains("open")) panel.classList.add("open");
-      if (slotHere()) {
-        panel.classList.remove("float");
-        if (slot) slot.style.minHeight = "";
-      } else {
-        if (slot) slot.style.minHeight = Math.max(panel.offsetHeight || 180, 1) + "px";
-        panel.classList.add("float");
-      }
-    }
-    function openFloat() {
-      setMemo(false);
-      panel.hidden = false;
-      panel.classList.add("open");
-      panel.classList.add("float");
-      document.body.classList.add("steps-open");
-      if (toggle) toggle.textContent = "式を閉じる";
-      placePanel();
+      pin();
     }
     memoBtn.addEventListener("click", function (e) {
       e.preventDefault();
       e.stopImmediatePropagation();
-      var wasFloat = panel.classList.contains("float") || !slotHere();
       setMemo(!memoOpen());
-      if (wasFloat) panel.classList.add("float");
+      pin();
     }, true);
     if (copyBtn) {
       copyBtn.classList.remove("hidden");
@@ -133,22 +109,23 @@
         e.preventDefault();
         e.stopPropagation();
         setTimeout(function () {
-          openFloat();
-          panel.classList.add("float");
+          setMemo(false);
+          panel.hidden = false;
+          document.body.classList.add("steps-open");
+          if (toggle) toggle.textContent = "式を閉じる";
+          pin();
         }, 0);
       }, true);
     });
-    if (toggle) {
-      toggle.addEventListener("click", function () { setTimeout(placePanel, 0); });
-    }
-    window.addEventListener("scroll", placePanel, { passive: true });
-    document.addEventListener("scroll", placePanel, true);
-    window.addEventListener("resize", placePanel);
+    if (toggle) toggle.addEventListener("click", function () { setTimeout(pin, 0); });
+    window.addEventListener("scroll", pin, true);
+    document.addEventListener("scroll", pin, true);
+    window.addEventListener("resize", pin);
     if (window.visualViewport) {
-      window.visualViewport.addEventListener("scroll", placePanel);
-      window.visualViewport.addEventListener("resize", placePanel);
+      window.visualViewport.addEventListener("scroll", pin);
+      window.visualViewport.addEventListener("resize", pin);
     }
-    setInterval(function () { if (!panel.hidden) placePanel(); }, 250);
+    (function loop() { pin(); requestAnimationFrame(loop); })();
     setMemo(false);
   };
   document.head.appendChild(s);
