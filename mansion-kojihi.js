@@ -11,8 +11,8 @@
     "#copySteps.hidden{display:inline-flex !important;}",
     "#memoTall{display:none !important;}",
     "body.steps-open{padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px)) !important;}",
-    ".steps-slot{min-height:0 !important;height:auto !important;padding-bottom:0 !important;margin-bottom:0 !important;}",
-    ".steps-panel.open{position:fixed !important;left:50% !important;bottom:calc(8px + env(safe-area-inset-bottom, 0px)) !important;transform:translateX(-50%) !important;width:calc(100% - 24px) !important;max-width:400px !important;max-height:min(46vh, 320px) !important;overflow:auto !important;z-index:1000 !important;margin:0 !important;box-shadow:0 12px 32px rgba(0,0,0,0.35) !important;}",
+    ".steps-panel.open{position:static !important;left:auto !important;right:auto !important;bottom:auto !important;transform:none !important;width:auto !important;max-width:none !important;margin:0 0 10px !important;}",
+    ".steps-panel.open.float{position:fixed !important;left:50% !important;bottom:calc(8px + env(safe-area-inset-bottom, 0px)) !important;transform:translateX(-50%) !important;width:calc(100% - 24px) !important;max-width:400px !important;max-height:min(46vh, 320px) !important;overflow:auto !important;z-index:1000 !important;margin:0 !important;box-shadow:0 12px 32px rgba(0,0,0,0.35) !important;}",
     ".steps-panel.open .memo-box{min-height:9em;max-height:30vh;height:30vh;}",
     ".memo-box{border:1.5px solid #7dd3fc;min-height:9em;}"
   ].join("");
@@ -57,10 +57,23 @@
     var slot = orig("stepsSlot");
     var toggle = orig("stepsToggle");
     var oldTall = orig("memoTall");
+    var holdAlign = 0;
     if (oldTall && oldTall.parentNode) oldTall.parentNode.removeChild(oldTall);
     function memoOpen() { return memoView && !memoView.classList.contains("hidden"); }
-    function pin() {
-      if (!panel || panel.hidden || !panel.classList.contains("open")) return;
+    function openNow() { return panel && !panel.hidden && panel.classList.contains("open"); }
+    function dock() {
+      if (!panel) return;
+      panel.classList.remove("float");
+      panel.classList.remove("memo-dock");
+      ["position", "left", "right", "bottom", "top", "transform", "width", "max-width", "z-index", "margin"].forEach(function (k) {
+        panel.style.removeProperty(k);
+      });
+      if (slot) slot.style.minHeight = "0px";
+    }
+    function lift() {
+      if (!panel) return;
+      var h = Math.max(panel.offsetHeight || 0, 1) + "px";
+      if (slot && slot.style.minHeight !== h) slot.style.minHeight = h;
       panel.classList.add("float");
       panel.classList.remove("memo-dock");
       panel.style.setProperty("position", "fixed", "important");
@@ -72,7 +85,23 @@
       panel.style.setProperty("max-width", "400px", "important");
       panel.style.setProperty("z-index", "1000", "important");
       panel.style.setProperty("margin", "0", "important");
-      if (slot) slot.style.minHeight = "0px";
+    }
+    function place() {
+      if (!openNow()) { dock(); return; }
+      if (Date.now() < holdAlign) { dock(); return; }
+      var vh = window.innerHeight || 0;
+      var rect = slot ? slot.getBoundingClientRect() : { top: vh, bottom: vh };
+      var awayUp = rect.bottom < 8;
+      var awayDown = rect.top > vh + 16;
+      if (awayUp || awayDown) lift();
+      else dock();
+    }
+    function alignToBottom() {
+      dock();
+      holdAlign = Date.now() + 500;
+      var top = panel.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
+      var y = Math.max(0, top - (window.innerHeight || 0));
+      window.scrollTo(0, y);
     }
     function setMemo(on) {
       formulaView.classList.toggle("hidden", on);
@@ -87,13 +116,12 @@
         var box = orig("memoBox");
         if (box && !String(box.value || "").trim()) box.value = dumpFormula();
       }
-      pin();
+      place();
     }
     memoBtn.addEventListener("click", function (e) {
       e.preventDefault();
       e.stopImmediatePropagation();
       setMemo(!memoOpen());
-      pin();
     }, true);
     if (copyBtn) {
       copyBtn.classList.remove("hidden");
@@ -114,18 +142,25 @@
           panel.classList.add("open");
           document.body.classList.add("steps-open");
           if (toggle) toggle.textContent = "式を閉じる";
-          pin();
+          alignToBottom();
         }, 0);
       }, true);
     });
-    if (toggle) toggle.addEventListener("click", function () { setTimeout(pin, 0); });
-    window.addEventListener("scroll", pin, true);
-    document.addEventListener("scroll", pin, true);
+    if (toggle) toggle.addEventListener("click", function () {
+      setTimeout(function () {
+        if (openNow()) alignToBottom();
+        else dock();
+      }, 0);
+    });
+    var closeBtn = orig("stepsClose");
+    if (closeBtn) closeBtn.addEventListener("click", function () { setTimeout(dock, 0); });
+    window.addEventListener("scroll", place, true);
+    document.addEventListener("scroll", place, true);
     if (window.visualViewport) {
-      window.visualViewport.addEventListener("scroll", pin);
-      window.visualViewport.addEventListener("resize", pin);
+      window.visualViewport.addEventListener("scroll", place);
+      window.visualViewport.addEventListener("resize", place);
     }
-    (function loop() { pin(); requestAnimationFrame(loop); })();
+    (function loop() { place(); requestAnimationFrame(loop); })();
     setMemo(false);
   };
   document.head.appendChild(s);
