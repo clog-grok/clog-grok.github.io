@@ -8,7 +8,7 @@
 <meta name="tool-tag" content="建築">
 <meta name="tool-status" content="wip">
 <style>
-  :root { --bg-color:#0f172a; --card-bg:#1e293b; --text-main:#f8fafc; --text-sub:#cbd5e1; --accent:#38bdf8; --ok:#34d399; --border:#334155; --warn:#fbbf24; }
+  :root { --bg-color:#0f172a; --card-bg:#1e293b; --text-main:#f8fafc; --text-sub:#cbd5e1; --accent:#38bdf8; --ok:#34d399; --border:#334155; --warn:#fbbf24; --steps-fs:0.72rem; }
   html[data-theme="light"] { --bg-color:#e2e8f0; --card-bg:#ffffff; --text-main:#0f172a; --text-sub:#334155; --accent:#0369a1; --ok:#047857; --border:#cbd5e1; --warn:#b45309; }
   * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; }
@@ -41,66 +41,124 @@
   .conv { font-size: 0.72rem; color: var(--text-sub); text-align: right; margin: 0 0 10px; min-height: 1em; word-break: break-all; }
   .result-box { border: 2px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
   .result-box.main { border-color: var(--accent); }
-  .result-title { font-size: 0.78rem; color: var(--text-sub); margin-bottom: 4px; }
+  .result-title { font-size: 0.78rem; color: var(--text-sub); margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .result-title .title-left { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 0; }
   .result-amount { font-size: 1.45rem; font-weight: bold; text-align: right; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
   .result-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.8rem; margin-top: 6px; color: var(--text-sub); }
   .result-line b { color: var(--text-main); font-weight: 600; }
   .result-line input[type="number"] { width: 88px; text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 0.85rem; outline: none; }
   .result-sub { font-size: 0.72rem; color: var(--text-sub); text-align: right; margin: 4px 0 0; min-height: 1em; }
   .cap { display: inline-block; font-size: 0.68rem; border: 1px solid var(--ok); color: var(--ok); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
-  .check { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
+  .check { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
+  .check input[type="number"] { width: 64px; text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main); font-size: 0.85rem; }
   .extra-list { font-size: 0.72rem; color: var(--text-sub); line-height: 1.5; margin: 0 0 8px 24px; }
-  .steps-btn { display: block; width: 100%; border: 2px solid var(--border); background: var(--bg-color); color: var(--text-main); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; font-size: 0.78rem; cursor: pointer; }
+  .steps-btn-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .steps-btn { flex: 1; border: 2px solid var(--border); background: var(--bg-color); color: var(--text-main); border-radius: 12px; padding: 10px 14px; font-size: 0.78rem; cursor: pointer; }
+  .fs-btns { display: flex; gap: 4px; flex-shrink: 0; }
+  .fs-btns button { border: 1px solid var(--border); background: transparent; color: var(--text-sub); border-radius: 6px; padding: 6px 8px; font-size: 0.68rem; min-width: 32px; }
+  .fs-btns button.on { border-color: var(--accent); color: var(--text-main); background: rgba(56, 189, 248, 0.14); }
   .steps-slot { min-height: 0; }
   .steps-panel { display: none; background: var(--card-bg); color: var(--text-main); border: 2px solid var(--border); border-radius: 14px; padding: 10px 12px; margin: 0 0 10px; }
   .steps-panel.open { display: block; }
-  .steps-panel.float { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: min(28vh, 180px); overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
+  .steps-panel.float { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: min(40vh, 280px); overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
   .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
   .foot a, .foot button { background: none; border: 0; color: var(--text-sub); font-size: 0.78rem; text-decoration: none; padding: 10px 4px; cursor: pointer; }
   .float-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
   .float-head strong { font-size: 0.85rem; }
-  .float-head button { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; }
-  .steps { font-size: 0.72rem; color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: break-all; }
+  .float-head #stepsClose { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; }
+  .float-head .fs-btns button { width: auto; height: auto; }
+  .steps { font-size: var(--steps-fs); color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: break-all; }
   .warn { font-size: 0.72rem; color: var(--warn); margin-top: 8px; line-height: 1.5; }
   .hidden { display: none; }
   .foot-link { color: var(--text-sub); font-size: 0.75rem; text-decoration: none; }
+  .block-title { font-size: 1.02rem; font-weight: 700; color: var(--text-main); margin: 0; }
+  .split { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .split .half { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex: 1; min-width: 0; }
+  .split label { font-size: 0.86rem; }
+  .plan-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 0.8rem; color: var(--text-sub); }
+  .plan-row .part { display: flex; align-items: center; gap: 6px; }
+  .floor-cap { font-size: 0.8rem; color: var(--text-main); font-weight: 600; white-space: nowrap; }
+  .badge-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; }
+  .badge-row .label { font-size: 0.78rem; color: var(--text-sub); display: flex; align-items: center; }
 </style>
 </head>
 <body>
 <div class="app-container">
   <button type="button" class="theme" id="themeBtn" aria-label="テーマ">☀</button>
   <h1>マンション工事費ざっくり</h1>
+
   <div class="result-box">
-    <div class="result-title">想定延べ面積<span class="cap" id="capLabel">容積</span></div>
+    <div class="result-title">
+      <span class="title-left">想定延べ面積<span class="cap" id="capLabel">容積で頭打ち</span></span>
+      <div class="mini unit-seg" data-unit-seg>
+        <button type="button" data-disp="m2" class="on">㎡</button>
+        <button type="button" data-disp="tsubo">坪</button>
+      </div>
+    </div>
     <div class="result-amount" id="gfaText">—</div>
     <div class="result-line"><span>建築面積上限（1階）</span><b id="archText">—</b></div>
     <div class="result-line"><span>容積の上限</span><b id="farText">—</b></div>
-    <div class="result-line"><span>上限までの階数</span><b id="needFloorText">—</b></div>
-    <div class="result-line"><span>1階あたり戸数</span><b id="perFloorText">—</b></div>
+    <div class="result-line">
+      <span>計画階数</span>
+      <div class="with-unit">
+        <input type="number" id="floors" inputmode="numeric" value="5">
+        <span class="unit-slash">/</span>
+        <b id="needFloorText" class="floor-cap">—</b>
+      </div>
+    </div>
     <p class="warn hidden" id="floorNote"></p>
   </div>
+
   <details class="fold" id="landFold">
-    <summary><span class="tri" aria-hidden="true"></span>敷地・建蔽・容積・階数</summary>
-    <div class="row"><label id="landLabel">敷地面積</label><div class="mini" id="unitSeg"><button type="button" data-unit="m2" class="on">㎡</button><button type="button" data-unit="tsubo">坪</button></div></div>
-    <div class="row"><span></span><div class="with-unit"><input type="number" id="land" inputmode="decimal" value="330"><span class="unit" id="landUnit">㎡</span></div></div>
+    <summary><span class="tri" aria-hidden="true"></span>敷地・建蔽・容積</summary>
+    <div class="badge-row">
+      <span class="label">想定延べ面積<span class="cap" id="capLabelLand">容積で頭打ち</span></span>
+      <div class="mini unit-seg" data-unit-seg>
+        <button type="button" data-disp="m2" class="on">㎡</button>
+        <button type="button" data-disp="tsubo">坪</button>
+      </div>
+    </div>
+    <div class="row">
+      <label id="landLabel">敷地面積</label>
+      <div class="with-unit"><input type="number" id="land" inputmode="decimal" value="330"><span class="unit" id="landUnit">㎡</span></div>
+    </div>
     <div class="conv" id="landConv"></div>
-    <div class="row"><label>建蔽率</label><div class="with-unit"><input type="number" id="kenpei" inputmode="decimal" value="80"><span class="unit">%</span></div></div>
-    <div class="row"><label>容積率</label><div class="with-unit"><input type="number" id="yoseki" inputmode="decimal" value="400"><span class="unit">%</span></div></div>
-    <div class="row"><label>階数</label><div class="with-unit"><input type="number" id="floors" inputmode="numeric" value="7"><span class="unit">階</span></div></div>
+    <div class="row split">
+      <div class="half"><label>建蔽率</label><div class="with-unit"><input type="number" id="kenpei" inputmode="decimal" value="80"><span class="unit">%</span></div></div>
+      <div class="half"><label>容積率</label><div class="with-unit"><input type="number" id="yoseki" inputmode="decimal" value="400"><span class="unit">%</span></div></div>
+    </div>
   </details>
-  <div class="result-box">
-    <div class="result-title">戸数と面積</div>
+
+  <div class="result-box" id="planBox">
+    <div class="result-title">
+      <span class="title-left"><span class="block-title">住戸の計画</span><span class="cap" id="capLabelPlan">容積で頭打ち</span></span>
+      <div class="mini unit-seg" data-unit-seg>
+        <button type="button" data-disp="m2" class="on">㎡</button>
+        <button type="button" data-disp="tsubo">坪</button>
+      </div>
+    </div>
+    <div class="plan-row">
+      <div class="part"><span>階数</span><b id="planFloorText">5</b><span>階</span></div>
+      <div class="part"><span>1階あたり</span><b id="perFloorText">—</b></div>
+    </div>
     <div class="result-line"><span>想定戸数</span><div class="with-unit"><input type="number" id="unitsIn" inputmode="numeric" min="1" step="1"><span class="unit-slash">/</span><b id="unitsCapText" class="units-cap">—</b></div></div>
     <div class="result-line"><span>1戸あたり本体</span><b id="perUnitText">—</b></div>
     <div class="result-line"><span>専有の合計</span><b id="exText">—</b></div>
-    <div class="result-line"><span>廊下係数</span><input type="number" id="coeffOut" inputmode="decimal" step="0.01" min="1"></div>
     <div class="result-line"><span>延べ面積</span><b id="gfaLine">—</b></div>
     <div class="conv" id="gfaFormula" style="margin:2px 0 6px;"></div>
     <div class="result-line"><span>共用の合計</span><b id="commonText">—</b></div>
     <p class="warn hidden" id="unitsNote"></p>
   </div>
+
   <details class="fold" id="typeFold">
     <summary><span class="tri" aria-hidden="true"></span>住戸・構造・単価</summary>
+    <div class="badge-row">
+      <span class="label">想定延べ面積<span class="cap" id="capLabelType">容積で頭打ち</span></span>
+      <div class="mini unit-seg" data-unit-seg>
+        <button type="button" data-disp="m2" class="on">㎡</button>
+        <button type="button" data-disp="tsubo">坪</button>
+      </div>
+    </div>
     <div class="seg" id="typeSeg">
       <button type="button" data-type="oneroom" class="on">ワンルーム</button>
       <button type="button" data-type="family">ファミリー</button>
@@ -110,26 +168,51 @@
       <button type="button" data-struct="RC" class="on">RC造</button>
       <button type="button" data-struct="SRC">SRC造</button>
     </div>
-    <div class="row"><label id="priceLabel">延べの坪単価</label><div class="mini" id="priceSeg"><button type="button" data-price="tsubo" class="on">坪</button><button type="button" data-price="m2">㎡</button></div></div>
-    <div class="row"><span></span><div class="with-unit"><input type="number" id="price" inputmode="decimal" value="120"><span class="unit" id="priceUnit">万円/坪</span></div></div>
-    <div class="conv" id="priceConv"></div>
-    <div class="row"><label>1戸の専有</label><div class="with-unit"><input type="number" id="unitM2" inputmode="decimal" value="25"><span class="unit">㎡</span></div></div>
-    <div class="row"><label>専有効率</label><input type="number" id="eff" inputmode="decimal" step="0.01" value="0.75"></div>
+    <div class="row">
+      <label id="priceLabel">延べ坪単価</label>
+      <div class="with-unit"><input type="number" id="price" inputmode="decimal" value="120"><span class="unit" id="priceUnit">万円/坪</span></div>
+    </div>
     <div class="row"><label>廊下係数</label><input type="number" id="coeff" inputmode="decimal" step="0.01" value="1.33"></div>
+    <div class="row"><label>専有効率</label><input type="number" id="eff" inputmode="decimal" step="0.01" value="0.75"></div>
     <div class="conv">専有効率 ＝ 1 ÷ 廊下係数</div>
+    <div class="row"><label>1戸の専有</label><div class="with-unit"><input type="number" id="unitM2" inputmode="decimal" value="25"><span class="unit">㎡</span></div></div>
   </details>
+
   <div class="result-box main">
-    <div class="result-title" id="bodyTitle">本体工事費（延べ面積 × 単価）</div>
+    <div class="result-title" id="bodyTitle">本体工事費（延べ × 単価）</div>
     <div class="result-amount" id="bodyText">—</div>
     <div class="result-line"><span id="formulaLabel">延べ坪 × 坪単価</span><b id="formulaText">—</b></div>
     <p class="result-sub hidden" id="bodyBaseLine"></p>
   </div>
-  <label class="check"><input type="checkbox" id="extra"> 付帯＋諸費用 +25%（仮置き）</label>
-  <p class="extra-list hidden" id="extraList">含むもの（仮）：外構・地盤改良・設計監理・申請 など</p>
-  <button type="button" class="steps-btn" id="stepsToggle">式の確認</button>
+
+  <label class="check">
+    <input type="checkbox" id="extra">
+    <span>付帯＋諸費用</span>
+    <input type="number" id="extraPct" inputmode="decimal" step="1" value="25" aria-label="付帯諸費用パーセント">
+    <span>%</span>
+    <span id="extraYen">（—）</span>
+  </label>
+  <p class="extra-list" id="extraList">含むもの（仮）：外構・地盤改良・設計監理・申請 など</p>
+
+  <div class="steps-btn-row">
+    <button type="button" class="steps-btn" id="stepsToggle">式の確認</button>
+    <div class="fs-btns" id="fsBtns">
+      <button type="button" data-fs="down">小</button>
+      <button type="button" data-fs="mid" class="on">中</button>
+      <button type="button" data-fs="up">大</button>
+    </div>
+  </div>
   <div class="steps-slot" id="stepsSlot">
     <div class="steps-panel" id="stepsPanel" hidden>
-      <div class="float-head"><strong>式の確認</strong><button type="button" id="stepsClose" aria-label="閉じる">×</button></div>
+      <div class="float-head">
+        <strong>式の確認</strong>
+        <div class="fs-btns" id="fsBtnsPanel">
+          <button type="button" data-fs="down">小</button>
+          <button type="button" data-fs="mid" class="on">中</button>
+          <button type="button" data-fs="up">大</button>
+        </div>
+        <button type="button" id="stepsClose" aria-label="閉じる">×</button>
+      </div>
       <p class="steps" id="steps">—</p>
     </div>
   </div>
