@@ -1,17 +1,18 @@
 (function () {
   var css = document.createElement("style");
   css.textContent = [
-    ".float-head{display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:4px;margin-bottom:6px;}",
-    ".float-head .head-title{display:flex;align-items:center;gap:4px;min-width:0;flex:1 1 auto;}",
-    ".float-head .head-tools{display:flex;align-items:center;gap:4px;flex:0 0 auto;margin-left:auto;}",
-    ".float-head .fs-btns{margin-right:0;gap:3px;flex-shrink:0;}",
-    ".float-head .fs-btns button,.float-head .icon-btn{width:auto;min-width:26px;height:28px;padding:3px 5px;flex-shrink:0;}",
-    ".float-head #stepsClose{margin-left:1em;width:28px;height:28px;flex-shrink:0;}",
+    ".float-head{display:flex;align-items:center;flex-wrap:nowrap;gap:6px;margin-bottom:6px;}",
+    ".float-head .head-title{display:flex;align-items:center;gap:4px;flex:1 1 auto;min-width:0;}",
+    ".float-head .head-tools{display:flex;align-items:center;gap:6px;flex:0 0 auto;margin-left:8px;}",
+    ".float-head .fs-btns{display:flex;gap:4px;flex-shrink:0;}",
+    ".float-head .fs-btns button,.float-head .icon-btn{width:2.1em;min-width:2.1em;height:28px;padding:0;flex-shrink:0;box-sizing:border-box;}",
+    ".float-head #stepsClose{margin-left:0.7em;width:28px;min-width:28px;height:28px;flex-shrink:0;}",
+    "#copySteps{width:2.1em;min-width:2.1em;overflow:hidden;}",
     "#copySteps.hidden{display:inline-flex !important;}",
+    "#memoTall{display:none !important;}",
     ".memo-box{border:1.5px solid #7dd3fc;min-height:9em;}",
     ".steps-panel.float .memo-box{min-height:7em;max-height:26vh;}",
-    ".steps-panel.memo-tall{max-height:none;}",
-    ".steps-panel.memo-tall .memo-box{max-height:none;}"
+    ".steps-panel:not(.float) .memo-box{max-height:none;}"
   ].join("");
   document.head.appendChild(css);
 
@@ -40,8 +41,9 @@
   function copyText(text, btn) {
     function ok() {
       if (!btn) return;
-      btn.textContent = "\u30b3\u30d4\u30fc\u3057\u305f";
-      setTimeout(function () { btn.textContent = "\u5199"; }, 1200);
+      btn.classList.add("on");
+      btn.title = "\u30b3\u30d4\u30fc\u3057\u305f";
+      setTimeout(function () { btn.classList.remove("on"); btn.title = "\u5f0f\u3092\u30b3\u30d4\u30fc"; }, 900);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok).catch(function () {});
   }
@@ -55,44 +57,25 @@
     var head = orig("stepsHead");
     var clearBtn = orig("memoClear");
     var panel = orig("stepsPanel");
-    var tallOn = false;
-    var tallBtn = document.createElement("button");
-    tallBtn.type = "button";
-    tallBtn.className = "icon-btn";
-    tallBtn.id = "memoTall";
-    tallBtn.title = "\u30e1\u30e2\u3092\u4e0b\u307e\u3067\u5e83\u3052\u308b";
-    tallBtn.textContent = "\u5168";
-    if (memoBtn && memoBtn.parentNode) memoBtn.parentNode.insertBefore(tallBtn, orig("stepsClose"));
+    var oldTall = document.getElementById("memoTall");
+    if (oldTall && oldTall.parentNode) oldTall.parentNode.removeChild(oldTall);
     function memoOpen() { return memoView && !memoView.classList.contains("hidden"); }
     function fitMemo() {
       var box = orig("memoBox");
-      if (!box || !panel) return;
-      if (panel.classList.contains("float") && !tallOn) {
+      if (!box || !panel || !memoOpen()) return;
+      if (panel.classList.contains("float")) {
         box.style.height = "";
         return;
       }
       box.style.height = "auto";
-      var lines = 3 * 24;
-      var h = box.scrollHeight + lines;
+      var h = box.scrollHeight + 72;
       var foot = document.querySelector(".foot");
       if (foot) {
-        var room = foot.getBoundingClientRect().top - box.getBoundingClientRect().top - 18;
-        if (room > 140) h = Math.min(h, room);
+        var room = foot.getBoundingClientRect().top - box.getBoundingClientRect().top - 16;
+        if (room > 160) h = Math.min(h, room);
       }
-      box.style.height = Math.max(160, Math.round(h)) + "px";
+      box.style.height = Math.max(180, Math.round(h)) + "px";
     }
-    function setTall(on) {
-      tallOn = on;
-      if (panel) panel.classList.toggle("memo-tall", on);
-      tallBtn.classList.toggle("on", on);
-      tallBtn.textContent = on ? "\u623b" : "\u5168";
-      fitMemo();
-    }
-    tallBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      setTall(!tallOn);
-    });
     function setMemo(on) {
       formulaView.classList.toggle("hidden", on);
       memoView.classList.toggle("hidden", !on);
@@ -110,7 +93,7 @@
         var box = orig("memoBox");
         if (box && !String(box.value || "").trim()) box.value = dumpFormula();
         if (box && box.focus) box.focus();
-        fitMemo();
+        setTimeout(fitMemo, 60);
       }
     }
     memoBtn.addEventListener("click", function (e) {
