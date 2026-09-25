@@ -18,7 +18,6 @@ const coeff = document.getElementById("coeff");
 const extra = document.getElementById("extra");
 const extraPct = document.getElementById("extraPct");
 const unitsIn = document.getElementById("unitsIn");
-const landLabel = document.getElementById("landLabel");
 const landConv = document.getElementById("landConv");
 const priceLabel = document.getElementById("priceLabel");
 const archIn = document.getElementById("archIn");
@@ -91,21 +90,27 @@ function bindSeg(id, attr, onPick) {
 }
 function setDispUnit(v, fromInput) {
   const m2Now = landM2();
+  const tsuboNow = priceTsubo();
   dispUnit = v;
   document.querySelectorAll("[data-unit-seg] button").forEach(function (b) {
     b.classList.toggle("on", b.getAttribute("data-disp") === v);
   });
-  const landUnitEl = document.getElementById("landUnit");
-  priceLabel.textContent = "延べ坪単価";
-  document.getElementById("priceUnit").textContent = "万円/坪";
   const u = dispUnit === "m2" ? "㎡" : "坪";
-  landUnitEl.textContent = u;
+  document.getElementById("landUnit").textContent = u;
   const archUnit = document.getElementById("archUnit");
   const farUnit = document.getElementById("farUnit");
   if (archUnit) archUnit.textContent = u;
   if (farUnit) farUnit.textContent = u;
-  if (fromInput !== "keepLand" && m2Now) {
-    land.value = dispUnit === "m2" ? String(Math.round(m2Now * 10) / 10) : String(Math.round((m2Now * TO_TSUBO) * 10) / 10);
+  if (dispUnit === "m2") {
+    priceLabel.textContent = "延べ㎡単価";
+    document.getElementById("priceUnit").textContent = "万円/㎡";
+    if (fromInput !== "keepLand" && m2Now) land.value = String(Math.round(m2Now * 10) / 10);
+    if (fromInput !== "keepLand" && tsuboNow) price.value = String(Math.round((tsuboNow / M2_PER_TSUBO) * 100) / 100);
+  } else {
+    priceLabel.textContent = "延べ坪単価";
+    document.getElementById("priceUnit").textContent = "万円/坪";
+    if (fromInput !== "keepLand" && m2Now) land.value = String(Math.round((m2Now * TO_TSUBO) * 10) / 10);
+    if (fromInput !== "keepLand" && tsuboNow) price.value = String(Math.round(tsuboNow * 10) / 10);
   }
 }
 document.querySelectorAll("[data-unit-seg]").forEach(function (root) {
@@ -117,11 +122,14 @@ document.querySelectorAll("[data-unit-seg]").forEach(function (root) {
   });
 });
 bindSeg("typeSeg", "data-type", function (v) { unitsManual = false; const t = typeMem[v] || TYPE[v]; setEff(t.eff); unitM2.value = t.unitM2; });
-bindSeg("structSeg", "data-struct", function (v) { price.value = String(priceMem[v] || PRESET[v]); });
+bindSeg("structSeg", "data-struct", function (v) {
+  const tsubo = priceMem[v] || PRESET[v];
+  price.value = dispUnit === "m2" ? String(Math.round((tsubo / M2_PER_TSUBO) * 100) / 100) : String(tsubo);
+});
 function rememberPrice() { const t = priceTsubo(); if (t > 0) priceMem[currentStruct()] = t; }
 function rememberType() { const e = parseFloat(eff.value); const u = parseFloat(unitM2.value); if (isFinite(e) && e > 0 && isFinite(u) && u > 0) typeMem[currentType()] = { unitM2: u, eff: e }; }
 function landM2() { const n = parseFloat(land.value); if (!isFinite(n) || n <= 0) return 0; return dispUnit === "tsubo" ? n * M2_PER_TSUBO : n; }
-function priceTsubo() { const n = parseFloat(price.value); if (!isFinite(n) || n <= 0) return 0; return n; }
+function priceTsubo() { const n = parseFloat(price.value); if (!isFinite(n) || n <= 0) return 0; return dispUnit === "m2" ? n * M2_PER_TSUBO : n; }
 function priceM2() { return priceTsubo() / M2_PER_TSUBO; }
 function setEff(e) { syncing = true; const v = Math.max(0.01, Math.min(e, 1)); eff.value = num(v, 2); coeff.value = num(1 / v, 2); syncing = false; }
 function setCoeff(c) { syncing = true; const v = Math.max(1, c); coeff.value = num(v, 2); eff.value = num(1 / v, 2); syncing = false; }
@@ -181,11 +189,8 @@ function calc() {
   const y = yPct / 100;
   const pTsubo = priceTsubo();
   const pM2 = priceM2();
-  if (m2) {
-    landConv.textContent = dispUnit === "m2"
-      ? fmt(m2 * TO_TSUBO, 1) + "坪 × 3.305785 ＝ " + fmt(m2, 1) + "㎡"
-      : fmt(m2, 1) + "㎡ × 0.3025 ＝ " + fmt(m2 * TO_TSUBO, 1) + "坪";
-  } else landConv.textContent = "";
+  if (m2) landConv.textContent = dispUnit === "m2" ? fmt(m2 * TO_TSUBO, 1) + "坪 × 3.305785 ＝ " + fmt(m2, 1) + "㎡" : fmt(m2, 1) + "㎡ × 0.3025 ＝ " + fmt(m2 * TO_TSUBO, 1) + "坪";
+  else landConv.textContent = "";
   const arch = m2 * k;
   const farVal = m2 * y;
   const byFloor = arch * f;
@@ -215,7 +220,8 @@ function calc() {
   fillDispArea(farIn, farVal);
   document.getElementById("archPair").textContent = pairArea(arch);
   document.getElementById("farPair").textContent = pairArea(farVal);
-  document.getElementById("needFloorText").textContent = needFloors > 0 ? trimNum(needFloors, 2) + "階（階数の上限）" : "—";
+  const needFloorIn = document.getElementById("needFloorIn");
+  if (needFloorIn && document.activeElement !== needFloorIn) needFloorIn.value = needFloors > 0 ? String(Math.round(needFloors * 100) / 100) : "";
   document.getElementById("planFloorText").textContent = f > 0 ? trimNum(f, 2) : "—";
   document.getElementById("perFloorText").textContent = perFloor > 0 ? trimNum(perFloor, 1) + "戸" : "—";
   const note = document.getElementById("floorNote");
@@ -223,7 +229,8 @@ function calc() {
   else { note.classList.add("hidden"); note.textContent = ""; }
   const pct = extraRate();
   const extraAmt = body * pct;
-  document.getElementById("extraYen").textContent = body > 0 ? "（" + yen(extraAmt) + "）" : "（—）";
+  const extraMan = document.getElementById("extraMan");
+  if (extraMan && document.activeElement !== extraMan) extraMan.value = body > 0 ? String(Math.round((extraAmt / 10000) * 10) / 10) : "";
   const withExtra = extra.checked;
   const total = withExtra ? body * (1 + pct) : body;
   const pctLabel = signedPct(pct * 100);
@@ -301,6 +308,20 @@ coeff.addEventListener("input", function () { if (syncing) return; unitsManual =
 unitsIn.addEventListener("input", function () { unitsManual = true; calc(); });
 extra.addEventListener("change", calc);
 extraPct.addEventListener("input", calc);
+document.getElementById("extraMan").addEventListener("input", function () {
+  const man = parseFloat(document.getElementById("extraMan").value);
+  const base = lastBody > 0 ? lastBody : 0;
+  if (base > 0 && isFinite(man) && man >= 0) extraPct.value = String(Math.round((man * 10000 / base) * 1000) / 10);
+  calc();
+});
+document.getElementById("needFloorIn").addEventListener("input", function () {
+  if (syncing) return;
+  const nf = parseFloat(document.getElementById("needFloorIn").value);
+  const kPct = parseFloat(kenpei.value) || 0;
+  if (nf > 0 && kPct > 0) yoseki.value = String(Math.round(nf * kPct * 10) / 10);
+  unitsManual = false;
+  calc();
+});
 archIn.addEventListener("input", function () {
   if (syncing) return;
   const arch = parseDispArea(archIn);
@@ -318,17 +339,35 @@ farIn.addEventListener("input", function () {
   unitsManual = false;
   calc();
 });
-document.getElementById("copySteps").addEventListener("click", function () {
+function formulaDump() {
   const pills = Array.from(document.querySelectorAll("#stepsPills .pill")).map(function (el) { return el.textContent; }).join(" / ");
   const delta = document.getElementById("stepsDelta").textContent;
   const advice = document.getElementById("stepsAdvice").textContent;
   const body = document.getElementById("steps").textContent;
-  const text = ["マンション工事費ざっくり", pills, delta, advice, body].filter(Boolean).join("\n");
-  const btn = document.getElementById("copySteps");
-  function ok() { btn.textContent = "コピーした"; setTimeout(function () { btn.textContent = "式をコピー"; }, 1200); }
+  return ["マンション工事費ざっくり", pills, delta, advice, body].filter(Boolean).join("\n");
+}
+function copyText(text, btn, label) {
+  function ok() { if (btn) { btn.textContent = "コピーした"; setTimeout(function () { btn.textContent = label; }, 1200); } }
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok).catch(function () {});
   else { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); ok(); } catch (err) {} document.body.removeChild(ta); }
-});
+}
+function setMemoMode(on) {
+  document.getElementById("formulaView").classList.toggle("hidden", on);
+  document.getElementById("memoView").classList.toggle("hidden", !on);
+  document.getElementById("stepsHead").textContent = on ? "テキストメモ" : "式の確認";
+  document.getElementById("copySteps").classList.toggle("hidden", on);
+  document.getElementById("memoBtn").classList.toggle("on", on);
+  if (on) {
+    const box = document.getElementById("memoBox");
+    if (!box.value.trim()) box.value = formulaDump();
+    box.focus();
+  }
+}
+document.getElementById("copySteps").addEventListener("click", function () { copyText(formulaDump(), document.getElementById("copySteps"), "コピー"); });
+document.getElementById("memoBtn").addEventListener("click", function () { setMemoMode(true); });
+document.getElementById("backFormula").addEventListener("click", function () { setMemoMode(false); });
+document.getElementById("copyMemo").addEventListener("click", function () { copyText(document.getElementById("memoBox").value || formulaDump(), document.getElementById("copyMemo"), "全体をコピー"); });
+document.getElementById("memoBox").addEventListener("input", saveState);
 const STORE_KEY = "mansion-kojihi-v2";
 function currentType() { const on = document.querySelector("#typeSeg button.on"); return on ? on.getAttribute("data-type") : "oneroom"; }
 function currentStruct() { const on = document.querySelector("#structSeg button.on"); return on ? on.getAttribute("data-struct") : "RC"; }
@@ -341,7 +380,7 @@ function applyTheme(theme) {
 }
 function saveState() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ land: land.value, kenpei: kenpei.value, yoseki: yoseki.value, floors: floors.value, price: price.value, unitM2: unitM2.value, eff: eff.value, coeff: coeff.value, unitsIn: unitsIn.value, extra: !!extra.checked, extraPct: extraPct.value, dispUnit: dispUnit, unitsManual: !!unitsManual, type: currentType(), struct: currentStruct(), theme: currentTheme(), priceMem: priceMem, typeMem: typeMem, pageFsIndex: pageFsIndex, stepsFsIndex: stepsFsIndex }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({ land: land.value, kenpei: kenpei.value, yoseki: yoseki.value, floors: floors.value, price: price.value, unitM2: unitM2.value, eff: eff.value, coeff: coeff.value, unitsIn: unitsIn.value, extra: !!extra.checked, extraPct: extraPct.value, dispUnit: dispUnit, unitsManual: !!unitsManual, type: currentType(), struct: currentStruct(), theme: currentTheme(), priceMem: priceMem, typeMem: typeMem, pageFsIndex: pageFsIndex, stepsFsIndex: stepsFsIndex, memo: document.getElementById("memoBox") ? document.getElementById("memoBox").value : "" }));
   } catch (e) {}
 }
 function loadState() {
@@ -368,9 +407,9 @@ function loadState() {
     if (typeof data.pageFsIndex === "number" && data.pageFsIndex >= 0 && data.pageFsIndex < PAGE_SCALES.length) pageFsIndex = data.pageFsIndex;
     if (typeof data.stepsFsIndex === "number" && data.stepsFsIndex >= 0 && data.stepsFsIndex < STEPS_PX.length) stepsFsIndex = data.stepsFsIndex;
     applyTheme(data.theme === "light" ? "light" : "dark");
-    if (data.priceUnit === "m2") { const p = parseFloat(price.value); if (isFinite(p) && p > 0) price.value = String(Math.round((p * M2_PER_TSUBO) * 10) / 10); }
     const unit = data.dispUnit || data.landUnit || "m2";
     setDispUnit(unit === "tsubo" ? "tsubo" : "m2", "keepLand");
+    if (typeof data.memo === "string" && document.getElementById("memoBox")) document.getElementById("memoBox").value = data.memo;
     applyPageFs(); applyStepsFs();
     return true;
   } catch (e) { return false; }
@@ -400,6 +439,14 @@ document.getElementById("themeBtn").addEventListener("click", function () { appl
   }
   toggle.addEventListener("click", function () { if (isOpen()) closePanel(); else openPanel(); });
   closeBtn.addEventListener("click", closePanel);
+  document.querySelectorAll("[data-open-steps]").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      setMemoMode(false);
+      if (!isOpen()) openPanel();
+    });
+  });
   window.addEventListener("scroll", syncStepsMode, { passive: true });
   window.addEventListener("resize", syncStepsMode);
   if (window.visualViewport) { window.visualViewport.addEventListener("resize", syncStepsMode); window.visualViewport.addEventListener("scroll", syncStepsMode); }
