@@ -78,8 +78,8 @@ function rememberType() { const e = parseFloat(eff.value); const u = parseFloat(
 function landM2() { const n = parseFloat(land.value); if (!isFinite(n) || n <= 0) return 0; return landUnit === "tsubo" ? n * M2_PER_TSUBO : n; }
 function priceTsubo() { const n = parseFloat(price.value); if (!isFinite(n) || n <= 0) return 0; return priceUnit === "m2" ? n * M2_PER_TSUBO : n; }
 function priceM2() { return priceTsubo() / M2_PER_TSUBO; }
-function setEff(e, source) { syncing = true; const v = Math.max(0.01, Math.min(e, 1)); const formatted = num(v, 2); if (source !== eff) eff.value = formatted; syncing = false; }
-function setCoeff(c, source) { syncing = true; const v = c; const formatted = num(v, 2); if (source !== coeff) coeff.value = formatted; if (coeffOut && source !== coeffOut) coeffOut.value = formatted; syncing = false; }
+function setEff(e, source) { syncing = true; if (source !== eff) eff.value = String(e); syncing = false; }
+function setCoeff(c, source) { syncing = true; var s = String(c); if (source !== coeff) coeff.value = s; if (coeffOut && source !== coeffOut) coeffOut.value = s; syncing = false; }
 function calc() {
   const m2 = landM2();
   const kPct = parseFloat(kenpei.value) || 0;
@@ -198,13 +198,13 @@ function calc() {
     calc();
   });
 });
-eff.addEventListener("input", function () { if (syncing) return; unitsManual = false; const raw = String(eff.value); if (raw === "" || raw === "." || /\.$/.test(raw)) return; const e = parseFloat(raw); if (!isFinite(e) || e <= 0) return; setEff(e, eff); rememberType(); calc(); });
-function onCoeffInput(el) { if (syncing) return; unitsManual = false; const raw = String(el.value); if (raw === "" || raw === "." || /\.$/.test(raw)) return; const c = parseFloat(raw); if (!isFinite(c)) return; setCoeff(c, el); rememberType(); calc(); }
+eff.addEventListener("input", function () { if (syncing) return; unitsManual = false; var raw = String(eff.value); if (raw === "" || raw === "." || /\.$/.test(raw)) { calc(); return; } var e = parseFloat(raw); if (!isFinite(e) || e <= 0) { calc(); return; } rememberType(); calc(); });
+function onCoeffInput(el) { if (syncing) return; unitsManual = false; var raw = String(el.value); if (raw === "" || raw === "." || /\.$/.test(raw)) { calc(); return; } var c = parseFloat(raw); if (!isFinite(c)) { calc(); return; } syncing = true; if (el === coeffOut && coeff) coeff.value = raw; if (el === coeff && coeffOut) coeffOut.value = raw; syncing = false; rememberType(); calc(); }
 coeff.addEventListener("input", function () { onCoeffInput(coeff); });
 coeffOut.addEventListener("input", function () { onCoeffInput(coeffOut); });
 unitsIn.addEventListener("input", function () { unitsManual = true; calc(); });
 extra.addEventListener("change", calc);
-const STORE_KEY = "mansion-kojihi-preview-v5";
+const STORE_KEY = "mansion-kojihi-preview-v6";
 function currentType() { const on = document.querySelector("#typeSeg button.on"); return on ? on.getAttribute("data-type") : "oneroom"; }
 function currentStruct() { const on = document.querySelector("#structSeg button.on"); return on ? on.getAttribute("data-struct") : "RC"; }
 function currentTheme() { return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"; }
@@ -282,10 +282,10 @@ function resetAll() {
   landUnit = "m2"; priceUnit = "tsubo"; unitsManual = false;
   land.value = "330"; kenpei.value = "80"; yoseki.value = "400"; floors.value = "7"; price.value = "120"; unitM2.value = "25"; extra.checked = false; unitsIn.value = "";
   setSegOn("typeSeg", "data-type", "oneroom"); setSegOn("structSeg", "data-struct", "RC"); setSegOn("unitSeg", "data-unit", "m2"); setSegOn("priceSeg", "data-price", "tsubo");
-  applyLandUnitLabels(); applyPriceUnitLabels(); setEff(0.75); setCoeff(1.33);
+  applyLandUnitLabels(); applyPriceUnitLabels(); eff.value = "0.75"; coeff.value = "1.33"; if (coeffOut) coeffOut.value = "1.33";
   const panel = document.getElementById("stepsPanel"); panel.classList.remove("open", "float"); panel.hidden = true; document.body.classList.remove("steps-open");
   document.getElementById("stepsToggle").textContent = "式の確認"; document.getElementById("stepsSlot").style.minHeight = ""; calc();
 }
 document.getElementById("resetBtn").addEventListener("click", resetAll);
-if (!loadState()) { setEff(0.75); setCoeff(1.33); } else { setCoeff(parseFloat(coeff.value) || 1.33); }
+if (!loadState()) { eff.value = "0.75"; coeff.value = "1.33"; if (coeffOut) coeffOut.value = "1.33"; }
 calc();
