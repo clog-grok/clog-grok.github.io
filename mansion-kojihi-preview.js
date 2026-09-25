@@ -199,13 +199,13 @@ function calc() {
   el.addEventListener("input", onField);
   el.addEventListener("change", onField);
 });
-eff.addEventListener("input", function () { if (syncing) return; unitsManual = false; rememberType(); calc(); });
-function onCoeffInput(el) { if (syncing) return; unitsManual = false; rememberType(); calc(); }
+eff.addEventListener("input", function () { if (syncing) return; unitsManual = false; const e = parseFloat(eff.value); if (isFinite(e) && e > 0) setEff(e); rememberType(); calc(); });
+function onCoeffInput(el) { if (syncing) return; unitsManual = false; const c = parseFloat(el.value); if (isFinite(c) && c >= 1) setCoeff(c); rememberType(); calc(); }
 coeff.addEventListener("input", function () { onCoeffInput(coeff); });
 coeffOut.addEventListener("input", function () { onCoeffInput(coeffOut); });
 unitsIn.addEventListener("input", function () { unitsManual = true; calc(); });
 extra.addEventListener("change", calc);
-const STORE_KEY = "mansion-kojihi-preview-v9";
+const STORE_KEY = "mansion-kojihi-preview-v10";
 function currentType() { const on = document.querySelector("#typeSeg button.on"); return on ? on.getAttribute("data-type") : "oneroom"; }
 function currentStruct() { const on = document.querySelector("#structSeg button.on"); return on ? on.getAttribute("data-struct") : "RC"; }
 function currentTheme() { return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"; }
