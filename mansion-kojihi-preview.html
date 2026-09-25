@@ -79,17 +79,16 @@
   <h1>マンション工事費ざっくり</h1>
   <p class="preview-note">配置プレビュー（公開版は別・未反映）</p>
 
-  <div class="result-box">
-    <div class="result-line"><span>建築面積上限（1階）</span><b id="archText">—</b></div>
-    <div class="result-line"><span>容積の上限</span><b id="farText">—</b></div>
-    <div class="result-line"><span>上限までの階数</span><b id="needFloorText">—</b></div>
-    <p class="warn hidden" id="floorNote"></p>
-  </div>
-
   <details class="fold" id="landFold">
-    <summary><span class="tri" aria-hidden="true"></span>敷地・建蔽・容積・階数</summary>
+    <summary><span class="tri" aria-hidden="true"></span>敷地・建蔽・容積</summary>
     <div class="result-title">想定延べ面積<span class="cap" id="capLabelLand">容積</span></div>
     <div class="result-amount" id="gfaTextLand">—</div>
+    <div class="result-box">
+      <div class="result-line"><span>建築面積上限（1階）</span><b id="archText">—</b></div>
+      <div class="result-line"><span>容積の上限</span><b id="farText">—</b></div>
+      <div class="result-line"><span>上限までの階数</span><b id="needFloorText">—</b></div>
+      <p class="warn hidden" id="floorNote"></p>
+    </div>
     <div class="row"><label id="landLabel">敷地面積</label><div class="mini" id="unitSeg"><button type="button" data-unit="m2" class="on">㎡</button><button type="button" data-unit="tsubo">坪</button></div></div>
     <div class="row"><span></span><div class="with-unit"><input type="number" step="any" id="land" inputmode="decimal" value="330"><span class="unit" id="landUnit">㎡</span></div></div>
     <div class="conv" id="landConv"></div>
