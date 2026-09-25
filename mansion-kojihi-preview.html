@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>配置プレビュー｜マンション工事費</title>
-<meta name="description" content="階数を住戸の計画へ移した配置の試し。公開版はそのまま。">
+<meta name="description" content="公開版を土台に、階数と戸数・面積を住戸の計画へ寄せた配置プレビュー。公開版はそのまま。">
 <meta name="tool-tag" content="建築">
 <meta name="tool-status" content="wip">
 <style>
@@ -15,8 +15,7 @@
   body.steps-open { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
   .app-container { background-color: var(--card-bg); width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); position: relative; }
   .theme { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 999px; padding: 0; font-size: 1rem; line-height: 1; }
-  h1 { font-size: 1.15rem; text-align: center; margin: 0 0 4px; padding-right: 48px; }
-  .preview-note { text-align: center; font-size: 0.72rem; color: var(--warn); margin: 0 0 12px; }
+  h1 { font-size: 1.15rem; text-align: center; margin: 0 0 14px; padding-right: 48px; }
   .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
   .seg.three { grid-template-columns: 1fr 1fr 1fr; }
   .seg button { border: 1px solid var(--border); background: transparent; color: var(--text-sub); border-radius: 8px; padding: 8px 4px; font-size: 0.78rem; }
@@ -24,14 +23,13 @@
   .mini { display: flex; gap: 4px; flex-shrink: 0; }
   .mini button { border: 1px solid var(--border); background: transparent; color: var(--text-sub); border-radius: 6px; padding: 3px 7px; font-size: 0.68rem; }
   .mini button.on { border-color: var(--accent); color: var(--text-main); background: rgba(56, 189, 248, 0.14); }
-  .fold, .land-card { background-color: var(--bg-color); border-radius: 12px; padding: 8px 14px 14px; margin-bottom: 12px; }
+  .fold { background-color: var(--bg-color); border-radius: 12px; padding: 8px 14px 14px; margin-bottom: 12px; }
   .fold summary { list-style: none; cursor: pointer; padding: 8px 0; margin-bottom: 8px; color: var(--text-main); font-size: 1.02rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .fold:not([open]) summary { margin-bottom: 0; }
   .fold summary::-webkit-details-marker { display: none; }
   .fold summary .tri { display: inline-block; width: 1.1em; font-size: 0.85em; line-height: 1; color: var(--accent); flex-shrink: 0; }
   .fold summary .tri::before { content: "▶"; }
   .fold[open] summary .tri::before { content: "▼"; }
-  .block-title { font-size: 1.02rem; font-weight: 700; color: var(--text-main); margin: 4px 0 10px; }
   .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
   .row label { font-size: 0.92rem; color: var(--text-main); }
   .row input[type="number"] { width: 104px; text-align: right; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 0.95rem; }
@@ -49,11 +47,10 @@
   .result-line b { color: var(--text-main); font-weight: 600; }
   .result-line input[type="number"] { width: 88px; text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 0.85rem; outline: none; }
   .result-sub { font-size: 0.72rem; color: var(--text-sub); text-align: right; margin: 4px 0 0; min-height: 1em; }
+  .cap { display: inline-block; font-size: 0.68rem; border: 1px solid var(--ok); color: var(--ok); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
   .check { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
   .extra-list { font-size: 0.72rem; color: var(--text-sub); line-height: 1.5; margin: 0 0 8px 24px; }
-  .result-line .with-unit input[type="number"] { width: 88px; }
   .steps-btn { display: block; width: 100%; border: 2px solid var(--border); background: var(--bg-color); color: var(--text-main); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; font-size: 0.78rem; cursor: pointer; }
-  .steps-btn:hover { border-color: var(--accent); }
   .steps-slot { min-height: 0; }
   .steps-panel { display: none; background: var(--card-bg); color: var(--text-main); border: 2px solid var(--border); border-radius: 14px; padding: 10px 12px; margin: 0 0 10px; }
   .steps-panel.open { display: block; }
@@ -66,23 +63,27 @@
   .steps { font-size: 0.72rem; color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: break-all; }
   .warn { font-size: 0.72rem; color: var(--warn); margin-top: 8px; line-height: 1.5; }
   .hidden { display: none; }
-  .foot-link { display: block; width: max-content; color: var(--text-sub); font-size: 0.75rem; text-decoration: none; margin-top: 8px; }
+  .foot-link { color: var(--text-sub); font-size: 0.75rem; text-decoration: none; }
+
+  h1 { margin: 0 0 4px; }
+  .preview-note { text-align: center; font-size: 0.72rem; color: var(--warn); margin: 0 0 12px; }
+  .land-card { background-color: var(--bg-color); border-radius: 12px; padding: 8px 14px 14px; margin-bottom: 12px; }
+  .block-title { font-size: 1.02rem; font-weight: 700; color: var(--text-main); margin: 4px 0 10px; }
+  .foot { gap: 8px; flex-wrap: wrap; }
+  .foot-link { display: inline-block; width: max-content; margin-top: 0; }
 </style>
 </head>
 <body>
 <div class="app-container">
   <button type="button" class="theme" id="themeBtn" aria-label="テーマ">☀</button>
   <h1>マンション工事費ざっくり</h1>
-  <p class="preview-note">配置プレビュー（公開版は別）</p>
+  <p class="preview-note">配置プレビュー（公開版は別・未反映）</p>
 
   <div class="result-box">
     <div class="result-title">敷地からの上限</div>
-    <div class="result-line"><span>建築面積上限</span><b id="archText">—</b></div>
+    <div class="result-line"><span>建築面積上限（1階）</span><b id="archText">—</b></div>
     <div class="result-line"><span>容積の上限</span><b id="farText">—</b></div>
     <div class="result-line"><span>上限までの階数</span><b id="needFloorText">—</b></div>
-    <span id="capLabel" class="hidden"></span>
-    <span id="gfaText" class="hidden"></span>
-    <span id="perFloorText" class="hidden"></span>
     <p class="warn hidden" id="floorNote"></p>
   </div>
 
@@ -98,6 +99,9 @@
   <div class="result-box">
     <div class="result-title">住戸の計画</div>
     <div class="row"><label>階数</label><div class="with-unit"><input type="number" id="floors" inputmode="numeric" value="7"><span class="unit">階</span></div></div>
+    <div class="result-title" style="margin-top:10px;">想定延べ面積<span class="cap" id="capLabel">容積</span></div>
+    <div class="result-amount" id="gfaText">—</div>
+    <div class="result-line"><span>1階あたり戸数</span><b id="perFloorText">—</b></div>
     <div class="result-line"><span>想定戸数</span><div class="with-unit"><input type="number" id="unitsIn" inputmode="numeric" min="1" step="1"><span class="unit-slash">/</span><b id="unitsCapText" class="units-cap">—</b></div></div>
     <div class="result-line"><span>1戸あたり本体</span><b id="perUnitText">—</b></div>
     <div class="result-line"><span>専有の合計</span><b id="exText">—</b></div>
@@ -129,14 +133,13 @@
   </details>
 
   <div class="result-box main">
-    <div class="result-title" id="bodyTitle">本体工事費（延べ × 単価）</div>
+    <div class="result-title" id="bodyTitle">本体工事費（延べ面積 × 単価）</div>
     <div class="result-amount" id="bodyText">—</div>
     <div class="result-line"><span id="formulaLabel">延べ坪 × 坪単価</span><b id="formulaText">—</b></div>
     <p class="result-sub hidden" id="bodyBaseLine"></p>
   </div>
   <label class="check"><input type="checkbox" id="extra"> 付帯＋諸費用 +25%（仮置き）</label>
   <p class="extra-list hidden" id="extraList">含むもの（仮）：外構・地盤改良・設計監理・申請 など</p>
-
   <button type="button" class="steps-btn" id="stepsToggle">式の確認</button>
   <div class="steps-slot" id="stepsSlot">
     <div class="steps-panel" id="stepsPanel" hidden>
@@ -146,7 +149,7 @@
   </div>
   <div class="foot">
     <a class="foot-link" href="./wip.html">← 試作</a>
-    <a class="foot-link" href="./mansion-kojihi.html">公開版</a>
+    <a class="foot-link" href="./mansion-kojihi.html">公開版（参考）</a>
     <button type="button" id="resetBtn" aria-label="リセット">↺</button>
   </div>
 </div>
