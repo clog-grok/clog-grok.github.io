@@ -169,10 +169,10 @@ function calc() {
     document.getElementById("bodyText").textContent = yen(body * 1.25);
     if (priceUnit === "tsubo") {
       document.getElementById("formulaLabel").textContent = "延べ坪 × 坪単価";
-      document.getElementById("formulaText").textContent = usedGfa > 0 ? "(" + num(usedGfa * TO_TSUBO, 1) + " 延べ坪 × " + num(pTsubo, 1) + "万円) × 1.25" : "—";
+      document.getElementById("formulaText").textContent = usedGfa > 0 ? "(" + num(usedGfa * TO_TSUBO, 1) + " 延べ坪 × " + num(pTsubo, 1) + " 坪単価) × 1.25" : "—";
     } else {
       document.getElementById("formulaLabel").textContent = "延べ平米 × 平米単価";
-      document.getElementById("formulaText").textContent = usedGfa > 0 ? "(" + num(usedGfa, 1) + " 延べ平米 × " + num(pM2, 2) + "万円) × 1.25" : "—";
+      document.getElementById("formulaText").textContent = usedGfa > 0 ? "(" + num(usedGfa, 1) + " 延べ平米 × " + num(pM2, 2) + " 平米単価) × 1.25" : "—";
     }
     bodyBaseLine.classList.remove("hidden"); bodyBaseLine.textContent = body > 0 ? "本体 " + yen(body) : ""; extraList.classList.remove("hidden");
   } else {

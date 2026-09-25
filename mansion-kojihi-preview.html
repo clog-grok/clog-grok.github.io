@@ -99,6 +99,11 @@
 
   <details class="fold" id="landFold" open>
     <summary><span class="tri" aria-hidden="true"></span>敷地・建蔽・容積</summary>
+    <div class="row"><label id="landLabel">敷地面積</label><div class="mini" id="unitSeg"><button type="button" data-unit="m2" class="on">㎡</button><button type="button" data-unit="tsubo">坪</button></div></div>
+    <div class="row"><span></span><div class="with-unit"><input type="text" inputmode="decimal" id="land" value="330"><span class="unit" id="landUnit">㎡</span></div></div>
+    <div class="conv" id="landConv"></div>
+    <div class="row"><label>建蔽率</label><div class="with-unit"><input type="text" inputmode="decimal" id="kenpei" value="80"><span class="unit">%</span></div></div>
+    <div class="row"><label>容積率</label><div class="with-unit"><input type="text" inputmode="decimal" id="yoseki" value="400"><span class="unit">%</span></div></div>
     <div class="gfa-land-block">
       <div class="cap-line"><span class="cap" id="capLabelLand2">容積</span></div>
       <div class="gfa-land-line">
@@ -106,11 +111,6 @@
         <b id="gfaTextLand2" class="gfa-land-val">—</b>
       </div>
     </div>
-    <div class="row"><label id="landLabel">敷地面積</label><div class="mini" id="unitSeg"><button type="button" data-unit="m2" class="on">㎡</button><button type="button" data-unit="tsubo">坪</button></div></div>
-    <div class="row"><span></span><div class="with-unit"><input type="text" inputmode="decimal" id="land" value="330"><span class="unit" id="landUnit">㎡</span></div></div>
-    <div class="conv" id="landConv"></div>
-    <div class="row"><label>建蔽率</label><div class="with-unit"><input type="text" inputmode="decimal" id="kenpei" value="80"><span class="unit">%</span></div></div>
-    <div class="row"><label>容積率</label><div class="with-unit"><input type="text" inputmode="decimal" id="yoseki" value="400"><span class="unit">%</span></div></div>
   </details>
 
   <div class="result-box">
@@ -130,13 +130,6 @@
 
   <details class="fold" id="typeFold" open>
     <summary><span class="tri" aria-hidden="true"></span>住戸・構造・単価</summary>
-    <div class="gfa-land-block">
-      <div class="cap-line"><span class="cap" id="capLabelLand">容積</span></div>
-      <div class="gfa-land-line">
-        <span class="gfa-land-label">想定延べ面積</span>
-        <b id="gfaTextLand" class="gfa-land-val">—</b>
-      </div>
-    </div>
     <div class="seg" id="typeSeg">
       <button type="button" data-type="oneroom" class="on">ワンルーム</button>
       <button type="button" data-type="family">ファミリー</button>
@@ -153,6 +146,13 @@
     <div class="row"><label>専有効率</label><input type="text" inputmode="decimal" id="eff" value="0.75"></div>
     <div class="row"><label>廊下係数</label><input type="text" inputmode="decimal" id="coeff" value="1.33"></div>
     <div class="conv">専有効率 ＝ 1 ÷ 廊下係数</div>
+    <div class="gfa-land-block">
+      <div class="cap-line"><span class="cap" id="capLabelLand">容積</span></div>
+      <div class="gfa-land-line">
+        <span class="gfa-land-label">想定延べ面積</span>
+        <b id="gfaTextLand" class="gfa-land-val">—</b>
+      </div>
+    </div>
   </details>
 
   <div class="result-box main">
