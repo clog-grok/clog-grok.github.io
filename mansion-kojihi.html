@@ -1,1 +1,221 @@
-PLACEHOLDER
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>マンション工事費ざっくり</title>
+<meta name="description" content="敷地と建蔽・容積・階数から延べ面積と本体工事費の概算。">
+<meta name="tool-tag" content="建築">
+<meta name="tool-status" content="wip">
+<style>
+  :root { --bg-color:#0f172a; --card-bg:#1e293b; --text-main:#f8fafc; --text-sub:#cbd5e1; --accent:#38bdf8; --ok:#34d399; --border:#334155; --warn:#fbbf24; --bad:#f87171; --page-scale:1; --steps-fs:12px; }
+  html[data-theme="light"] { --bg-color:#e2e8f0; --card-bg:#ffffff; --text-main:#0f172a; --text-sub:#334155; --accent:#0369a1; --ok:#047857; --border:#cbd5e1; --warn:#b45309; --bad:#b91c1c; }
+  * { box-sizing: border-box; }
+  html { font-size: calc(16px * var(--page-scale)); color-scheme: dark; }
+  html[data-theme="light"] { color-scheme: light; }
+  input[type="number"], input[type="text"], textarea { -webkit-appearance: none; appearance: none; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px; color-scheme: inherit; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; }
+  body.steps-open { padding-bottom: 0; }
+  .app-container { background-color: var(--card-bg); width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); position: relative; }
+  .theme { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 999px; padding: 0; font-size: 1rem; line-height: 1; }
+  h1 { font-size: 1.15rem; text-align: center; margin: 0 0 14px; padding-right: 48px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .seg.three { grid-template-columns: 1fr 1fr 1fr; }
+  .seg button { border: 1px solid var(--border); background: transparent; color: var(--text-sub); border-radius: 8px; padding: 8px 4px; font-size: 0.78rem; }
+  .seg button.on { border-color: var(--accent); color: var(--text-main); background: rgba(56, 189, 248, 0.14); }
+  .mini { display: flex; gap: 4px; flex-shrink: 0; }
+  .mini button { border: 1px solid var(--border); background: transparent; color: var(--text-sub); border-radius: 6px; padding: 3px 7px; font-size: 0.68rem; }
+  .mini button.on { border-color: var(--accent); color: var(--text-main); background: rgba(56, 189, 248, 0.14); }
+  .fold { background-color: var(--bg-color); border-radius: 12px; padding: 8px 14px 14px; margin-bottom: 12px; }
+  .fold summary { list-style: none; cursor: pointer; padding: 8px 0; margin-bottom: 8px; color: var(--text-main); font-size: 1.02rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .fold summary .sum-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .fold-eq { margin-left: auto; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); border-radius: 8px; padding: 4px 8px; font-size: 0.68rem; font-weight: 600; cursor: pointer; }
+  .fold:not([open]) summary { margin-bottom: 0; }
+  .fold summary::-webkit-details-marker { display: none; }
+  .fold summary .tri { display: inline-block; width: 1.1em; font-size: 0.85em; line-height: 1; color: var(--accent); flex-shrink: 0; }
+  .fold summary .tri::before { content: "▶"; }
+  .fold[open] summary .tri::before { content: "▼"; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .row label { font-size: 0.92rem; color: var(--text-main); white-space: nowrap; writing-mode: horizontal-tb; flex-shrink: 0; }
+  .row input[type="number"] { width: 104px; text-align: right; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 0.95rem; }
+  .with-unit { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .with-unit input[type="number"] { width: 88px; }
+  .unit { font-size: 0.72rem; color: var(--text-main); min-width: 0; font-weight: 600; white-space: nowrap; }
+  .unit.pct { font-size: 0.68rem; min-width: 0.9em; }
+  .unit-slash { font-size: 0.9rem; color: var(--text-sub); font-weight: 600; margin: 0 2px; }
+  .units-cap { font-size: 0.85rem; color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .conv { font-size: 0.72rem; color: var(--text-sub); text-align: right; margin: 0 0 10px; min-height: 1em; word-break: break-all; }
+  .result-box { border: 2px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .result-box.main { border-color: var(--accent); }
+  .result-title { font-size: 0.78rem; color: var(--text-sub); margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .result-title .title-left { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 0; }
+  .result-amount { font-size: 1.45rem; font-weight: bold; text-align: right; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+  .result-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.8rem; margin-top: 6px; color: var(--text-sub); }
+  .result-line > span { white-space: nowrap; writing-mode: horizontal-tb; flex-shrink: 0; }
+  .result-line b { color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .result-line input[type="number"] { width: 88px; text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 0.85rem; outline: none; }
+  .cap-edit { width: 108px; }
+  .hint { font-size: 0.68rem; color: var(--text-sub); text-align: right; margin: 0 0 2px; }
+  .result-sub { font-size: 0.72rem; color: var(--text-sub); text-align: right; margin: 4px 0 0; min-height: 1em; }
+  .cap { display: inline-block; font-size: 0.68rem; border: 1px solid var(--ok); color: var(--ok); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+  .check { display: flex; flex-direction: column; align-items: stretch; gap: 6px; font-size: 0.8rem; color: var(--text-main); margin: 8px 0 6px; }
+  .check-top, .check-yen { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+  .check-top span, .check-yen span { white-space: nowrap; writing-mode: horizontal-tb; flex-shrink: 0; }
+  .check input[type="number"], .check input[type="text"] { text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main); font-size: 0.85rem; }
+  .check-yen { display: grid; grid-template-columns: minmax(8.2em, 1.1fr) auto minmax(6.2em, 1fr) auto; align-items: center; column-gap: 6px; }
+  .check #extraPct, .check #extraMan { width: 100%; min-width: 0; font-variant-numeric: tabular-nums; }
+  .check-yen .yen-unit { font-size: 0.78rem; }
+  .extra-list { font-size: 0.72rem; color: var(--text-sub); line-height: 1.5; margin: 0 0 8px 24px; }
+  .steps-btn-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .steps-btn { flex: 1; border: 2px solid var(--border); background: var(--bg-color); color: var(--text-main); border-radius: 12px; padding: 10px 14px; font-size: 0.78rem; cursor: pointer; }
+  .fs-btns { display: flex; gap: 4px; flex-shrink: 0; }
+  .fs-btns button { border: 1px solid var(--border); background: transparent; color: var(--text-sub); border-radius: 6px; padding: 6px 8px; font-size: 0.68rem; min-width: 32px; }
+  .fs-btns button.on { border-color: var(--accent); color: var(--text-main); background: rgba(56, 189, 248, 0.14); }
+  .steps-slot { min-height: 0; }
+  .steps-panel { display: none; background: var(--card-bg); color: var(--text-main); border: 2px solid var(--border); border-radius: 14px; padding: 10px 12px; margin: 0 0 10px; font-size: 16px; }
+  .steps-panel.open { display: block; }
+  .steps-panel.float { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 24px); max-width: 400px; max-height: min(46vh, 340px); overflow: auto; z-index: 1000; margin: 0; box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
+  .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+  .foot a, .foot button { background: none; border: 0; color: var(--text-sub); font-size: 0.78rem; text-decoration: none; padding: 10px 4px; cursor: pointer; }
+  .float-head { display: flex; justify-content: flex-start; align-items: center; flex-wrap: nowrap; gap: 6px; margin-bottom: 6px; }
+  .float-head .head-title { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1 1 auto; }
+  .float-head strong { font-size: 0.85rem; white-space: nowrap; writing-mode: horizontal-tb; }
+  .float-head #stepsClose { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; width: 32px; height: 32px; font-size: 1.1rem; line-height: 1; cursor: pointer; margin-left: 0.8em; flex-shrink: 0; }
+  .float-head .fs-btns { margin-right: 0; flex-shrink: 0; }
+  .float-head .fs-btns button { width: auto; height: 28px; }
+  .steps { font-size: var(--steps-fs); color: var(--text-main); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
+  .steps.over { color: var(--bad); }
+  .steps-meta { font-size: var(--steps-fs); line-height: 1.4; margin: 0 0 8px; color: var(--text-sub); }
+  .steps-delta { color: var(--accent); margin: 0 0 6px; font-size: var(--steps-fs); }
+  .steps-delta.up { color: var(--bad); }
+  .steps-delta.down { color: var(--ok); }
+  .pill { display: inline-block; border-radius: 999px; padding: 1px 8px; margin: 0 6px 6px 0; font-size: 11px; border: 1px solid var(--border); }
+  .pill.ok { border-color: var(--ok); color: var(--ok); }
+  .pill.warn { border-color: var(--warn); color: var(--warn); }
+  .pill.bad { border-color: var(--bad); color: var(--bad); }
+  .copy-btn { display: block; width: 100%; margin-top: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; padding: 6px 8px; font-size: 12px; cursor: pointer; }
+  .head-tools { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: auto; }
+  .head-tools .icon-btn + .icon-btn { margin-left: 0; }
+  .icon-btn { border: 1px solid var(--border); background: transparent; color: var(--text-main); border-radius: 8px; min-width: 30px; height: 30px; padding: 0 5px; font-size: 0.72rem; cursor: pointer; }
+  .head-title .icon-btn { min-width: 28px; height: 28px; }
+  .icon-btn.on { border-color: var(--accent); background: rgba(56, 189, 248, 0.14); }
+  .memo-box { width: 100%; min-height: 10em; resize: vertical; border: 1.5px solid #7dd3fc; border-radius: 8px; background: var(--bg-color); color: var(--text-main); font-size: 16px; line-height: 1.45; padding: 8px; font-family: inherit; }
+  .price-row { margin-top: 10px; padding: 8px 0 2px; border-top: 1px dashed var(--border); }
+  .price-row label { font-weight: 700; }
+  .price-row input[type="number"] { width: 96px; font-weight: 700; border-color: var(--accent); }
+  .need-edit { width: 64px; }
+  .warn { font-size: 0.72rem; color: var(--warn); margin-top: 8px; line-height: 1.5; }
+  .hidden { display: none; }
+  .foot-link { color: var(--text-sub); font-size: 0.75rem; text-decoration: none; }
+  .block-title { font-size: 1.02rem; font-weight: 700; color: var(--text-main); margin: 0; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: center; }
+  .split .half { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+  .split label { font-size: 0.78rem; white-space: nowrap; writing-mode: horizontal-tb; color: var(--text-main); flex-shrink: 0; line-height: 1.2; }
+  .split .half .with-unit { justify-content: flex-end; gap: 3px; }
+  .split .half input[type="number"] { width: 3.4em; padding: 6px 4px; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); }
+  .split .half .with-unit input[type="number"] { width: 3.2em; padding: 6px 4px; background: var(--card-bg); color: var(--text-main); }
+  .split .half.rate .with-unit input[type="number"] { width: 3.4em; }
+  .plan-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 0.8rem; color: var(--text-sub); }
+  .plan-row .part { display: flex; align-items: center; gap: 6px; }
+  .plan-row input[type="number"] { width: 64px; text-align: right; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 0.85rem; }
+  .floor-cap { font-size: 0.8rem; color: var(--text-main); font-weight: 600; white-space: nowrap; }
+  .badge-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; }
+  .badge-row .label { font-size: 0.78rem; color: var(--text-sub); display: flex; align-items: center; }
+</style>
+</head>
+<body>
+<div class="app-container">
+  <button type="button" class="theme" id="themeBtn" aria-label="テーマ">☀</button>
+  <h1>マンション工事費ざっくり</h1>
+  <div class="result-box">
+    <div class="result-title">
+      <span class="title-left">想定延べ面積<span class="cap" id="capLabel">容積で頭打ち</span></span>
+      <div class="mini unit-seg" data-unit-seg>
+        <button type="button" data-disp="m2" class="on">㎡</button>
+        <button type="button" data-disp="tsubo">坪</button>
+      </div>
+    </div>
+    <div class="result-amount" id="gfaText">—</div>
+    <div class="result-line"><span>建築面積上限（1階）</span><div class="with-unit"><input type="text" id="archIn" class="cap-edit" inputmode="decimal" enterkeyhint="done" aria-label="建築面積上限"><span class="unit" id="archUnit">㎡</span></div></div>
+    <p class="hint" id="archPair">—</p>
+    <div class="result-line"><span>容積の上限</span><div class="with-unit"><input type="text" id="farIn" class="cap-edit" inputmode="decimal" enterkeyhint="done" aria-label="容積の上限"><span class="unit" id="farUnit">㎡</span></div></div>
+    <p class="hint" id="farPair">—</p>
+    <div class="result-line"><span>計画階数</span><div class="with-unit"><input type="text" id="floors" inputmode="numeric" enterkeyhint="done" value="5"><span class="unit-slash">/</span><input type="text" id="needFloorIn" class="need-edit" inputmode="decimal" enterkeyhint="done" aria-label="階数の上限"><span class="unit">階</span></div></div>
+    <p class="warn hidden" id="floorNote"></p>
+  </div>
+  <details class="fold" id="landFold">
+    <summary><span class="sum-left"><span class="tri" aria-hidden="true"></span>敷地・建蔽・容積</span><button type="button" class="fold-eq" data-open-steps>式</button></summary>
+    <div class="badge-row"><span class="label">想定延べ面積<span class="cap" id="capLabelLand">容積で頭打ち</span></span><div class="mini unit-seg" data-unit-seg><button type="button" data-disp="m2" class="on">㎡</button><button type="button" data-disp="tsubo">坪</button></div></div>
+    <div class="row"><label id="landLabel">敷地面積</label><div class="with-unit"><input type="text" id="land" inputmode="decimal" enterkeyhint="done" value="330"><span class="unit" id="landUnit">㎡</span></div></div>
+    <div class="conv" id="landConv"></div>
+    <div class="split"><div class="half rate"><label>建蔽率</label><div class="with-unit"><input type="text" id="kenpei" inputmode="decimal" enterkeyhint="done" value="80"><span class="unit pct">%</span></div></div><div class="half rate"><label>容積率</label><div class="with-unit"><input type="text" id="yoseki" inputmode="decimal" enterkeyhint="done" value="400"><span class="unit pct">%</span></div></div></div>
+  </details>
+  <div class="result-box" id="planBox">
+    <div class="result-title"><span class="title-left"><span class="block-title">住戸の計画</span><span class="cap" id="capLabelPlan">容積で頭打ち</span></span><div class="mini unit-seg" data-unit-seg><button type="button" data-disp="m2" class="on">㎡</button><button type="button" data-disp="tsubo">坪</button></div></div>
+    <div class="plan-row"><div class="part"><span>階数</span><b id="planFloorText">5</b><span>階</span></div><div class="part"><span>1階あたり</span><b id="perFloorText">—</b></div></div>
+    <div class="result-line"><span>想定戸数</span><div class="with-unit"><input type="text" id="unitsIn" inputmode="numeric" enterkeyhint="done"><span class="unit-slash">/</span><b id="unitsCapText" class="units-cap">—</b></div></div>
+    <div class="result-line"><span>1戸あたり本体</span><b id="perUnitText">—</b></div>
+    <div class="result-line"><span>専有の合計</span><b id="exText">—</b></div>
+    <div class="result-line"><span>延べ面積</span><b id="gfaLine">—</b></div>
+    <div class="conv" id="gfaFormula" style="margin:2px 0 6px;"></div>
+    <div class="result-line"><span>共用の合計</span><b id="commonText">—</b></div>
+    <p class="warn hidden" id="unitsNote"></p>
+  </div>
+  <details class="fold" id="typeFold">
+    <summary><span class="sum-left"><span class="tri" aria-hidden="true"></span>住戸・構造・単価</span><button type="button" class="fold-eq" data-open-steps>式</button></summary>
+    <div class="badge-row"><span class="label">想定延べ面積<span class="cap" id="capLabelType">容積で頭打ち</span></span><div class="mini unit-seg" data-unit-seg><button type="button" data-disp="m2" class="on">㎡</button><button type="button" data-disp="tsubo">坪</button></div></div>
+    <div class="seg" id="typeSeg"><button type="button" data-type="oneroom" class="on">ワンルーム</button><button type="button" data-type="family">ファミリー</button></div>
+    <div class="seg three" id="structSeg"><button type="button" data-struct="S">S造</button><button type="button" data-struct="RC" class="on">RC造</button><button type="button" data-struct="SRC">SRC造</button></div>
+    <div class="split"><div class="half"><label>廊下係数</label><input type="text" id="coeff" inputmode="decimal" enterkeyhint="done" value="1.33"></div><div class="half"><label>専有効率</label><input type="text" id="eff" inputmode="decimal" enterkeyhint="done" value="0.75"></div></div>
+    <div class="conv">廊下係数 × 専有効率 ＝ 1</div>
+    <div class="row"><label>1戸の専有</label><div class="with-unit"><input type="text" id="unitM2" inputmode="decimal" enterkeyhint="done" value="25"><span class="unit">㎡</span></div></div>
+    <div class="row price-row"><label id="priceLabel">延べ坪単価</label><div class="with-unit"><input type="text" id="price" inputmode="decimal" enterkeyhint="done" value="120"><span class="unit" id="priceUnit">万円/坪</span></div></div>
+  </details>
+  <div class="result-box main">
+    <div class="result-title" id="bodyTitle">本体工事費（延べ × 単価）</div>
+    <div class="result-amount" id="bodyText">—</div>
+    <div class="result-line"><span id="formulaLabel">延べ坪 × 坪単価</span><b id="formulaText">—</b></div>
+    <p class="result-sub hidden" id="bodyBaseLine"></p>
+  </div>
+  <div class="check"><div class="check-top"><input type="checkbox" id="extra"><span>付帯＋諸費用</span></div><div class="check-yen"><input type="text" id="extraPct" inputmode="decimal" value="25" aria-label="付帯諸費用パーセント"><span>%</span><input type="text" id="extraMan" inputmode="decimal" aria-label="付帯諸費用の金額"><span class="yen-unit">万円</span></div></div>
+  <p class="extra-list" id="extraList">含むもの（仮）：外構・地盤改良・設計監理・申請 など</p>
+  <div class="steps-btn-row"><button type="button" class="steps-btn" id="stepsToggle">式の確認</button><div class="fs-btns" id="pageFsBtns" title="ページ全体の文字サイズ"><button type="button" data-page-fs="down">小</button><button type="button" data-page-fs="mid" class="on">中</button><button type="button" data-page-fs="up">大</button></div></div>
+  <div class="steps-slot" id="stepsSlot">
+    <div class="steps-panel" id="stepsPanel" hidden>
+      <div class="float-head">
+        <div class="head-title">
+          <button type="button" class="icon-btn hidden" id="memoClear" title="メモを消す">消</button>
+          <strong id="stepsHead">式</strong>
+          <div class="fs-btns" id="stepsFsBtns" title="ポップ内の文字サイズ"><button type="button" data-steps-fs="down">小</button><button type="button" data-steps-fs="mid" class="on">中</button><button type="button" data-steps-fs="up">大</button></div>
+        </div>
+        <div class="head-tools">
+          <button type="button" class="icon-btn" id="copySteps" title="式をコピー">写</button>
+          <button type="button" class="icon-btn" id="memoBtn" title="メモ">書</button>
+          <button type="button" id="stepsClose" aria-label="閉じる">×</button>
+        </div>
+      </div>
+      <div id="formulaView"><div id="stepsPills"></div><p class="steps-delta hidden" id="stepsDelta"></p><p class="steps-meta" id="stepsAdvice"></p><p class="steps" id="steps">—</p></div>
+      <div id="memoView" class="hidden"><textarea id="memoBox" class="memo-box" placeholder="ここに自由にメモ"></textarea></div>
+    </div>
+  </div>
+  <div class="foot"><a class="foot-link" href="./index.html">← 一覧</a><button type="button" id="resetBtn" aria-label="リセット">↺</button></div>
+</div>
+<script src="./mansion-kojihi.js?v=20260926n"></script>
+<style>
+.float-head{display:flex !important;flex-wrap:nowrap !important;align-items:center !important;justify-content:flex-start !important;gap:6px !important;}
+.float-head .head-title,.float-head .head-tools{display:flex !important;align-items:center !important;flex-wrap:nowrap !important;gap:6px !important;}
+.float-head .head-tools{margin-left:auto !important;flex:0 0 auto !important;}
+.float-head .fs-btns button,.float-head .icon-btn,#stepsClose{position:static !important;flex-shrink:0 !important;}
+#stepsClose{margin-left:0.8em !important;}
+#memoTall{display:none !important;}
+#copySteps{width:2.2em !important;min-width:2.2em !important;max-width:2.2em !important;overflow:hidden !important;}
+.memo-box{border:1.5px solid #7dd3fc !important;min-height:10em !important;}
+body.steps-open{padding-bottom:0 !important;}
+.steps-panel.open.float{position:fixed !important;}
+.row input[type="text"],.with-unit input[type="text"],.result-line input[type="text"],.split .half input[type="text"],.plan-row input[type="text"],.price-row input[type="text"],.check input[type="text"]{text-align:right;}
+.split .half input[type="text"],.split .half .with-unit input[type="text"]{width:3.4em;padding:6px 4px;}
+.with-unit input[type="text"]{width:88px;}
+.price-row input[type="text"]{width:96px;font-weight:700;border-color:var(--accent);}
+</style>
+</body>
+</html>
