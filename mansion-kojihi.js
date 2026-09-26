@@ -74,19 +74,27 @@
         panel.style.removeProperty(k);
       });
     }
+    function reserveHome() {
+      if (!slot) return;
+      if (!panel.classList.contains("float")) homeH = panel.offsetHeight || homeH;
+      var h = Math.max(homeH || panel.offsetHeight || 1, 1) + "px";
+      if (slot.style.minHeight !== h) slot.style.minHeight = h;
+    }
+    function releaseHome() {
+      if (slot) slot.style.minHeight = "0px";
+      homeH = 0;
+    }
     function dock() {
       if (!panel) return;
       panel.classList.remove("float");
       panel.classList.remove("memo-dock");
       clearFixed();
-      if (slot) slot.style.minHeight = "0px";
-      if (openNow()) homeH = panel.offsetHeight || homeH;
+      if (openNow()) reserveHome();
+      else releaseHome();
     }
     function lift() {
       if (!panel) return;
-      if (!panel.classList.contains("float")) homeH = panel.offsetHeight || homeH;
-      var h = Math.max(homeH || panel.offsetHeight || 1, 1) + "px";
-      if (slot && slot.style.minHeight !== h) slot.style.minHeight = h;
+      reserveHome();
       panel.classList.add("float");
       panel.classList.remove("memo-dock");
       panel.style.setProperty("position", "fixed", "important");
@@ -109,9 +117,14 @@
       if (Date.now() < holdAlign) { dock(); return; }
       var bottom = viewBottom();
       var rect = slot ? slot.getBoundingClientRect() : { top: bottom, bottom: bottom };
-      var atAppear = rect.top >= bottom - 36 && rect.top <= bottom + 28;
-      if (atAppear) dock();
-      else lift();
+      var floated = panel.classList.contains("float");
+      if (floated) {
+        if (rect.top < bottom - 8) dock();
+        else lift();
+      } else {
+        if (rect.top > bottom + 24) lift();
+        else dock();
+      }
     }
     function alignToBottom() {
       dock();
