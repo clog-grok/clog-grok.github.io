@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>DXF軽量ビューア</title>
+<meta name="description" content="DXF図面を開いて距離・面積を測る（縮尺補正つき）">
+<meta name="tool-status" content="wip">
+<style>
+:root{--bg:#12161a;--bar:#1c2227;--fg:#e6edf0;--btn:#273036;--bd:#3d4850;--mut:#8fa0a8;--cv:#0e1317;--act:#c4364d;--actb:#ff5d73}
+:root[data-theme=light]{--bg:#e9ecee;--bar:#f7f8f8;--fg:#1b2429;--btn:#e8ecee;--bd:#b8c2c8;--mut:#5d6b73;--cv:#f6f6f2;--act:#d4193c;--actb:#d4193c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font:14px/1.4 -apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;touch-action:none}
+body{display:flex;flex-direction:column;height:100dvh}
+header,footer{background:var(--bar);padding:6px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+button,.btn,input[type=number]{min-height:44px;padding:0 8px;border:1px solid var(--bd);border-radius:8px;background:var(--btn);color:var(--fg);font:inherit;font-size:13px;display:inline-flex;align-items:center;justify-content:center}
+header>*,#sets>*{flex:1 1 auto;min-width:0}
+#sets{background:var(--bar);padding:0 6px 6px;display:flex;gap:4px;border-bottom:1px solid var(--bd)}
+button:active,.btn:active{opacity:.7}
+button.on{background:var(--act);border-color:var(--actb);color:#fff}
+#snapB.on{background:#2d6b52;border-color:#5ad19a;color:#fff}
+#thB svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+:root[data-theme=dark] .sun,:root[data-theme=light] .moon{display:none}
+#main{flex:1;min-height:0;position:relative;background:var(--cv)}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);color:#fff;padding:4px 10px;border-radius:6px;pointer-events:none;max-width:90%}
+#abar{position:absolute;top:46px;left:8px;display:flex;gap:6px}
+#abar button{background:var(--bar)}
+footer{padding:6px 10px}
+#out{font-size:15px;font-variant-numeric:tabular-nums;white-space:pre-line;min-height:22px;width:100%}
+#panel{position:absolute;left:0;right:0;bottom:0;z-index:5;background:var(--bar);border-top:1px solid var(--bd);padding:8px;display:flex;flex-direction:column;gap:6px;touch-action:pan-y}
+.pr{display:flex;gap:6px;align-items:flex-end}
+.pr label{flex:1;font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:2px}
+.pr button{flex:1}
+input[type=number]{width:100%;font-size:16px;padding:0 10px}
+#calSt{font-size:13px}
+#info{font-size:12px;color:var(--mut);max-height:4.2em;overflow:auto}
+</style>
+</head>
+<body>
+<header>
+  <label class="btn">開く<input type="file" id="f" accept=".dxf,.DXF" hidden></label>
+  <button id="fitB">全体</button>
+  <button id="mB">距離</button>
+  <button id="aB">面積</button>
+  <button id="setB">設定</button>
+</header>
+<div id="sets" hidden>
+  <button id="snapB" class="on">吸着</button>
+  <button id="calB">縮尺</button>
+  <button id="thB" aria-label="ライト/ダーク切替"><svg viewBox="0 0 24 24"><g class="sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g><path class="moon" d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+</div>
+<div id="main">
+  <canvas id="c"></canvas><div id="badge"></div>
+  <div id="abar" hidden><button id="rsB">消去</button><button id="undoB">1点戻す</button><button id="okB">確定</button></div>
+  <div id="panel" hidden>
+    <div class="pr">
+      <label>図面上の測定値<input type="number" id="rawIn" inputmode="decimal" step="any"></label>
+      <label>実際の寸法(mm)<input type="number" id="realIn" inputmode="decimal" step="any"></label>
+    </div>
+    <div class="pr"><button id="apB">補正を適用</button><button id="clB">補正解除</button></div>
+    <div class="pr"><label style="flex-direction:row;align-items:center;gap:6px;min-height:44px"><input type="checkbox" id="rndC" checked>きりのいい係数に丸める</label><label style="flex-direction:row;align-items:center;gap:6px;min-height:44px"><input type="checkbox" id="intC" checked>補正後の距離を整数mmで表示</label></div>
+    <div id="calSt"></div>
+    <div id="info">DXFファイルを開いてください。</div>
+  </div>
+</div>
+<footer><div id="out">DXFファイルを開いてください</div></footer>
+<script>
+const $=id=>document.getElementById(id),cv=$('c'),ctx=cv.getContext('2d');
+let W=1,H=1,dpr=1,V={z:1,x:0,y:0},D=null,mode='',snapOn=true,dPts=[],aPts=[],aDone=false,hov=null,k=1,raf=0,curKey=null,theme='dark',lastM='',note='',calSrc=null,intMm=true;
+/* ---------- DXFパーサ(自前・外部ライブラリなし) ---------- */
+const clean=s=>s.replace(/\\U\+([0-9A-Fa-f]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)))
+ .replace(/\\P/g,'\n').replace(/\\S([^;]*);/g,(_,a)=>a.replace('^','/')).replace(/\\[ACFfHQTW][^;]*;/g,'')
+ .replace(/\\[LlOoKk]/g,'').replace(/\\~/g,' ').replace(/[{}]/g,'').replace(/%%[cC]/g,'Ø').replace(/%%[dD]/g,'°').replace(/%%[pP]/g,'±');
+function parse(t){
+  const L=t.split(/\r?\n/),recs=[];let sec='',r=null,cb=null;
+  for(let i=0;i+1<L.length;i+=2){
+    const c=parseInt(L[i],10),v=L[i+1].trim();
+    if(c===0){if(v==='ENDSEC')sec='';if(v==='ENDBLK')cb=null;r={t:v,g:[],sec,b:cb};recs.push(r)}
+    else if(r){r.g.push([c,v]);if(c===2){if(r.t==='SECTION')sec=v;else if(r.t==='BLOCK'){cb=v;r.b=v}}}
+  }
+  const gv=(r,c)=>{for(const a of r.g)if(a[0]===c)return a[1]},gn=(r,c,d=0)=>{const v=gv(r,c);return v===undefined?d:parseFloat(v)};
+  const top=[],blocks={},un={};let pl=null;
+  for(const r of recs){
+    const T=r.t;let o=null;
+    if(T==='BLOCK'){blocks[r.b]={bx:gn(r,10),by:gn(r,20),e:[]};continue}
+    if(r.sec!=='ENTITIES'&&r.sec!=='BLOCKS')continue;
+    if(T==='ENDBLK'||T==='ENDSEC')continue;
+    if(T==='SEQEND'){pl=null;continue}
+    if(T==='VERTEX'){const f=gn(r,70);if(pl&&!(f&16)&&f<64)pl.p.push({x:gn(r,10),y:gn(r,20),b:gn(r,42)});continue}
+    if(T==='LINE')o={t:'L',a:[gn(r,10),gn(r,20)],b:[gn(r,11),gn(r,21)]};
+    else if(T==='LWPOLYLINE'){const p=[];for(const[k_,v]of r.g){if(k_===10)p.push({x:parseFloat(v),y:0,b:0});else if(k_===20&&p.length)p[p.length-1].y=parseFloat(v);else if(k_===42&&p.length)p[p.length-1].b=parseFloat(v)}o={t:'P',p,cl:(gn(r,70)&1)===1}}
+    else if(T==='POLYLINE')pl=o={t:'P',p:[],cl:(gn(r,70)&1)===1};
+    else if(T==='CIRCLE')o={t:'C',x:gn(r,10),y:gn(r,20),r:gn(r,40)};
+    else if(T==='ARC')o={t:'A',x:gn(r,10),y:gn(r,20),r:gn(r,40),a0:gn(r,50),a1:gn(r,51)};
+    else if(T==='TEXT'){let x=gn(r,10),y=gn(r,20),ha=gn(r,72);if((ha||gn(r,73))&&gv(r,11)!==undefined){x=gn(r,11);y=gn(r,21)}o={t:'T',x,y,h:gn(r,40),rot:gn(r,50)*Math.PI/180,ha:ha===1||ha===4?1:ha===2?2:0,va:-1,s:gv(r,1)||''}}
+    else if(T==='MTEXT'){let s='';for(const[k_,v]of r.g)if(k_===3)s+=v;s+=gv(r,1)||'';const a=gn(r,71,1)-1,rot=gv(r,11)!==undefined?Math.atan2(gn(r,21),gn(r,11)):gn(r,50)*Math.PI/180;o={t:'T',x:gn(r,10),y:gn(r,20),h:gn(r,40),rot,ha:a%3,va:Math.floor(a/3),s}}
+    else if(T==='INSERT')o={t:'I',n:gv(r,2),x:gn(r,10),y:gn(r,20),sx:gn(r,41,1),sy:gn(r,42,1),rot:gn(r,50)*Math.PI/180};
+    else if(T==='DIMENSION')o={t:'I',n:gv(r,2),x:0,y:0,sx:1,sy:1,rot:0};
+    else{un[T]=(un[T]||0)+1;continue}
+    (r.sec==='BLOCKS'?(blocks[r.b]||{e:[]}).e:top).push(o);
+  }
+  /* 展開: 全図形を1つのPath2Dにまとめる(円・円弧・膨らみは折れ線化) */
+  const path=new Path2D(),sn=[],xs=[],ys=[],txt=[];let nSeg=0;
+  const tr=(M,x,y)=>[M[0]*x+M[2]*y+M[4],M[1]*x+M[3]*y+M[5]];
+  const cmp=(P,Q)=>[P[0]*Q[0]+P[2]*Q[1],P[1]*Q[0]+P[3]*Q[1],P[0]*Q[2]+P[2]*Q[3],P[1]*Q[2]+P[3]*Q[3],P[0]*Q[4]+P[2]*Q[5]+P[4],P[1]*Q[4]+P[3]*Q[5]+P[5]];
+  function add(M,pp,cl,sp){
+    pp.forEach((q,i)=>{const[x,y]=tr(M,q[0],q[1]);i?path.lineTo(x,y):path.moveTo(x,y);xs.push(x);ys.push(y)});
+    if(cl)path.closePath();nSeg++;
+    for(const q of sp){const[x,y]=tr(M,q[0],q[1]);sn.push(x,y)}
+  }
+  const arc=(cx,cy,r,a0,sw)=>{const n=Math.max(4,Math.ceil(Math.abs(sw)/(Math.PI/48))),o=[];for(let i=0;i<=n;i++){const a=a0+sw*i/n;o.push([cx+r*Math.cos(a),cy+r*Math.sin(a)])}return o};
+  function expand(list,M,d){
+    for(const o of list){
+      if(o.t==='L')add(M,[o.a,o.b],false,[o.a,o.b]);
+      else if(o.t==='P'&&o.p.length>1){
+        const pp=[],n=o.p.length,m=o.cl?n:n-1;
+        for(let i=0;i<m;i++){
+          const p0=o.p[i],p1=o.p[(i+1)%n];pp.push([p0.x,p0.y]);
+          if(p0.b){const dx=p1.x-p0.x,dy=p1.y-p0.y,dd=Math.hypot(dx,dy);if(dd>0){const b=p0.b,off=dd*(1-b*b)/(4*b),cx=(p0.x+p1.x)/2-dy/dd*off,cy=(p0.y+p1.y)/2+dx/dd*off,r=Math.hypot(p0.x-cx,p0.y-cy),a=arc(cx,cy,r,Math.atan2(p0.y-cy,p0.x-cx),4*Math.atan(b));pp.push(...a.slice(1,-1))}}
+        }
+        if(!o.cl){const l=o.p[n-1];pp.push([l.x,l.y])}
+        add(M,pp,o.cl,o.p.map(p=>[p.x,p.y]));
+      }
+      else if(o.t==='C'&&o.r>0)add(M,arc(o.x,o.y,o.r,0,2*Math.PI),true,[]);
+      else if(o.t==='A'&&o.r>0){const a0=o.a0*Math.PI/180;let sw=(((o.a1-o.a0)%360)+360)%360||360;sw*=Math.PI/180;const a=arc(o.x,o.y,o.r,a0,sw);add(M,a,false,[a[0],a[a.length-1]])}
+      else if(o.t==='T'){
+        const s=clean(o.s);if(!s.trim()||!(o.h>0))continue;
+        const[x,y]=tr(M,o.x,o.y);xs.push(x);ys.push(y);
+        txt.push({x,y,h:o.h*Math.hypot(M[0],M[1]),rot:o.rot+Math.atan2(M[1],M[0]),ha:o.ha,va:o.va,s,l:s.split('\n')});
+      }
+      else if(o.t==='I'&&d<4){
+        const B=blocks[o.n];if(!B)continue;const c=Math.cos(o.rot),s=Math.sin(o.rot);
+        const a=o.sx*c,b=o.sx*s,cc=-o.sy*s,dd=o.sy*c;
+        expand(B.e,cmp(M,[a,b,cc,dd,o.x-(a*B.bx+cc*B.by),o.y-(b*B.bx+dd*B.by)]),d+1);
+      }
+    }
+  }
+  expand(top,[1,0,0,1,0,0],0);
+  /* 全体表示用の範囲: 迷子の図形に引きずられないよう上下0.5%を除外 */
+  let bnd=null;
+  if(xs.length){
+    const lim=a=>{const s=Float64Array.from(a).sort();if(s.length<200)return[s[0],s[s.length-1]];return[s[Math.floor(s.length*.005)],s[Math.ceil(s.length*.995)-1]]};
+    const[x0,x1]=lim(xs),[y0,y1]=lim(ys);bnd=[x0,y0,x1,y1];
+  }
+  return{path,txt,sn:Float64Array.from(sn),bnd,nSeg,un};
+}
+
+/* ---------- 保存(使えない環境でも止まらない) ---------- */
+const st={g(a){try{return localStorage.getItem(a)}catch(e){return null}},s(a,v){try{localStorage.setItem(a,v);return true}catch(e){return false}},d(a){try{localStorage.removeItem(a)}catch(e){}}};
+
+/* ---------- テーマ ---------- */
+// DXFの色・レイヤーは読んでいないため、線と文字はそれぞれ単色。色対応を足すときは、この配色表を土台にする。
+const PAL={
+  dark:{line:'#bcd7e0',text:'#f0c36a',meas:'#ff5d73',fill:'rgba(255,93,115,.28)',snap:'#ffd23f',lb:'rgba(0,0,0,.75)',lf:'#fff'},
+  light:{line:'#27343c',text:'#8a5300',meas:'#d4193c',fill:'rgba(212,25,60,.2)',snap:'#0a7a4f',lb:'rgba(255,255,255,.9)',lf:'#111'}};
+const T=()=>PAL[theme];
+function setTheme(t,save){theme=t;document.documentElement.dataset.theme=t;if(save)st.s('dxfv:theme',t);req()}
+$('thB').onclick=()=>setTheme(theme==='dark'?'light':'dark',true);
+
+/* ---------- ファイル読み込み(文字コード判定つき) ---------- */
+$('f').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;$('out').textContent='読み込み中...';
+  try{
+    const buf=await f.arrayBuffer();
+    const head=new TextDecoder('latin1').decode(buf.slice(0,300000));
+    const cp=(/\$DWGCODEPAGE\s+3\s+(\S+)/.exec(head)||[])[1]||'(記載なし)';
+    let enc,text;
+    if(/932/.test(cp)){enc='Shift_JIS';text=new TextDecoder('shift_jis').decode(buf)}
+    else try{enc='UTF-8';text=new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch(_){enc='Shift_JIS(自動判定)';text=new TextDecoder('shift_jis').decode(buf)}
+    D=parse(text);dPts=[];aPts=[];aDone=false;hov=null;lastM='';note='';
+    // 図面の識別: ファイル名+サイズ+更新日時(別ファイルを完全に区別できる保証はない)
+    curKey=`dxfv:cal:${f.name}|${f.size}|${f.lastModified}`;
+    k=1;calSrc=null;$('rawIn').value='';$('realIn').value='';
+    let msg=`${f.name}: 図形${D.nSeg} 文字${D.txt.length}`;const sv=st.g(curKey);
+    if(sv)try{const o=JSON.parse(sv);if(o.k>0&&isFinite(o.k)){k=o.k;$('rawIn').value=o.raw??'';$('realIn').value=o.real??'';msg+=`\n保存済みの補正 ×${k.toFixed(4)} を復元しました`}}catch(_){}
+    const un=Object.entries(D.un).map(([a,b])=>a+'×'+b).join(', ');
+    $('info').textContent=`文字コード ${enc} (コードページ ${cp})`+(un?` / 未対応: ${un}`:'')+' / DXFの色・レイヤーは未対応(単色表示)'+(D.nSeg+D.txt.length?'':' / 描画できる要素なし');
+    if(un)msg+='\n未対応の図形あり(詳細は縮尺パネル)';
+    fit();upd(msg);
+  }catch(err){$('out').textContent='読み込みエラー: '+err.message;console.error(err)}
+  finally{e.target.value=''}   // 同じファイルを再選択しても読み込めるように
+};
+
+/* ---------- 表示 ---------- */
+function resize(){const m=$('main');W=m.clientWidth;H=m.clientHeight;dpr=window.devicePixelRatio||1;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);req()}
+new ResizeObserver(resize).observe($('main'));
+const req=()=>{if(!raf)raf=requestAnimationFrame(draw)};
+function fit(){
+  if(!D||!D.bnd){req();return}
+  const[x0,y0,x1,y1]=D.bnd,w=x1-x0||1,h=y1-y0||1;
+  V.z=Math.min(W/w,H/h)*.92;D.fz=V.z;V.x=W/2-(x0+x1)/2*V.z;V.y=H/2+(y0+y1)/2*V.z;req();
+}
+const clampZ=z=>D&&D.fz?Math.min(Math.max(z,D.fz*.02),D.fz*20000):z;
+const S=p=>[V.x+p.x*V.z,V.y-p.y*V.z];
+function draw(){
+  raf=0;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);if(!D)return;
+  const C=T();
+  ctx.setTransform(dpr*V.z,0,0,-dpr*V.z,dpr*V.x,dpr*V.y);
+  ctx.lineWidth=1.3/V.z;ctx.strokeStyle=C.line;ctx.stroke(D.path);
+  ctx.fillStyle=C.text;
+  for(const t of D.txt){
+    const hs=t.h*V.z;if(hs<3||hs>3000)continue;       // 小さすぎ・大きすぎる文字は描かない
+    const sx=V.x+t.x*V.z,sy=V.y-t.y*V.z,w=t.s.length*hs;
+    if(sx>W+w||sx<-w||sy>H+w||sy<-w)continue;
+    ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.rot);const f=t.h/32;ctx.scale(f,-f);
+    ctx.font='32px sans-serif';ctx.textAlign=['left','center','right'][t.ha]||'left';
+    ctx.textBaseline=t.va<0?'alphabetic':['top','middle','bottom'][t.va];
+    const y0=t.va>0?-(t.l.length-1)*45*t.va/2:0;
+    t.l.forEach((s,i)=>ctx.fillText(s,0,y0+i*45));ctx.restore();
+  }
+  /* 以降は画面座標(測定表示は拡大しても大きさ一定) */
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const lab=(t,x,y)=>{ctx.font='bold 15px sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';const w=ctx.measureText(t).width;ctx.fillStyle=C.lb;ctx.fillRect(x-w/2-4,y-15,w+8,21);ctx.fillStyle=C.lf;ctx.fillText(t,x,y)};
+  const mk=(p,r)=>{const[x,y]=S(p);ctx.beginPath();ctx.arc(x,y,r,0,7);if(r>6){ctx.moveTo(x-14,y);ctx.lineTo(x+14,y);ctx.moveTo(x,y-14);ctx.lineTo(x,y+14)}ctx.stroke();if(p.s)ctx.strokeRect(x-5,y-5,10,10)};
+  ctx.lineWidth=2;ctx.strokeStyle=C.meas;
+  if(aPts.length){
+    const q=aPts.map(S);ctx.beginPath();q.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+    if(aDone){ctx.closePath();ctx.fillStyle=C.fill;ctx.fill()}
+    ctx.stroke();
+    if(!aDone&&q.length>2){ctx.save();ctx.setLineDash([6,5]);ctx.globalAlpha=.6;ctx.beginPath();ctx.moveTo(...q[q.length-1]);ctx.lineTo(...q[0]);ctx.stroke();ctx.restore()}
+    aPts.forEach(p=>mk(p,5));
+    if(aDone){const m=aMetric();lab(k===1?m.a.toFixed(3):(m.a*k*k/1e6).toFixed(3)+' ㎡',q.reduce((s,p)=>s+p[0],0)/q.length,q.reduce((s,p)=>s+p[1],0)/q.length)}
+  }
+  if(dPts.length){
+    const q=dPts.map(S);
+    if(q.length===2){ctx.beginPath();ctx.moveTo(...q[0]);ctx.lineTo(...q[1]);ctx.stroke()}
+    dPts.forEach(p=>mk(p,9));
+    if(q.length===2)lab(fD(dRaw()*k),(q[0][0]+q[1][0])/2,(q[0][1]+q[1][1])/2-12);
+  }
+  if(hov){const[x,y]=S(hov);ctx.strokeStyle=C.snap;ctx.lineWidth=2.5;ctx.strokeRect(x-9,y-9,18,18)}
+}
+
+/* ---------- 計測(距離と面積は別の状態) ---------- */
+const f3=v=>v.toFixed(3);
+const fD=v=>k!==1&&intMm?String(Math.round(v)):f3(v);   // 補正後の距離・周長(mm)
+/* きりのいい係数: 候補(整数・一般的な縮尺)のうち±1%以内で最も近いもの */
+function niceK(x){
+  if(!(x>0&&isFinite(x)))return x;
+  const c=[1,2,5,10,20,25,50,100,200,250,300,500,1000];const r=Math.round(x);if(r>0)c.push(r);
+  let b=null,bd=Infinity;for(const v of c){const d=Math.abs(x-v)/v;if(d<=0.01&&d<bd){bd=d;b=v}}
+  if(b!==null)return b;
+  return x>=10?Math.round(x):Math.round(x*100)/100;
+}
+function dRaw(){return dPts.length===2?Math.hypot(dPts[1].x-dPts[0].x,dPts[1].y-dPts[0].y):0}
+function selfX(){
+  const n=aPts.length;if(n<4)return false;
+  const ccw=(a,b,c)=>(c.y-a.y)*(b.x-a.x)-(b.y-a.y)*(c.x-a.x);
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
+    if(j===i+1||(i===0&&j===n-1))continue;
+    const a=aPts[i],b=aPts[(i+1)%n],c=aPts[j],d=aPts[(j+1)%n];
+    if(ccw(a,c,d)*ccw(b,c,d)<0&&ccw(a,b,c)*ccw(a,b,d)<0)return true;
+  }
+  return false;
+}
+function aMetric(){   // 元の図面座標で計算(座標法)。補正・表示倍率は混ぜない
+  const n=aPts.length;if(n<3)return null;let a=0,p=0;const o=aPts[0];
+  for(let i=0;i<n;i++){const u=aPts[i],v=aPts[(i+1)%n];a+=(u.x-o.x)*(v.y-o.y)-(v.x-o.x)*(u.y-o.y);p+=Math.hypot(v.x-u.x,v.y-u.y)}
+  return{a:Math.abs(a)/2,p,x:selfX()};
+}
+function upd(msg){
+  const tag=mode==='dist'?(dPts.length===1?'距離: 2点目をタップ':dPts.length===2?'距離: タップで新しい測定':'距離: 1点目をタップ')
+    :mode==='area'?(aDone?'面積: タップで新しい測定':`面積: ${aPts.length}点（3点以上で確定）`):'移動・拡大';
+  $('badge').textContent=tag+'　'+(k===1?'補正なし':'補正 ×'+k.toFixed(4))+(note&&mode?'　'+note:'');
+  $('mB').classList.toggle('on',mode==='dist');$('aB').classList.toggle('on',mode==='area');
+  $('abar').hidden=!mode;$('undoB').hidden=$('okB').hidden=mode!=='area';
+  let t='';
+  if(lastM==='dist'&&dPts.length===2){
+    const r=dRaw();
+    t=k===1?`距離 ${f3(r)}（図面値）`:`距離 ${fD(r*k)} mm（補正後）\n図面値 ${f3(r)} × ${k.toFixed(4)}`;
+  }else if(lastM==='area'&&aDone){
+    const m=aMetric(),k2=k*k;
+    t=k===1?`面積 ${f3(m.a)}　周長 ${f3(m.p)}（図面値）`
+      :`面積 ${f3(m.a*k2/1e6)} ㎡（${Math.round(m.a*k2)} mm²）　周長 ${fD(m.p*k)} mm（補正後）\n図面値 面積 ${f3(m.a)} / 周長 ${f3(m.p)}`;
+    if(m.x)t+='\n⚠ 辺が交差しています。面積が正しくない可能性があります';
+  }else if(k!==1)t=`補正 ×${k.toFixed(4)} 適用中`;
+  $('out').textContent=[t,msg].filter(Boolean).join('\n')||'計測する場合は「距離」か「面積」を押してください';
+  $('calSt').textContent=k===1?'補正: なし':`補正 ×${k.toFixed(4)}（図面値 ${$('rawIn').value} → 実寸 ${$('realIn').value} mm）`;
+}
+function near(sx,sy,R){   // 画面上のピクセル距離で判定(ズーム倍率に依存しない)
+  if(!D||!D.sn.length)return null;let bi=-1,bd=R*R;const s=D.sn;
+  for(let i=0;i<s.length;i+=2){const dx=V.x+s[i]*V.z-sx,dy=V.y-s[i+1]*V.z-sy,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i}}
+  return bi<0?null:{x:s[bi],y:s[bi+1],s:1};
+}
+function tap(sx,sy,touch){
+  if(!D||!mode)return;
+  const s=snapOn?near(sx,sy,touch?26:14):null,p=s||{x:(sx-V.x)/V.z,y:(V.y-sy)/V.z,s:0};
+  note=s?'端点に吸着':'自由点';
+  if(mode==='dist'){
+    dPts=dPts.length===1?[dPts[0],p]:[p];
+    if(dPts.length===2){lastM='dist';if(k===1||!$('panel').hidden){const r=+dRaw().toFixed(6);$('rawIn').value=r;calSrc={raw:r,ok:dPts[0].s===1&&dPts[1].s===1}}}
+  }else{if(aDone){aPts=[];aDone=false}aPts.push(p)}
+  hov=null;upd();req();
+}
+const setMode=m=>{mode=mode===m?'':m;hov=null;upd();req()};
+$('mB').onclick=()=>setMode('dist');
+$('aB').onclick=()=>setMode('area');
+$('snapB').onclick=e=>{snapOn=!snapOn;e.currentTarget.classList.toggle('on',snapOn);hov=null;req()};
+$('rsB').onclick=()=>{dPts=[];aPts=[];aDone=false;lastM='';note='';hov=null;upd();req()};
+$('fitB').onclick=fit;
+$('undoB').onclick=()=>{aDone=false;aPts.pop();if(lastM==='area')lastM='';upd();req()};
+$('okB').onclick=()=>{if(aPts.length<3){upd('3点以上指定してください');return}aDone=true;lastM='area';upd();req()};
+
+/* ---------- 縮尺補正(表示ズームとは無関係。測定値にだけ掛ける) ---------- */
+$('calB').onclick=()=>{const p=$('panel');p.hidden=!p.hidden;$('calB').classList.toggle('on',!p.hidden);if(!p.hidden&&mode!=='dist')setMode('dist')};
+$('setB').onclick=()=>{const p=$('sets');p.hidden=!p.hidden;$('setB').classList.toggle('on',!p.hidden);if(p.hidden){$('panel').hidden=true;$('calB').classList.remove('on')}};
+$('intC').onchange=e=>{intMm=e.target.checked;upd();req()};
+$('rawIn').oninput=()=>{calSrc=null};
+const saveK=(raw,real)=>curKey?st.s(curKey,JSON.stringify({k,raw,real})):false;
+{const v=st.g('dxfv:round');$('rndC').checked=v!=='0';$('rndC').onchange=e=>st.s('dxfv:round',e.target.checked?'1':'0')}
+$('apB').onclick=()=>{
+  const raw=parseFloat($('rawIn').value),real=parseFloat($('realIn').value);
+  if(!(raw>0&&isFinite(raw))||!(real>0&&isFinite(real))){upd('図面上の測定値と実際の寸法を、0より大きい数値で入力してください');return}
+  if(!calSrc||calSrc.raw!==raw){upd('先に「距離」で2点を測定してください（端点に吸着）');return}
+  if(!calSrc.ok){upd('2点とも端点に吸着させてから補正してください');return}
+  const k0=real/raw;   // 補正係数 k = 実際の寸法 ÷ 図面上の測定値
+  k=$('rndC').checked?niceK(k0):k0;
+  const rm=k!==k0?`係数 ×${+k0.toFixed(6)} → ×${k} に丸めて適用\n`:'';
+  const ok=saveK(raw,real);
+  upd(rm+(curKey?(ok?'補正を適用し、この図面用に保存しました':'補正を適用しました（この環境では保存できません）'):'補正を適用しました'));req();
+};
+$('clB').onclick=()=>{k=1;if(curKey)st.d(curKey);upd('補正を解除しました（保存値も削除）');req()};
+
+/* ---------- 入力: Pointer Eventsに一本化(マウス・タッチ二重反応なし) ---------- */
+const P=new Map();let g={};
+const pos=e=>{const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+function zoomAt(sx,sy,f){const wx=(sx-V.x)/V.z,wy=(V.y-sy)/V.z,z=clampZ(V.z*f);V.z=z;V.x=sx-wx*z;V.y=sy+wy*z;req()}
+cv.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  cv.setPointerCapture(e.pointerId);const p=pos(e);P.set(e.pointerId,p);
+  if(P.size===1){
+    g={multi:false,moved:false,x0:p.x,y0:p.y,touch:e.pointerType!=='mouse'};
+    if(mode&&snapOn&&g.touch){hov=near(p.x,p.y,26);req()}   // 触れた時点で吸着先を表示
+  }else{g.multi=true;g.moved=true;hov=null;const[a,b]=[...P.values()];g.pd=Math.hypot(a.x-b.x,a.y-b.y);g.mx=(a.x+b.x)/2;g.my=(a.y+b.y)/2}
+});
+cv.addEventListener('pointermove',e=>{
+  const p=pos(e),old=P.get(e.pointerId);
+  if(!old){if(mode&&snapOn&&e.pointerType==='mouse'){hov=near(p.x,p.y,14);req()}return}
+  P.set(e.pointerId,p);
+  if(P.size===1){
+    if(!g.moved&&Math.hypot(p.x-g.x0,p.y-g.y0)>(g.touch?9:5)){g.moved=true;hov=null}
+    if(g.moved){V.x+=p.x-old.x;V.y+=p.y-old.y;req()}
+  }else if(P.size===2){
+    const[a,b]=[...P.values()],d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+    if(g.pd>0){const wx=(g.mx-V.x)/V.z,wy=(V.y-g.my)/V.z,z=clampZ(V.z*d/g.pd);V.z=z;V.x=mx-wx*z;V.y=my+wy*z;req()}
+    g.pd=d;g.mx=mx;g.my=my;
+  }
+});
+const endP=(e,ok)=>{
+  if(!P.has(e.pointerId))return;
+  if(ok&&P.size===1&&!g.multi&&!g.moved&&mode)tap(g.x0,g.y0,g.touch);
+  else if(hov){hov=null;req()}
+  P.delete(e.pointerId);if(P.size===1)g.moved=true;
+};
+cv.addEventListener('pointerup',e=>endP(e,true));
+cv.addEventListener('pointercancel',e=>endP(e,false));
+cv.addEventListener('wheel',e=>{e.preventDefault();const p=pos(e);zoomAt(p.x,p.y,Math.exp(-Math.max(-100,Math.min(100,e.deltaY))*.0015))},{passive:false});
+
+/* ---------- 起動 ---------- */
+{const t=st.g('dxfv:theme');theme=t==='light'||t==='dark'?t:(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');setTheme(theme,false)}
+upd();
+</script>
+</body>
+</html>
