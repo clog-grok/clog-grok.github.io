@@ -138,7 +138,8 @@ let R=[],SRC=null,pPts=[],pDone=false,ci=-1,ei=-1,asg=1,LT='',nmv={dist:'',area:
 const clean=s=>s.replace(/\\U\+([0-9A-Fa-f]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)))
  .replace(/\\P/g,'\n').replace(/\\S([^;]*);/g,(_,a)=>a.replace('^','/')).replace(/\\[ACFfHQTW][^;]*;/g,'')
  .replace(/\\[LlOoKk]/g,'').replace(/\\~/g,' ').replace(/[{}]/g,'').replace(/%%[cC]/g,'Ø').replace(/%%[dD]/g,'°').replace(/%%[pP]/g,'±');
-function parse(t){
+function parse(t,opt){
+  const skipMeas=!!(opt&&opt.skipMeas);
   const L=t.split(/\r?\n/),recs=[];let sec='',r=null,cb=null;
   for(let i=0;i+1<L.length;i+=2){
     const c=parseInt(L[i],10),v=L[i+1].trim();
@@ -152,6 +153,9 @@ function parse(t){
     if(T==='BLOCK'){blocks[r.b]={bx:gn(r,10),by:gn(r,20),e:[]};continue}
     if(r.sec!=='ENTITIES'&&r.sec!=='BLOCKS')continue;
     if(T==='ENDBLK'||T==='ENDSEC')continue;
+    const layer=gv(r,8)||'0';
+    if(layer==='GROK_META'){pl=null;continue}
+    if(skipMeas&&layer==='GROK_MEAS'){pl=null;continue}
     if(T==='SEQEND'){pl=null;continue}
     if(T==='VERTEX'){const f=gn(r,70);if(pl&&!(f&16)&&f<64)pl.p.push({x:gn(r,10),y:gn(r,20),b:gn(r,42)});continue}
     if(T==='LINE')o={t:'L',a:[gn(r,10),gn(r,20)],b:[gn(r,11),gn(r,21)]};
@@ -264,15 +268,23 @@ $('f').onchange=async e=>{
     let enc,text;
     if(/932/.test(cp)){enc='Shift_JIS';text=new TextDecoder('shift_jis').decode(buf)}
     else try{enc='UTF-8';text=new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch(_){enc='Shift_JIS(自動判定)';text=new TextDecoder('shift_jis').decode(buf)}
-    // 開く直後は必ず空。復元はそのファイル中身専用キーだけから
-    D=parse(text);SRC={text,sjis:/Shift/.test(enc),name:f.name,handle:null};R=[];dPts=[];aPts=[];aDone=false;hov=null;lastM='';note='';ei=-1;ci=-1;RS={dist:[],area:[],cnt:[]};
+    // 開く直後は必ず空。META(GROK_R_JSON)があれば一覧を優先復元し、そのとき GROK_MEAS/META 下敷きは描かない
+    const meta=extractGrokR(text);
+    D=parse(text,{skipMeas:!!meta});SRC={text,sjis:/Shift/.test(enc),name:f.name,handle:null};R=[];dPts=[];aPts=[];aDone=false;hov=null;lastM='';note='';ei=-1;ci=-1;RS={dist:[],area:[],cnt:[]};
     curKey=await dxfContentKey(buf);
     k=1;calSrc=null;$('rawIn').value='';$('realIn').value='';
     let msg=`${f.name}: 図形${D.nSeg} 文字${D.txt.length}`;const sv=st.g(curKey);
     if(sv)try{const o=JSON.parse(sv);if(o.k>0&&isFinite(o.k)){k=o.k;$('rawIn').value=o.raw??'';$('realIn').value=o.real??'';msg+=`\nこの図面の補正 ×${fk(k)} を復元`}}catch(_){}
-    // 記入復元は curKey（中身ハッシュ）のみ。旧キー name|size|mtime は読まない＝他ファイルと混ざらない
+    // 記入復元: DXF内 META を優先。なければ curKey:rec（中身ハッシュ）。旧キー name|size|mtime は読まない
     R=[];
-    try{const rv=st.g(curKey+':rec');if(rv){const arr=JSON.parse(rv);R=Array.isArray(arr)?arr:[];if(R.length)msg+=`\nこの図面の記入 ${R.length}件 を復元`}}catch(_){R=[]}
+    if(meta&&Array.isArray(meta.R)){
+      R=meta.R;
+      if(meta.k>0&&isFinite(meta.k)){k=meta.k;$('rawIn').value='';$('realIn').value='';msg+=`\nDXF内の補正 ×${fk(k)} を復元`}
+      if(R.length)msg+=`\nDXF内の記入 ${R.length}件 を復元`;
+      persist();
+    }else{
+      try{const rv=st.g(curKey+':rec');if(rv){const arr=JSON.parse(rv);R=Array.isArray(arr)?arr:[];if(R.length)msg+=`\nこの図面の記入 ${R.length}件 を復元`}}catch(_){R=[]}
+    }
     ci=-1;
     const un=Object.entries(D.un).map(([a,b])=>a+'×'+b).join(', ');
     $('info').textContent=`文字コード ${enc} (コードページ ${cp})`+(un?` / 未対応: ${un}`:'')+' / DXFの色・レイヤーは未対応(単色表示)'+(D.nSeg+D.txt.length?'':' / 描画できる要素なし');
@@ -581,9 +593,99 @@ function renderList(){
   $('lsum').textContent=sum;LT=ls.join('\n')+'\n'+sum}
 $('lB').onclick=()=>{const p=$('lp');p.hidden=!p.hidden;$('lB').classList.toggle('on',!p.hidden);if(!p.hidden)renderList();upd()};
 $('lCp').onclick=async()=>{try{await navigator.clipboard.writeText(LT);upd('一覧をコピーしました')}catch(e){upd('コピーできませんでした')}};
+/* ---------- 記入のDXF埋込: GROK_MEAS(見た目) + GROK_META(JSON) ---------- */
+const ACI_POS=[1,3,4,5,6,30,50,90,140,170,210,14];
+const ACI_NEG=[10,20,40,60,80,12,22,42,200,240,11,31];
+const aciOf=(name,neg)=>{const pal=neg?ACI_NEG:ACI_POS;const h=hueOf(name||'');return pal[(((h%360)+360)%360)*pal.length/360|0]};
+function extractGrokR(text){
+  const L=text.split(/\r?\n/),parts=[];
+  for(let i=0;i+1<L.length;i+=2){
+    const c=parseInt(L[i],10);if(c!==1&&c!==3)continue;
+    const v=String(L[i+1]).replace(/\r$/,'').trim();
+    const m=/^GROK_R_JSON:(?:(\d+)\/(\d+):)?(.*)$/.exec(v);if(!m)continue;
+    parts.push({i:m[1]?+m[1]:1,n:m[2]?+m[2]:1,s:m[3]});
+  }
+  if(!parts.length)return null;
+  parts.sort((a,b)=>a.i-b.i);
+  const seen=new Set(),ordered=[];
+  for(const p of parts){if(seen.has(p.i))continue;seen.add(p.i);ordered.push(p)}
+  let json='';for(const p of ordered)json+=p.s;
+  try{
+    const o=JSON.parse(json);
+    if(Array.isArray(o))return{v:1,R:o};
+    if(o&&Array.isArray(o.R))return o;
+  }catch(_){}
+  return null;
+}
+function serializeGrokR(R,k){
+  const recs=R.map(r=>{
+    const o={t:r.t,name:r.name||'',sel:r.sel!==false,h:+r.h||0};
+    if(r.t==='d'){o.a={x:+r.a.x,y:+r.a.y};o.b={x:+r.b.x,y:+r.b.y}}
+    else if(r.t==='p'){o.p=(r.p||[]).map(p=>({x:+p.x,y:+p.y}))}
+    else if(r.t==='a'){o.p=(r.p||[]).map(p=>({x:+p.x,y:+p.y}));o.sg=r.sg===-1?-1:1}
+    else if(r.t==='c'){o.pts=(r.pts||[]).map(p=>({x:+p.x,y:+p.y}))}
+    return o;
+  });
+  return JSON.stringify({v:1,k:+k||1,R:recs});
+}
+function chunkGrokJson(json){
+  /* TEXT group1 は約255byte上限。日本語SJISでも安全なよう短めに分割 */
+  const bodyMax=80,parts=[];
+  for(let i=0;i<json.length;i+=bodyMax)parts.push(json.slice(i,i+bodyMax));
+  if(!parts.length)parts.push('');
+  const n=parts.length;
+  return parts.map((p,i)=>'GROK_R_JSON:'+(i+1)+'/'+n+':'+p);
+}
+function stripGrokEnt(L){
+  const n=L.length,recs=[];let sec='';
+  for(let i=0;i+1<n;i+=2){
+    const c=parseInt(L[i],10),v=L[i+1].trim();
+    if(c===0){
+      if(recs.length)recs[recs.length-1].end=i;
+      recs.push({start:i,end:n,t:v,sec,layer:'0'});
+      if(v==='ENDSEC')sec='';
+    }else if(c===2&&recs.length&&recs[recs.length-1].t==='SECTION')sec=v;
+    else if(c===8&&recs.length)recs[recs.length-1].layer=v;
+  }
+  if(!recs.length)return L;
+  const drop=new Set();
+  for(const r of recs){
+    if(r.sec==='ENTITIES'&&(r.layer==='GROK_MEAS'||r.layer==='GROK_META')&&r.t!=='ENDSEC'&&r.t!=='SECTION')drop.add(r);
+  }
+  if(!drop.size)return L;
+  const out=[];
+  for(const r of recs){if(drop.has(r))continue;for(let i=r.start;i<r.end;i++)out.push(L[i])}
+  for(let i=recs[recs.length-1].end;i<n;i++)out.push(L[i]);
+  return out;
+}
+function ensureGrokLayers(L){
+  let sec='',tab='',cur='',iEndTab=-1,hasM=false,hasMeta=false;
+  for(let i=0;i+1<L.length;i+=2){
+    const c=parseInt(L[i],10),v=L[i+1].trim();
+    if(c===0){
+      if(v==='ENDSEC')sec='';
+      if(v==='ENDTAB'){if(tab==='LAYER'&&iEndTab<0)iEndTab=i;tab=''}
+      cur=v;
+    }else if(c===2){
+      if(cur==='SECTION')sec=v;
+      else if(cur==='TABLE')tab=v;
+      else if(cur==='LAYER'&&tab==='LAYER'){if(v==='GROK_MEAS')hasM=true;if(v==='GROK_META')hasMeta=true}
+    }
+  }
+  if(iEndTab<0)return L;
+  const o=[];
+  const add=(name,flags)=>{o.push('0','LAYER','2',name,'70',String(flags),'62','7','6','CONTINUOUS')};
+  if(!hasM)add('GROK_MEAS',0);
+  if(!hasMeta)add('GROK_META',1); /* 70 bit0=frozen: JW等でMETA文字を隠す */
+  if(!o.length)return L;
+  const L2=L.slice();L2.splice(iEndTab,0,...o);return L2;
+}
 /* DXFテキストを加工: 追加図形をENTITIES末尾に挿入。bake時は既存図形の座標も×k */
 function buildDxf(text,R,k,bake,intMm){
-  const eol=text.includes('\r\n')?'\r\n':'\n',L=text.split(/\r?\n/),kk=bake?k:1;
+  const eol=text.includes('\r\n')?'\r\n':'\n';
+  let L=stripGrokEnt(text.split(/\r?\n/));
+  L=ensureGrokLayers(L);
+  const kk=bake?k:1;
   const SC=new Set(['LINE','LWPOLYLINE','POLYLINE','VERTEX','CIRCLE','ARC','TEXT','MTEXT','INSERT','BLOCK','POINT','SOLID','ELLIPSE']);
   const EX={CIRCLE:[40],ARC:[40],TEXT:[40],MTEXT:[40,41],LWPOLYLINE:[40,41,43],POLYLINE:[40,41],VERTEX:[40,41]};
   const num=x=>String(+x.toFixed(6)),skip={};let sec='',cur='',end=-1;
@@ -598,33 +700,40 @@ function buildDxf(text,R,k,bake,intMm){
   }
   if(end<0)throw new Error('ENTITIESセクションが見つかりません');
   const o=[],g=(c,v)=>o.push(String(c).padStart(3),String(v)),P=p=>({x:p.x*kk,y:p.y*kk});
-  const line=(a,b)=>{g(0,'LINE');g(100,'AcDbEntity');g(8,'0');g(100,'AcDbLine');g(10,num(a.x));g(20,num(a.y));g(30,0);g(11,num(b.x));g(21,num(b.y));g(31,0)};
-  const txt=(x,y,h,s,deg)=>{g(0,'TEXT');g(100,'AcDbEntity');g(8,'0');g(100,'AcDbText');g(10,num(x));g(20,num(y));g(30,0);g(40,num(h));g(1,s);g(50,num(deg));g(72,1);g(11,num(x));g(21,num(y));g(31,0);g(100,'AcDbText');g(73,0)};
+  const line=(a,b,aci)=>{g(0,'LINE');g(100,'AcDbEntity');g(8,'GROK_MEAS');if(aci!=null)g(62,String(aci));g(100,'AcDbLine');g(10,num(a.x));g(20,num(a.y));g(30,0);g(11,num(b.x));g(21,num(b.y));g(31,0)};
+  const txt=(x,y,h,s,deg,aci)=>{g(0,'TEXT');g(100,'AcDbEntity');g(8,'GROK_MEAS');if(aci!=null)g(62,String(aci));g(100,'AcDbText');g(10,num(x));g(20,num(y));g(30,0);g(40,num(h));g(1,s);g(50,num(deg));g(72,1);g(11,num(x));g(21,num(y));g(31,0);g(100,'AcDbText');g(73,0)};
   for(const r of R){
     if(r.sel===false)continue;
+    const neg=r.t==='a'&&r.sg===-1,aci=aciOf(r.name,neg);
     if(r.t==='d'){
       const a=P(r.a),b=P(r.b),h=r.h*kk,len=Math.hypot(b.x-a.x,b.y-a.y);if(!(len>0))continue;
-      let ux=(b.x-a.x)/len,uy=(b.y-a.y)/len;line(a,b);
-      const ar=(p,sx)=>{const s=h*.8,dx=ux*sx,dy=uy*sx;for(const q of[1,-1])line(p,{x:p.x+(dx*s)-q*dy*s*.3,y:p.y+(dy*s)+q*dx*s*.3})};ar(a,1);ar(b,-1);
+      let ux=(b.x-a.x)/len,uy=(b.y-a.y)/len;line(a,b,aci);
+      const ar=(p,sx)=>{const s=h*.8,dx=ux*sx,dy=uy*sx;for(const q of[1,-1])line(p,{x:p.x+(dx*s)-q*dy*s*.3,y:p.y+(dy*s)+q*dx*s*.3},aci)};ar(a,1);ar(b,-1);
       let ang=Math.atan2(uy,ux);if(ang>Math.PI/2+1e-9||ang<=-Math.PI/2+1e-9){ang+=Math.PI;ux=-ux;uy=-uy}
       const dv=bake?len:len*k;
-      txt((a.x+b.x)/2-uy*h*.9,(a.y+b.y)/2+ux*h*.9,h,nl(r,k!==1&&intMm?fmt(Math.round(dv),0):fmt(dv)),ang*180/Math.PI);
+      txt((a.x+b.x)/2-uy*h*.9,(a.y+b.y)/2+ux*h*.9,h,nl(r,k!==1&&intMm?fmt(Math.round(dv),0):fmt(dv)),ang*180/Math.PI,aci);
     }else if(r.t==='p'){
       const p=r.p.map(P),h=r.h*kk;if(p.length<2)continue;
-      g(0,'LWPOLYLINE');g(100,'AcDbEntity');g(8,'0');g(100,'AcDbPolyline');g(90,p.length);g(70,0);p.forEach(q=>{g(10,num(q.x));g(20,num(q.y))});
+      g(0,'LWPOLYLINE');g(100,'AcDbEntity');g(8,'GROK_MEAS');g(62,String(aci));g(100,'AcDbPolyline');g(90,p.length);g(70,0);p.forEach(q=>{g(10,num(q.x));g(20,num(q.y))});
       const tot=plen(p),a=p[p.length-2],b=p[p.length-1],len=Math.hypot(b.x-a.x,b.y-a.y)||1;let ux=(b.x-a.x)/len,uy=(b.y-a.y)/len,ang=Math.atan2(uy,ux);
       if(ang>Math.PI/2+1e-9||ang<=-Math.PI/2+1e-9){ang+=Math.PI;ux=-ux;uy=-uy}
       const dv=bake?tot:tot*k;
-      txt((a.x+b.x)/2-uy*h*.9,(a.y+b.y)/2+ux*h*.9,h,nl(r,k!==1&&intMm?fmt(Math.round(dv),0):fmt(dv)),ang*180/Math.PI);
+      txt((a.x+b.x)/2-uy*h*.9,(a.y+b.y)/2+ux*h*.9,h,nl(r,k!==1&&intMm?fmt(Math.round(dv),0):fmt(dv)),ang*180/Math.PI,aci);
     }else if(r.t==='c'){
-      const h=r.h*kk;r.pts.forEach((q0,j)=>{const q=P(q0);g(0,'CIRCLE');g(100,'AcDbEntity');g(8,'0');g(100,'AcDbCircle');g(10,num(q.x));g(20,num(q.y));g(30,0);g(40,num(h*.6));txt(q.x+h*.8,q.y+h*.3,h,(r.name||'')+' · '+(j+1),0)});
+      const h=r.h*kk;r.pts.forEach((q0,j)=>{const q=P(q0);g(0,'CIRCLE');g(100,'AcDbEntity');g(8,'GROK_MEAS');g(62,String(aci));g(100,'AcDbCircle');g(10,num(q.x));g(20,num(q.y));g(30,0);g(40,num(h*.6));txt(q.x+h*.8,q.y+h*.3,h,(r.name||'')+' · '+(j+1),0,aci)});
     }else{
       const p=r.p.map(P),h=r.h*kk;
-      g(0,'LWPOLYLINE');g(100,'AcDbEntity');g(8,'0');g(100,'AcDbPolyline');g(90,p.length);g(70,1);p.forEach(q=>{g(10,num(q.x));g(20,num(q.y))});
+      g(0,'LWPOLYLINE');g(100,'AcDbEntity');g(8,'GROK_MEAS');g(62,String(aci));g(100,'AcDbPolyline');g(90,p.length);g(70,1);p.forEach(q=>{g(10,num(q.x));g(20,num(q.y))});
       let A=polyA(p);if(!bake)A*=k*k;
-      txt(p.reduce((s,q)=>s+q.x,0)/p.length,p.reduce((s,q)=>s+q.y,0)/p.length,h,nl(r,k===1?fmt(A):fmt(A/1e6)+'m2'),0);
+      txt(p.reduce((s,q)=>s+q.x,0)/p.length,p.reduce((s,q)=>s+q.y,0)/p.length,h,nl(r,k===1?fmt(A):fmt(A/1e6)+'m2'),0,aci);
     }
   }
+  /* 一覧メタ: 全件(非表示含む)を JSON で GROK_META に TEXT 分割埋込 */
+  const metaChunks=chunkGrokJson(serializeGrokR(R,bake?1:k));
+  metaChunks.forEach((s,i)=>{
+    g(0,'TEXT');g(100,'AcDbEntity');g(8,'GROK_META');g(62,'8');g(100,'AcDbText');
+    g(10,num(i*0.01));g(20,num(0));g(30,0);g(40,'0.1');g(1,s);g(50,'0');g(72,0);g(100,'AcDbText');g(73,0);
+  });
   L.splice(end,0,...o);
   return{text:L.join(eol),skip};
 }
@@ -639,7 +748,10 @@ const closeFileBar=()=>{$('fileBar').hidden=true;$('fileB').classList.remove('on
 const closeSaveAs=()=>{$('saveAsBar').hidden=true};
 function bakeName(asNew){
   const bake=k!==1&&$('bakeC').checked;
-  return asNew?(SRC.name.replace(/\.dxf$/i,'')+(bake?'_補正':'_記入')+'.dxf'):SRC.name;
+  if(!asNew)return SRC.name;
+  let base=SRC.name.replace(/\.dxf$/i,'');
+  base=base.replace(/(_記入|_補正)+$/,''); // 別名保存のたびに _記入 が積み上がらないように
+  return base+(bake?'_補正':'_記入')+'.dxf';
 }
 function cleanName(n,fb){
   let name=(n||'').trim()||fb;
