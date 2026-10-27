@@ -244,30 +244,43 @@ async function unzipDxf(buf){
   }
   throw new Error('zipの中にDXFがありません');
 }
+/* 図面の識別: 中身のSHA-256（名前・日付の偶然一致で他図面の記入が混ざるのを防ぐ） */
+async function dxfContentKey(buf){
+  const u=buf instanceof ArrayBuffer?new Uint8Array(buf):new Uint8Array(buf.buffer,buf.byteOffset,buf.byteLength);
+  if(crypto&&crypto.subtle){
+    const dig=await crypto.subtle.digest('SHA-256', u);
+    return 'dxfv:c:'+[...new Uint8Array(dig)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  let h=2166136261>>>0;for(let i=0;i<u.length;i++){h^=u[i];h=Math.imul(h,16777619)>>>0}
+  return 'dxfv:c:f'+u.length.toString(16)+'_'+h.toString(16);
+}
 $('f').onchange=async e=>{
   let f=e.target.files[0];if(!f)return;$('out').textContent='読み込み中...';
   try{
     let buf=await f.arrayBuffer();
-    if(/\.zip$/i.test(f.name)){const z=await unzipDxf(buf);buf=z.bytes.buffer;f={name:z.name,size:z.bytes.length,lastModified:f.lastModified}}
+    if(/\.zip$/i.test(f.name)){const z=await unzipDxf(buf);buf=z.bytes.buffer.slice(z.bytes.byteOffset,z.bytes.byteOffset+z.bytes.byteLength);f={name:z.name,size:z.bytes.length,lastModified:f.lastModified}}
     const head=new TextDecoder('latin1').decode(buf.slice(0,300000));
     const cp=(/\$DWGCODEPAGE\s+3\s+(\S+)/.exec(head)||[])[1]||'(記載なし)';
     let enc,text;
     if(/932/.test(cp)){enc='Shift_JIS';text=new TextDecoder('shift_jis').decode(buf)}
     else try{enc='UTF-8';text=new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch(_){enc='Shift_JIS(自動判定)';text=new TextDecoder('shift_jis').decode(buf)}
-    D=parse(text);SRC={text,sjis:/Shift/.test(enc),name:f.name,handle:null};R=[];dPts=[];aPts=[];aDone=false;hov=null;lastM='';note='';ei=-1;ci=-1;
-    // 図面の識別: ファイル名+サイズ+更新日時(別ファイルを完全に区別できる保証はない)
-    curKey=`dxfv:cal:${f.name}|${f.size}|${f.lastModified}`;
+    // 開く直後は必ず空。復元はそのファイル中身専用キーだけから
+    D=parse(text);SRC={text,sjis:/Shift/.test(enc),name:f.name,handle:null};R=[];dPts=[];aPts=[];aDone=false;hov=null;lastM='';note='';ei=-1;ci=-1;RS={dist:[],area:[],cnt:[]};
+    curKey=await dxfContentKey(buf);
     k=1;calSrc=null;$('rawIn').value='';$('realIn').value='';
     let msg=`${f.name}: 図形${D.nSeg} 文字${D.txt.length}`;const sv=st.g(curKey);
-    if(sv)try{const o=JSON.parse(sv);if(o.k>0&&isFinite(o.k)){k=o.k;$('rawIn').value=o.raw??'';$('realIn').value=o.real??'';msg+=`\n保存済みの補正 ×${fk(k)} を復元しました`}}catch(_){}
-    try{const rv=st.g(curKey+':rec');if(rv){R=JSON.parse(rv);if(R.length)msg+=`\n保存済みの記入 ${R.length}件 を復元しました`}}catch(_){R=[]}
+    if(sv)try{const o=JSON.parse(sv);if(o.k>0&&isFinite(o.k)){k=o.k;$('rawIn').value=o.raw??'';$('realIn').value=o.real??'';msg+=`\nこの図面の補正 ×${fk(k)} を復元`}}catch(_){}
+    // 記入復元は curKey（中身ハッシュ）のみ。旧キー name|size|mtime は読まない＝他ファイルと混ざらない
+    R=[];
+    try{const rv=st.g(curKey+':rec');if(rv){const arr=JSON.parse(rv);R=Array.isArray(arr)?arr:[];if(R.length)msg+=`\nこの図面の記入 ${R.length}件 を復元`}}catch(_){R=[]}
     ci=-1;
     const un=Object.entries(D.un).map(([a,b])=>a+'×'+b).join(', ');
     $('info').textContent=`文字コード ${enc} (コードページ ${cp})`+(un?` / 未対応: ${un}`:'')+' / DXFの色・レイヤーは未対応(単色表示)'+(D.nSeg+D.txt.length?'':' / 描画できる要素なし');
     if(un)msg+='\n未対応の図形あり(詳細は縮尺パネル)';
     fit();upd(msg);
     $('fileBar').hidden=true;$('fileB').classList.remove('on');
-  }catch(err){$('out').textContent='読み込みエラー: '+err.message;console.error(err)}
+    if(typeof closeSaveAs==='function')closeSaveAs();
+  }catch(err){$('out').textContent='読み込みエラー: '+err.message;console.error(err);R=[];curKey=null}
   finally{e.target.value=''}   // 同じファイルを再選択しても読み込めるように
 };
 
@@ -510,7 +523,7 @@ $('redoB').onclick=()=>{
   persist();upd();if(!$('lp').hidden)renderList();req()};
 
 /* ---------- 個数・一覧・記録の保存 ---------- */
-const persist=()=>{if(curKey)st.s(curKey+':rec',JSON.stringify(R))};   // 同じ図面を開くと復元(DXFとは別にブラウザ内へ保存)
+const persist=()=>{if(curKey)st.s(curKey+':rec',JSON.stringify(R))};   // 中身ハッシュ専用。他ファイルのキーは触らない
 function newCat(n){const name=n||autoName('c');R.push({t:'c',name,pts:[],h:15/V.z,sel:true});ci=R.length-1;nmv.cnt=name;$('cname').value=name;persist()}
 function addCnt(p){
   const nm=($('cname').value.trim()||nmv.cnt||'').trim();
