@@ -2,8 +2,8 @@
   "service": "Muse",
   "plan": "Free",
   "period": "Weekly",
-  "usedPercent": 4,
-  "leftPercent": 96,
+  "usedPercent": 5,
+  "leftPercent": 95,
   "resetAt": "2026-11-23T08:06:00+09:00",
-  "updatedAt": "2026-11-21T00:26:02.672294+09:00"
+  "updatedAt": "2026-11-21T09:50:30.431852+09:00"
 }
